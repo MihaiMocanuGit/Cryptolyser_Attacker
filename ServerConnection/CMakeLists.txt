@@ -1,0 +1,1 @@
+add_library(ServerConnection STATIC serverConnection.hpp serverConnection.cpp)
