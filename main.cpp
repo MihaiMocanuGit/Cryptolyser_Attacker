@@ -1,6 +1,7 @@
-#include <iostream>
-#include <algorithm>
 #include "ServerConnection/ServerConnection.hpp"
+
+#include <algorithm>
+#include <iostream>
 
 int main(int argc, char **argv)
 {
@@ -12,16 +13,18 @@ int main(int argc, char **argv)
             if (connection.connect())
             {
                 std::vector<std::byte> data{i};
-                std::generate(data.begin(), data.end(), [&]()
-                {
-                    static uint8_t value = 0;
-                    return static_cast<std::byte>(value++);
-                });
+                std::generate(data.begin(), data.end(),
+                              [&]()
+                              {
+                                  static uint8_t value = 0;
+                                  return static_cast<std::byte>(value++);
+                              });
                 auto result = connection.transmit(data);
-                std::cout << count << ":\tdelta:\t" << result->outbound - result->inbound << "\tdata size:\t" << i
-                          << '\n';
+                std::cout << count << ":\tdelta:\t" << result->outbound - result->inbound
+                          << "\tdata size:\t" << i << '\n';
                 connection.closeConnection();
-            } else
+            }
+            else
             {
                 std::cerr << "Could not connect." << std::endl;
             }

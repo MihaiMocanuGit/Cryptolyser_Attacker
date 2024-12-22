@@ -1,10 +1,10 @@
 #include "ServerConnection.hpp"
 
-#include <string>
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
 #include <arpa/inet.h>
+#include <cstring>
+#include <iostream>
+#include <string>
+#include <unistd.h>
 
 void ServerConnection::m_closeSocket()
 {
@@ -12,7 +12,8 @@ void ServerConnection::m_closeSocket()
     m_isConnectionActive = false;
 }
 
-ServerConnection::ServerConnection(std::string ip, uint16_t port) noexcept: m_ip{std::move(ip)}, m_port{port}
+ServerConnection::ServerConnection(std::string ip, uint16_t port) noexcept
+    : m_ip{std::move(ip)}, m_port{port}
 {
 }
 
@@ -50,7 +51,8 @@ bool ServerConnection::connect()
     return true;
 }
 
-std::optional<ServerConnection::TimingData> ServerConnection::transmit(const std::vector<std::byte> &bytes)
+std::optional<ServerConnection::TimingData>
+    ServerConnection::transmit(const std::vector<std::byte> &bytes)
 {
     if (not m_isConnectionActive)
         return {};
@@ -63,8 +65,8 @@ std::optional<ServerConnection::TimingData> ServerConnection::transmit(const std
     }
     packet.dataLength = htobe64(bytes.size());
     std::memcpy(packet.byteData, bytes.data(), bytes.size());
-    if (sendto(m_sock, &packet, sizeof(packet), 0, reinterpret_cast<struct sockaddr *>(&m_receiverAddr),
-               sizeof(m_receiverAddr)) < 0)
+    if (sendto(m_sock, &packet, sizeof(packet), 0,
+               reinterpret_cast<struct sockaddr *>(&m_receiverAddr), sizeof(m_receiverAddr)) < 0)
     {
         std::cerr << "Error in sending data packet.\n";
         m_closeSocket();
@@ -92,8 +94,4 @@ void ServerConnection::closeConnection()
     std::memset(&m_receiverAddr, 0, sizeof(m_receiverAddr));
 }
 
-ServerConnection::~ServerConnection()
-{
-    this->closeConnection();
-}
-
+ServerConnection::~ServerConnection() { this->closeConnection(); }

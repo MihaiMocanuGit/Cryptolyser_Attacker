@@ -2,14 +2,14 @@
 #define CRYPTOLYSER_ATTACKER_SERVERCONNECTION_HPP
 
 #include <cstdint>
-#include <vector>
-#include <string>
 #include <netinet/in.h>
 #include <optional>
+#include <string>
+#include <vector>
 
 class ServerConnection
 {
-private:
+  private:
     std::string m_ip;
     uint16_t m_port;
     int m_sock{-1};
@@ -27,7 +27,8 @@ private:
 #pragma pack(0)
 
     void m_closeSocket();
-public:
+
+  public:
 #pragma pack(1)
     struct TimingData
     {
@@ -48,4 +49,4 @@ public:
     void closeConnection();
 };
 
-#endif //CRYPTOLYSER_ATTACKER_SERVERCONNECTION_HPP
+#endif // CRYPTOLYSER_ATTACKER_SERVERCONNECTION_HPP
