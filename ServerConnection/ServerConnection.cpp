@@ -79,6 +79,10 @@ std::optional<ServerConnection::TimingData>
                  reinterpret_cast<struct sockaddr *>(&m_receiverAddr), &len) < 0)
     {
         std::cerr << "Error in receiving message\n";
+        if (errno == EWOULDBLOCK)
+        {
+            std::cerr << "Reason: timeout.\n";
+        }
         m_closeSocket();
         return {};
     }
