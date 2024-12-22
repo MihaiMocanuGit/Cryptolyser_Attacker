@@ -5,7 +5,15 @@
 
 int main(int argc, char **argv)
 {
-    ServerConnection connection{"192.168.1.147", 8081};
+    if (argc != 3)
+    {
+        std::cerr << "Incorrect program parameters: <IPv4> <PORT>" << std::endl;
+        return -1;
+    }
+    const std::string_view ip = argv[1];
+    const uint16_t port = std::stoi(argv[2]);
+
+    ServerConnection connection{ip, port};
     std::cout << "Count, InboundSec, InboundNanoSec, OutboundSec, OutboundNanoSec\n";
     for (size_t count = 0;;)
     {

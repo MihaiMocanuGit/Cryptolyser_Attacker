@@ -10,7 +10,7 @@
 class ServerConnection
 {
   private:
-    std::string m_ip;
+    const std::string_view m_ip;
     uint16_t m_port;
     int m_sock{-1};
     sockaddr_in m_receiverAddr{};
@@ -39,7 +39,7 @@ class ServerConnection
     };
 #pragma pack(0)
 
-    ServerConnection(std::string ip, uint16_t port) noexcept;
+    ServerConnection(std::string_view ip, uint16_t port) noexcept;
     ServerConnection(const ServerConnection &serverConnection) = delete;
     ServerConnection &operator=(const ServerConnection &rhs) = delete;
     ~ServerConnection();

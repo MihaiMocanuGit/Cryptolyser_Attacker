@@ -12,8 +12,8 @@ void ServerConnection::m_closeSocket()
     m_isConnectionActive = false;
 }
 
-ServerConnection::ServerConnection(std::string ip, uint16_t port) noexcept
-    : m_ip{std::move(ip)}, m_port{port}
+ServerConnection::ServerConnection(std::string_view ip, uint16_t port) noexcept
+    : m_ip{ip}, m_port{port}
 {
 }
 
@@ -45,7 +45,7 @@ bool ServerConnection::connect()
     m_receiverAddr.sin_family = AF_INET;
     m_receiverAddr.sin_port = htobe16(m_port);
 
-    m_receiverAddr.sin_addr.s_addr = inet_addr(m_ip.c_str());
+    m_receiverAddr.sin_addr.s_addr = inet_addr(m_ip.data());
     m_isConnectionActive = true;
 
     return true;
