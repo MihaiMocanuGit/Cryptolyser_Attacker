@@ -15,7 +15,7 @@ class ServerConnection
     int m_sock{-1};
     sockaddr_in m_receiverAddr{};
     bool m_isConnectionActive{false};
-    static constexpr timeval M_RECV_TIMEOUT = {.tv_sec = 1, .tv_usec = 0};
+    static constexpr timeval M_RECV_TIMEOUT{/*.tv_sec*/ 1, /*.tv_usec*/ 0};
 
 #pragma pack(1)
     struct Packet
@@ -32,8 +32,10 @@ class ServerConnection
 #pragma pack(1)
     struct TimingData
     {
-        uint64_t inbound;
-        uint64_t outbound;
+        uint64_t inbound_sec;
+        uint64_t inbound_nsec;
+        uint64_t outbound_sec;
+        uint64_t outbound_nsec;
     };
 #pragma pack(0)
 

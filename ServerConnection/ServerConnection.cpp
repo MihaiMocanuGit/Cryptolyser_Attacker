@@ -73,7 +73,7 @@ std::optional<ServerConnection::TimingData>
         return {};
     }
 
-    TimingData responseTimingData = {.inbound = 0, .outbound = 0};
+    TimingData responseTimingData{};
     socklen_t len = sizeof(struct sockaddr_in);
     if (recvfrom(m_sock, &responseTimingData, sizeof(responseTimingData), 0,
                  reinterpret_cast<struct sockaddr *>(&m_receiverAddr), &len) < 0)
@@ -83,8 +83,10 @@ std::optional<ServerConnection::TimingData>
         return {};
     }
 
-    responseTimingData.inbound = be64toh(responseTimingData.inbound);
-    responseTimingData.outbound = be64toh(responseTimingData.outbound);
+    responseTimingData.inbound_sec = be64toh(responseTimingData.inbound_sec);
+    responseTimingData.inbound_nsec = be64toh(responseTimingData.inbound_nsec);
+    responseTimingData.outbound_sec = be64toh(responseTimingData.outbound_sec);
+    responseTimingData.outbound_nsec = be64toh(responseTimingData.outbound_nsec);
     return {responseTimingData};
 }
 
