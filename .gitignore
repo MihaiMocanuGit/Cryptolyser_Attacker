@@ -34,4 +34,7 @@
 # IDE specific
 .idea
 cmake-build-*
+
+# Program specific
 build*
+*.csv
