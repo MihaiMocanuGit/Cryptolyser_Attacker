@@ -12,31 +12,28 @@ void ServerConnection::m_closeSocket()
     m_isConnectionActive = false;
 }
 
-ServerConnection::ServerConnection(std::string_view ip, uint16_t port) noexcept
-    : m_ip{ip}, m_port{port}
-{
-}
+ServerConnection::ServerConnection(std::string_view ip, uint16_t port) : m_ip{ip}, m_port{port} {}
 
 bool ServerConnection::connect()
 {
     m_sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (m_sock < 0)
     {
-        std::cerr << "Error creating socket\n";
+        std::cerr << "Error creating socket" << std::endl;
         return false;
     }
 
-    int broadcast = 1;
+    int broadcast{1};
     // Set the broadcast option on the socket
     if (setsockopt(m_sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0)
     {
-        std::cerr << "Error in setting Broadcast option.\n";
+        std::cerr << "Error in setting Broadcast option." << std::endl;
         m_closeSocket();
         return false;
     }
     if (setsockopt(m_sock, SOL_SOCKET, SO_RCVTIMEO, &M_RECV_TIMEOUT, sizeof(M_RECV_TIMEOUT)) < 0)
     {
-        std::cerr << "Error in setting RECV TIMEOUT option.\n";
+        std::cerr << "Error in setting RECV TIMEOUT option." << std::endl;
         m_closeSocket();
         return false;
     }
@@ -56,32 +53,32 @@ std::optional<ServerConnection::TimingData>
 {
     if (not m_isConnectionActive)
         return {};
-    Packet packet;
-    if (Packet::MAX_DATA_SIZE < bytes.size())
+    if (MAX_DATA_SIZE < bytes.size())
     {
-        std::cerr << "Error, too many bytes for a single packet.\n";
+        std::cerr << "Error, too many bytes for a single packet." << std::endl;
         m_closeSocket();
         return {};
     }
+    Packet packet{};
     packet.dataLength = htobe64(bytes.size());
     std::memcpy(packet.byteData, bytes.data(), bytes.size());
     if (sendto(m_sock, &packet, sizeof(packet), 0,
                reinterpret_cast<struct sockaddr *>(&m_receiverAddr), sizeof(m_receiverAddr)) < 0)
     {
-        std::cerr << "Error in sending data packet.\n";
+        std::cerr << "Error in sending data packet." << std::endl;
         m_closeSocket();
         return {};
     }
 
     TimingData responseTimingData{};
-    socklen_t len = sizeof(struct sockaddr_in);
+    socklen_t len{sizeof(struct sockaddr_in)};
     if (recvfrom(m_sock, &responseTimingData, sizeof(responseTimingData), 0,
                  reinterpret_cast<struct sockaddr *>(&m_receiverAddr), &len) < 0)
     {
-        std::cerr << "Error in receiving message\n";
+        std::cerr << "Error in receiving message" << std::endl;
         if (errno == EWOULDBLOCK)
         {
-            std::cerr << "Reason: timeout.\n";
+            std::cerr << "Reason: timeout." << std::endl;
         }
         m_closeSocket();
         return {};

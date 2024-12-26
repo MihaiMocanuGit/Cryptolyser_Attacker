@@ -9,6 +9,9 @@
 
 class ServerConnection
 {
+  public:
+    static constexpr size_t MAX_DATA_SIZE{500};
+
   private:
     const std::string_view m_ip;
     uint16_t m_port;
@@ -17,16 +20,15 @@ class ServerConnection
     bool m_isConnectionActive{false};
     static constexpr timeval M_RECV_TIMEOUT{/*.tv_sec*/ 1, /*.tv_usec*/ 0};
 
+    void m_closeSocket();
+
 #pragma pack(1)
     struct Packet
     {
-        static constexpr size_t MAX_DATA_SIZE = 500;
         uint64_t dataLength;
         uint8_t byteData[MAX_DATA_SIZE];
     };
 #pragma pack(0)
-
-    void m_closeSocket();
 
   public:
 #pragma pack(1)
@@ -39,7 +41,7 @@ class ServerConnection
     };
 #pragma pack(0)
 
-    ServerConnection(std::string_view ip, uint16_t port) noexcept;
+    ServerConnection(std::string_view ip, uint16_t port);
     ServerConnection(const ServerConnection &serverConnection) = delete;
     ServerConnection &operator=(const ServerConnection &rhs) = delete;
     ~ServerConnection();
