@@ -24,6 +24,7 @@ int main(int argc, char **argv)
     if constexpr (PRINT_TO_STD)
         std::cout << header;
     csvFile << header;
+    size_t lostPackages = 0;
     for (size_t count{0};;)
     {
         for (size_t dataSize = 1; dataSize <= 500; ++dataSize, count++)
@@ -50,14 +51,20 @@ int main(int argc, char **argv)
                         std::cout << outputRow;
                     csvFile << outputRow;
                 }
+                else
+                {
+                    std::cout << "Loss ratio: "
+                              << static_cast<long double>(++lostPackages) / (count + 1)
+                              << std::endl;
+                    const std::string outputRow{std::to_string(count) + ", " +
+                                                std::to_string(dataSize) + ", -1, -1, -1, -1\n"};
+                    csvFile << outputRow;
+                }
                 connection.closeConnection();
             }
             else
             {
                 std::cerr << "Could not connect." << std::endl;
-                const std::string outputRow{std::to_string(count) + ", " +
-                                            std::to_string(dataSize) + ", -1, -1, -1, -1\n"};
-                csvFile << outputRow;
             }
         }
     }
