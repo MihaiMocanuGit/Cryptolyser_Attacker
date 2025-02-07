@@ -1,1 +1,1 @@
-add_library(ServerConnection STATIC ServerConnection.hpp ServerConnection.cpp)
+add_library(ServerConnection STATIC ServerConnection.hpp ServerConnection.cpp connection_data_types.h)

@@ -1,10 +1,14 @@
 #include "ServerConnection.hpp"
 
+#include "connection_data_types.h"
+
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
 #include <string>
 #include <unistd.h>
+
+constexpr uint32_t ServerConnection::DATA_MAX_SIZE{CONNECTION_DATA_MAX_SIZE};
 
 void ServerConnection::m_closeSocket()
 {
@@ -48,20 +52,21 @@ bool ServerConnection::connect()
     return true;
 }
 
-std::optional<ServerConnection::TimingData>
-    ServerConnection::transmit(const std::vector<std::byte> &bytes)
+std::optional<connection_timing_t> ServerConnection::transmit(uint32_t packet_id,
+                                                              const std::vector<std::byte> &bytes)
 {
     if (not m_isConnectionActive)
         return {};
-    if (MAX_DATA_SIZE < bytes.size())
+    if (CONNECTION_DATA_MAX_SIZE < bytes.size())
     {
         std::cerr << "Error, too many bytes for a single packet." << std::endl;
         m_closeSocket();
         return {};
     }
-    Packet packet{};
-    packet.dataLength = htobe64(bytes.size());
-    std::memcpy(packet.byteData, bytes.data(), bytes.size());
+    connection_packet_t packet{};
+    packet.packet_id = htobe32(packet_id);
+    packet.data_length = htobe32(bytes.size());
+    std::memcpy(packet.byte_data, bytes.data(), bytes.size());
     if (sendto(m_sock, &packet, sizeof(packet), 0,
                reinterpret_cast<struct sockaddr *>(&m_receiverAddr), sizeof(m_receiverAddr)) < 0)
     {
@@ -70,7 +75,7 @@ std::optional<ServerConnection::TimingData>
         return {};
     }
 
-    TimingData responseTimingData{};
+    connection_timing_t responseTimingData{};
     socklen_t len{sizeof(struct sockaddr_in)};
     if (recvfrom(m_sock, &responseTimingData, sizeof(responseTimingData), 0,
                  reinterpret_cast<struct sockaddr *>(&m_receiverAddr), &len) < 0)
@@ -83,7 +88,7 @@ std::optional<ServerConnection::TimingData>
         m_closeSocket();
         return {};
     }
-
+    responseTimingData.packet_id = be32toh(responseTimingData.packet_id);
     responseTimingData.inbound_sec = be64toh(responseTimingData.inbound_sec);
     responseTimingData.inbound_nsec = be64toh(responseTimingData.inbound_nsec);
     responseTimingData.outbound_sec = be64toh(responseTimingData.outbound_sec);

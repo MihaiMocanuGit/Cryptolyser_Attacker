@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     }
 
     const std::string_view header{
-        "Count, Size, InboundSec, InboundNanoSec, OutboundSec, OutboundNanoSec\n"};
+        "Id, Size, InboundSec, InboundNanoSec, OutboundSec, OutboundNanoSec\n"};
     csvFile << header;
 
     struct sigaction sigactionExit{};
@@ -81,8 +81,8 @@ int main(int argc, char **argv)
         }
     }
 
-    for (size_t dataSize{1}, count{1}; g_continueRunning;
-         dataSize = dataSize % ServerConnection::MAX_DATA_SIZE + 1, count++)
+    for (size_t dataSize{1}, id{1}; g_continueRunning;
+         dataSize = dataSize % ServerConnection::DATA_MAX_SIZE + 1, id++)
     {
         if (connection.connect())
         {
@@ -93,11 +93,10 @@ int main(int argc, char **argv)
                               static uint8_t value{0};
                               return static_cast<std::byte>(value++);
                           });
-            auto result{connection.transmit(data)};
+            auto result{connection.transmit(id, data)};
             if (result)
             {
-                const std::string outputRow{std::to_string(count) + ", " +
-                                            std::to_string(dataSize) + ", " +
+                const std::string outputRow{std::to_string(id) + ", " + std::to_string(dataSize) + ", " +
                                             std::to_string(result->inbound_sec) + ", " +
                                             std::to_string(result->inbound_nsec) + ", " +
                                             std::to_string(result->outbound_sec) + ", " +
@@ -107,14 +106,13 @@ int main(int argc, char **argv)
             else if (g_continueRunning)
             {
                 ++lostPackages;
-                const std::string outputRow{std::to_string(count) + ", " +
-                                            std::to_string(dataSize) + ", -1, -1, -1, -1\n"};
+                const std::string outputRow{std::to_string(id) + ", " + std::to_string(dataSize) + ", -1, -1, -1, -1\n"};
                 csvFile << outputRow;
             }
             connection.closeConnection();
 
-            if (count % ServerConnection::MAX_DATA_SIZE == 0)
-                printStats(timeStart, lostPackages, count);
+            if (id % ServerConnection::DATA_MAX_SIZE == 0)
+                printStats(timeStart, lostPackages, id);
         }
         else
         {

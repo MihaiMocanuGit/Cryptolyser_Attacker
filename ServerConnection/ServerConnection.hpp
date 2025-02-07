@@ -1,6 +1,8 @@
 #ifndef CRYPTOLYSER_ATTACKER_SERVERCONNECTION_HPP
 #define CRYPTOLYSER_ATTACKER_SERVERCONNECTION_HPP
 
+#include "connection_data_types.h"
+
 #include <cstdint>
 #include <netinet/in.h>
 #include <optional>
@@ -9,9 +11,6 @@
 
 class ServerConnection
 {
-  public:
-    static constexpr size_t MAX_DATA_SIZE{500};
-
   private:
     const std::string_view m_ip;
     uint16_t m_port;
@@ -22,25 +21,8 @@ class ServerConnection
 
     void m_closeSocket();
 
-#pragma pack(1)
-    struct Packet
-    {
-        uint64_t dataLength;
-        uint8_t byteData[MAX_DATA_SIZE];
-    };
-#pragma pack(0)
-
   public:
-#pragma pack(1)
-    struct TimingData
-    {
-        uint64_t inbound_sec;
-        uint64_t inbound_nsec;
-        uint64_t outbound_sec;
-        uint64_t outbound_nsec;
-    };
-#pragma pack(0)
-
+    static const uint32_t DATA_MAX_SIZE;
     ServerConnection(std::string_view ip, uint16_t port);
     ServerConnection(const ServerConnection &serverConnection) = delete;
     ServerConnection &operator=(const ServerConnection &rhs) = delete;
@@ -48,7 +30,8 @@ class ServerConnection
 
     bool connect();
 
-    std::optional<ServerConnection::TimingData> transmit(const std::vector<std::byte> &bytes);
+    std::optional<connection_timing_t> transmit(uint32_t packet_id,
+                                                const std::vector<std::byte> &bytes);
 
     void closeConnection();
 };
