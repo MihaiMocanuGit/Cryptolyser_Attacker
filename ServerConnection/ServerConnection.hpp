@@ -1,7 +1,7 @@
 #ifndef CRYPTOLYSER_ATTACKER_SERVERCONNECTION_HPP
 #define CRYPTOLYSER_ATTACKER_SERVERCONNECTION_HPP
 
-#include "connection_data_types.h"
+#include "Cryptolyser_Common/connection_data_types.h"
 
 #include <cstdint>
 #include <netinet/in.h>

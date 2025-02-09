@@ -1,6 +1,6 @@
 #include "ServerConnection.hpp"
 
-#include "connection_data_types.h"
+#include "Cryptolyser_Common/connection_data_types.h"
 
 #include <arpa/inet.h>
 #include <cstring>

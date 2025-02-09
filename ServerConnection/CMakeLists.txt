@@ -1,1 +1,2 @@
-add_library(ServerConnection STATIC ServerConnection.hpp ServerConnection.cpp connection_data_types.h)
+add_library(ServerConnection STATIC ServerConnection.hpp ServerConnection.cpp)
+target_link_libraries(ServerConnection PUBLIC Cryptolyser_Common)
