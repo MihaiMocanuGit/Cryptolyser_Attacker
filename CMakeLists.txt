@@ -15,7 +15,8 @@ set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} ${GCC_LINK_FLA
 
 add_subdirectory(ServerConnection)
 add_subdirectory(Cryptolyser_Common)
+add_subdirectory(DataProcessing)
 
 add_executable(${PROJECT_NAME} main.cpp)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ServerConnection Cryptolyser_Common)
+target_link_libraries(${PROJECT_NAME} PRIVATE ServerConnection Cryptolyser_Common DataProcessing)
