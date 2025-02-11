@@ -1,6 +1,7 @@
 ---
 BasedOnStyle: LLVM
 BreakBeforeBraces: Allman
+BreakTemplateDeclarations: Yes
 ColumnLimit: 100
 IncludeBlocks: Regroup
 IndentCaseLabels: true

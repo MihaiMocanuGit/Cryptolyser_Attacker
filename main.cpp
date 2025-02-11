@@ -96,8 +96,8 @@ int main(int argc, char **argv)
             auto result{connection.transmit(id, data)};
             if (result)
             {
-                const std::string outputRow{std::to_string(id) + ", " + std::to_string(dataSize) + ", " +
-                                            std::to_string(result->inbound_sec) + ", " +
+                const std::string outputRow{std::to_string(id) + ", " + std::to_string(dataSize) +
+                                            ", " + std::to_string(result->inbound_sec) + ", " +
                                             std::to_string(result->inbound_nsec) + ", " +
                                             std::to_string(result->outbound_sec) + ", " +
                                             std::to_string(result->outbound_nsec) + '\n'};
@@ -106,7 +106,8 @@ int main(int argc, char **argv)
             else if (g_continueRunning)
             {
                 ++lostPackages;
-                const std::string outputRow{std::to_string(id) + ", " + std::to_string(dataSize) + ", -1, -1, -1, -1\n"};
+                const std::string outputRow{std::to_string(id) + ", " + std::to_string(dataSize) +
+                                            ", -1, -1, -1, -1\n"};
                 csvFile << outputRow;
             }
             connection.closeConnection();
