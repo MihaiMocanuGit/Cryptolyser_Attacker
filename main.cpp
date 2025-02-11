@@ -1,3 +1,4 @@
+#include "DataProcessing/SampleData.hpp"
 #include "DataProcessing/TimingProcessing.hpp"
 #include "ServerConnection/ServerConnection.hpp"
 
@@ -7,32 +8,9 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-
-void printStats(const std::chrono::time_point<std::chrono::high_resolution_clock> &timeStart,
-                size_t lostPackages, size_t count)
-{
-    auto timeNow = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration<double, std::milli>(timeNow - timeStart).count();
-
-    std::ostringstream col1;
-    col1 << count << " packages";
-    constexpr unsigned width1{sizeof("1234567 packages.")};
-
-    std::ostringstream col2;
-    col2 << std::fixed << std::setprecision(2) << duration << " ms";
-    constexpr unsigned width2{sizeof("123456789.12 ms")};
-
-    std::ostringstream col3;
-    col3 << std::fixed << std::setprecision(8) << (long double)lostPackages / count << " %";
-    constexpr unsigned width3{sizeof("0.12345678 %")};
-
-    std::cout << std::right << std::setw(width1) << col1.str() << " |";
-    std::cout << std::right << std::setw(width2) << col2.str() << " |";
-    std::cout << std::right << std::setw(width3) << col3.str() << " |" << std::endl;
-}
-
 namespace
 {
+
 volatile sig_atomic_t g_continueRunning{true};
 void exitHandler(int signal)
 {
@@ -50,24 +28,11 @@ int main(int argc, char **argv)
     }
 
     std::cout << "Starting..." << std::endl;
-    auto timeStart = std::chrono::high_resolution_clock::now();
 
     const std::string_view ip{argv[1]};
     const uint16_t port{static_cast<uint16_t>(std::stoi(argv[2]))};
     ServerConnection connection{ip, port};
     size_t lostPackages{0};
-
-    std::ofstream csvFile;
-    csvFile.open(argv[3]);
-    if (!csvFile)
-    {
-        std::cerr << "Could not open file: " << argv[3] << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    const std::string_view header{
-        "Id, Size, InboundSec, InboundNanoSec, OutboundSec, OutboundNanoSec, DT \n"};
-    csvFile << header;
 
     struct sigaction sigactionExit{};
     sigactionExit.sa_handler = exitHandler;
@@ -82,49 +47,65 @@ int main(int argc, char **argv)
         }
     }
 
-    for (size_t dataSize{1}, id{1}; g_continueRunning;
-         dataSize = dataSize % ServerConnection::DATA_MAX_SIZE + 1, id++)
-    {
-        if (connection.connect())
-        {
-            std::vector<std::byte> data{dataSize};
-            std::generate(data.begin(), data.end(),
-                          []()
-                          {
-                              static uint8_t value{0};
-                              return static_cast<std::byte>(value++);
-                          });
-            auto result{connection.transmit(id, data)};
-            if (result)
-            {
-                const std::string outputRow{
-                    std::to_string(id) + ", " +                    //
-                    std::to_string(dataSize) + ", " +              //
-                    std::to_string(result->inbound_sec) + ", " +   //
-                    std::to_string(result->inbound_nsec) + ", " +  //
-                    std::to_string(result->outbound_sec) + ", " +  //
-                    std::to_string(result->outbound_nsec) + ", " + //
-                    std::to_string(TimingProcessing::computeDT<uint64_t>(
-                        result->inbound_sec, result->inbound_nsec, result->outbound_sec,
-                        result->outbound_nsec)) + //
-                    '\n'};
-                csvFile << outputRow;
-            }
-            else if (g_continueRunning)
-            {
-                ++lostPackages;
-                const std::string outputRow{std::to_string(id) + ", " + std::to_string(dataSize) +
-                                            ", -1, -1, -1, -1, -1\n"};
-                csvFile << outputRow;
-            }
-            connection.closeConnection();
+    constexpr unsigned DATA_SIZE{CONNECTION_DATA_MAX_SIZE};
+    constexpr unsigned DATA_INDEX{5};
+    constexpr unsigned TRANSMISSION_COUNT{516};
+    constexpr unsigned AES_BLOCK_SIZE{128};
+    std::vector<std::byte> dataTemplate(DATA_SIZE, std::byte(0));
+    std::vector<SampleData<long double>> sampleData(256);
+    constexpr std::string_view header{"Value, Mean, StdDev\n"};
 
-            if (id % ServerConnection::DATA_MAX_SIZE == 0)
-                printStats(timeStart, lostPackages, id);
-        }
-        else
+    size_t id{0};
+    for (size_t passNo{0}; passNo < 10 && g_continueRunning; passNo++)
+    {
+        for (unsigned value = 0; value < 256 && g_continueRunning; ++value)
         {
-            std::cerr << "Could not connect." << std::endl;
+            for (int aesBlockNo = 0; aesBlockNo <= DATA_SIZE / AES_BLOCK_SIZE; ++aesBlockNo)
+            {
+                dataTemplate[DATA_INDEX + aesBlockNo * AES_BLOCK_SIZE] = std::byte(value);
+            }
+
+            std::vector<long double> sample;
+            sample.reserve(TRANSMISSION_COUNT);
+            for (size_t count{0}; count < TRANSMISSION_COUNT && g_continueRunning; ++count, ++id)
+            {
+                if (connection.connect())
+                {
+                    auto result{connection.transmit(id, dataTemplate)};
+                    connection.closeConnection();
+                    if (not result and g_continueRunning)
+                    {
+                        std::cerr << "Lost packet with id:\t" << id
+                                  << " Loss rate: " << static_cast<float>(++lostPackages) / id
+                                  << '\n';
+                        count--;
+                        continue;
+                    }
+
+                    sample.push_back(TimingProcessing::computeDT<long double>(
+                        result->inbound_sec, result->inbound_nsec, result->outbound_sec,
+                        result->outbound_nsec));
+                }
+            };
+            // sampleData[value] = SampleData{std::move(sample)};
+            sampleData[value].insert(sample.begin(), sample.end());
+            std::cout << "Pass no: " << passNo << " Value no: " << value << '\n';
+        }
+        std::cout << "Saving current pass metrics to file." << std::endl;
+        std::ofstream csvFilePass;
+        csvFilePass.open(std::string{argv[3]} + std::to_string(passNo) + ".csv");
+        if (!csvFilePass)
+        {
+            std::cerr << "Could not open file: " << argv[3] << std::endl;
+            return EXIT_FAILURE;
+        }
+        csvFilePass << header;
+        for (unsigned value = 0; value < sampleData.size(); ++value)
+        {
+            SampleMetrics metrics = sampleData[value].metrics();
+            csvFilePass << static_cast<int>(static_cast<uint8_t>(value)) << ", "
+                        << std::setprecision(3) << std::fixed << metrics.mean << ", "
+                        << metrics.stdDev << "\n";
         }
     }
     std::cout << "Exiting..." << std::endl;
