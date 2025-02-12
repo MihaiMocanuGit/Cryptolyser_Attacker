@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <random>
 namespace
 {
 
@@ -51,29 +52,50 @@ int main(int argc, char **argv)
     constexpr unsigned DATA_INDEX{5};
     constexpr unsigned TRANSMISSION_COUNT{516};
     constexpr unsigned AES_BLOCK_SIZE{128};
-    std::vector<std::byte> dataTemplate(DATA_SIZE, std::byte(0));
+    constexpr unsigned NO_PASSES{5};
+    std::vector<std::byte> studyPlaintext(DATA_SIZE, std::byte{0});
     std::vector<SampleData<long double>> sampleData(256);
+    for (auto &sample : sampleData)
+        sample.reserve(DATA_SIZE * TRANSMISSION_COUNT * NO_PASSES);
     constexpr std::string_view header{"Value, Mean, StdDev\n"};
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<uint8_t> uniform_dist(0, 255);
     size_t id{0};
-    for (size_t passNo{0}; passNo < 10 && g_continueRunning; passNo++)
+    for (size_t passNo{0}; passNo < NO_PASSES && g_continueRunning; passNo++)
     {
         for (unsigned value = 0; value < 256 && g_continueRunning; ++value)
         {
-            for (int aesBlockNo = 0; aesBlockNo <= DATA_SIZE / AES_BLOCK_SIZE; ++aesBlockNo)
-            {
-                dataTemplate[DATA_INDEX + aesBlockNo * AES_BLOCK_SIZE] = std::byte(value);
-            }
-
             std::vector<long double> sample;
             sample.reserve(TRANSMISSION_COUNT);
             for (size_t count{0}; count < TRANSMISSION_COUNT && g_continueRunning; ++count, ++id)
             {
                 if (connection.connect())
                 {
-                    auto result{connection.transmit(id, dataTemplate)};
+                    // Plaintext Construction
+                    for (unsigned aesBlockNo = 0; aesBlockNo <= (DATA_SIZE - 1) / AES_BLOCK_SIZE;
+                         ++aesBlockNo)
+                    {
+                        const unsigned fixedPoint = DATA_INDEX + aesBlockNo * AES_BLOCK_SIZE;
+                        for (unsigned i = aesBlockNo * AES_BLOCK_SIZE;
+                             i < fixedPoint and i < CONNECTION_DATA_MAX_SIZE; ++i)
+                        {
+                            studyPlaintext[i] = std::byte{uniform_dist(gen)};
+                        }
+                        for (unsigned i = fixedPoint + 1;
+                             i < (aesBlockNo + 1) * AES_BLOCK_SIZE and i < CONNECTION_DATA_MAX_SIZE;
+                             ++i)
+                        {
+                            studyPlaintext[i] = std::byte{uniform_dist(gen)};
+                        }
+                        studyPlaintext[fixedPoint] = std::byte(value);
+                    }
+                    if (not g_continueRunning)
+                        break;
+                    auto result{connection.transmit(id, studyPlaintext)};
                     connection.closeConnection();
-                    if (not result and g_continueRunning)
+                    if (not result)
                     {
                         std::cerr << "Lost packet with id:\t" << id
                                   << " Loss rate: " << static_cast<float>(++lostPackages) / id
@@ -81,7 +103,6 @@ int main(int argc, char **argv)
                         count--;
                         continue;
                     }
-
                     sample.push_back(TimingProcessing::computeDT<long double>(
                         result->inbound_sec, result->inbound_nsec, result->outbound_sec,
                         result->outbound_nsec));
@@ -93,7 +114,8 @@ int main(int argc, char **argv)
         }
         std::cout << "Saving current pass metrics to file." << std::endl;
         std::ofstream csvFilePass;
-        csvFilePass.open(std::string{argv[3]} + std::to_string(passNo) + ".csv");
+        const std::string filename = std::string{argv[3]} + std::to_string(passNo) + ".csv";
+        csvFilePass.open(filename);
         if (!csvFilePass)
         {
             std::cerr << "Could not open file: " << argv[3] << std::endl;
