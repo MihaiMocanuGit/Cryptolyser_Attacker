@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     constexpr unsigned DATA_INDEX{5};
     constexpr unsigned TRANSMISSION_COUNT{516};
     constexpr unsigned AES_BLOCK_SIZE{128};
-    constexpr unsigned NO_PASSES{5};
+    constexpr unsigned NO_PASSES{128};
     std::vector<std::byte> studyPlaintext(DATA_SIZE, std::byte{0});
     std::vector<SampleData<long double>> sampleData(256);
     for (auto &sample : sampleData)
