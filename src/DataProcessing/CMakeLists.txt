@@ -1,4 +1,5 @@
 add_library(DataProcessing STATIC
+        SampleMetrics.hpp SampleMetrics.cpp
         SampleData.hpp SampleData.cpp
-        TimingProcessing.cpp TimingProcessing.hpp
+        TimingProcessing.hpp TimingProcessing.cpp
 )
