@@ -55,6 +55,12 @@ const SampleMetrics<Real_t> &SampleData<Real_t>::metrics() const noexcept
     return m_currentMetrics;
 }
 
+template <typename Real_t>
+const std::vector<Real_t> &SampleData<Real_t>::data() const noexcept
+{
+    return m_data;
+}
+
 template class SampleData<int>;
 template class SampleData<uint64_t>;
 template class SampleData<float>;

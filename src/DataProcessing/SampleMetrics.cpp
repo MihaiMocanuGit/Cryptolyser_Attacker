@@ -11,19 +11,22 @@ SampleMetrics<Real_t> SampleMetrics<Real_t>::combineMetrics(const SampleMetrics 
     if (metric2.size == 0)
         return metric1;
 
-    Real_t sum = metric1.sum + metric2.sum;
-    size_t size = metric1.size + metric2.size;
-    Real_t mean = (static_cast<Real_t>(metric1.size) * metric1.mean +
-                   static_cast<Real_t>(metric2.size) * metric2.mean) /
-                  static_cast<Real_t>(metric1.size + metric2.size);
+    Real_t sum{metric1.sum + metric2.sum};
+    size_t size{metric1.size + metric2.size};
+    Real_t mean{(static_cast<Real_t>(metric1.size) * metric1.mean +
+                 static_cast<Real_t>(metric2.size) * metric2.mean) /
+                static_cast<Real_t>(metric1.size + metric2.size)};
     // https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
-    Real_t variance = (static_cast<Real_t>(metric1.size - 1) * metric1.variance +
-                       static_cast<Real_t>(metric2.size - 1) * metric2.variance) /
-                      static_cast<Real_t>(metric1.size + metric2.size - 1);
-    variance += static_cast<Real_t>(metric1.size * metric2.size) * (metric1.mean - metric2.mean) *
-                (metric1.mean - metric2.mean) / (metric1.size + metric2.size);
-    Real_t stdDev = std::sqrt(variance);
+    Real_t numerator1{static_cast<Real_t>(metric1.size - 1) * metric1.variance +
+                      static_cast<Real_t>(metric2.size - 1) * metric2.variance};
+    Real_t denominator1{static_cast<Real_t>(metric1.size + metric2.size - 1)};
 
+    Real_t numerator2{static_cast<Real_t>(metric1.size * metric2.size) *
+                      (metric1.mean - metric2.mean) * (metric1.mean - metric2.mean)};
+    Real_t denominator2{
+        static_cast<Real_t>((metric1.size + metric2.size) * (metric1.size + metric2.size - 1))};
+    Real_t variance{numerator1 / denominator1 + numerator2 / denominator2};
+    Real_t stdDev{static_cast<Real_t>(std::sqrtl(variance))};
     return {sum, size, mean, variance, stdDev};
 }
 

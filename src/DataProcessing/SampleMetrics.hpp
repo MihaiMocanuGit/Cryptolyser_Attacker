@@ -2,6 +2,7 @@
 #define CRYPTOLYSER_ATTACKER_SAMPLEMETRICS_HPP
 
 #include <cmath>
+#include <cstdint>
 #include <numeric>
 
 template <typename Real_t>
@@ -23,23 +24,26 @@ struct SampleMetrics
     template <typename InputIterator>
     static SampleMetrics<Real_t> compute(InputIterator begin, InputIterator end)
     {
-        size_t aSize =
-            std::distance(begin, end); // I do not like that std::distance can be negative
+        size_t aSize{0};
+        if (end > begin)
+            aSize = end - begin;
+
         if (aSize == 0)
             return {};
-        else if (aSize == 1)
+        if (aSize == 1)
             return {*begin, 1, *begin, 0, 0};
 
-        Real_t aSum = std::accumulate(begin, end, 0); // overflow?
-        Real_t aMean = aSum / aSize;
-        Real_t squareSum = 0;
-        for (auto it = begin; it != end; ++it)
+        Real_t aSum{std::accumulate(begin, begin + aSize, static_cast<Real_t>(0.0))};
+        // TODO: while there may be overflow, we should still be able to compute a valid mean
+        Real_t aMean{aSum / static_cast<Real_t>(aSize)};
+        Real_t squareSum{0};
+        for (auto it{begin}; it != end; ++it)
         {
             squareSum += (*it - aMean) * (*it - aMean);
         }
-        Real_t aVariance = squareSum / (aSize - 1);
-        Real_t sStdDev = std::sqrt(aVariance);
-        return {aSum, aSize, aMean, aVariance, sStdDev};
+        Real_t aVariance{squareSum / static_cast<Real_t>(aSize - 1)};
+        Real_t aStdDev{static_cast<Real_t>(std::sqrtl(aVariance))};
+        return {aSum, aSize, aMean, aVariance, aStdDev};
     }
 };
 

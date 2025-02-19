@@ -27,6 +27,13 @@ class SampleData
     explicit SampleData(const std::vector<Real_t> &data);
     explicit SampleData(std::vector<Real_t> &&data);
 
+    template <typename InputIterator>
+    SampleData(InputIterator begin, InputIterator end)
+        : m_data{begin, end},
+          m_currentMetrics{SampleMetrics<Real_t>::compute(m_data.begin(), m_data.end())}
+    {
+    }
+
     void reserve(std::size_t newCapacity);
 
     typename std::vector<Real_t>::const_iterator insert(const Real_t &dataValue);
@@ -43,5 +50,7 @@ class SampleData
     typename std::vector<Real_t>::const_iterator end() const noexcept;
 
     [[nodiscard]] const SampleMetrics<Real_t> &metrics() const noexcept;
+
+    const std::vector<Real_t> &data() const noexcept;
 };
 #endif // CRYPTOLYSER_ATTACKER_SAMPLEDATA_HPP
