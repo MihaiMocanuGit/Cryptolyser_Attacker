@@ -1,0 +1,3 @@
+add_executable(UTest_DataProcessing utest_SampleData.cpp)
+target_link_libraries(UTest_DataProcessing PRIVATE DataProcessing Catch2::Catch2WithMain)
+catch_discover_tests(UTest_DataProcessing)
