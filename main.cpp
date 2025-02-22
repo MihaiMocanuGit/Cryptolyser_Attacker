@@ -1,5 +1,6 @@
 #include "DataProcessing/SampleData.hpp"
 #include "DataProcessing/TimingProcessing.hpp"
+#include "SampleGroup.hpp"
 #include "ServerConnection/ServerConnection.hpp"
 
 #include <algorithm>
@@ -9,14 +10,50 @@
 #include <iomanip>
 #include <iostream>
 #include <random>
+
 namespace
 {
-
 volatile sig_atomic_t g_continueRunning{true};
 void exitHandler(int signal)
 {
     (void)signal;
     g_continueRunning = false;
+}
+
+std::vector<std::byte> constructRandomVector(size_t size)
+{
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_int_distribution<uint8_t> uniform_dist(0, 255);
+    std::vector<std::byte> randomized;
+    randomized.reserve(size);
+    for (size_t i{0}; i < size; ++i)
+        randomized.push_back(static_cast<std::byte>(uniform_dist(gen)));
+    return randomized;
+}
+
+bool saveToCsvFile(const std::string &fileName, const SampleGroup<long double> &sampleGroup)
+{
+    std::cout << "Saving current pass metrics to file." << std::endl;
+    std::ofstream csvFilePass;
+    csvFilePass.open(fileName);
+    if (!csvFilePass)
+    {
+        std::cerr << "Could not open file: " << fileName << std::endl;
+        return false;
+    }
+    constexpr std::string_view header{
+        "Value, Mean, StdDev, StandardizedMean, StandardizedStdDev\n"};
+    csvFilePass << header;
+    for (unsigned value = 0; value < sampleGroup.size(); ++value)
+    {
+        SampleMetrics metrics = sampleGroup.localMetrics(value);
+        SampleMetrics standardizedMetrics = sampleGroup.standardizeLocalMetrics(value);
+        csvFilePass << static_cast<int>(static_cast<uint8_t>(value)) << ", " << std::setprecision(4)
+                    << std::fixed << metrics.mean << ", " << metrics.stdDev << ", "
+                    << standardizedMetrics.mean << ", " << standardizedMetrics.stdDev << "\n";
+    }
+    return true;
 }
 } // namespace
 
@@ -53,15 +90,9 @@ int main(int argc, char **argv)
     constexpr unsigned TRANSMISSION_COUNT{516};
     constexpr unsigned AES_BLOCK_SIZE{128};
     constexpr unsigned NO_PASSES{128};
-    std::vector<std::byte> studyPlaintext(DATA_SIZE, std::byte{0});
-    std::vector<SampleData<long double>> sampleData(256);
-    for (auto &sample : sampleData)
-        sample.reserve(DATA_SIZE * TRANSMISSION_COUNT * NO_PASSES);
-    constexpr std::string_view header{"Value, Mean, StdDev\n"};
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint8_t> uniform_dist(0, 255);
+    SampleGroup<long double> sampleGroup{256, TRANSMISSION_COUNT * NO_PASSES};
+
     size_t id{0};
     for (size_t passNo{0}; passNo < NO_PASSES && g_continueRunning; passNo++)
     {
@@ -74,31 +105,25 @@ int main(int argc, char **argv)
                 if (connection.connect())
                 {
                     // Plaintext Construction
+                    std::vector<std::byte> studyPlaintext = constructRandomVector(DATA_SIZE);
                     for (unsigned aesBlockNo = 0; aesBlockNo <= (DATA_SIZE - 1) / AES_BLOCK_SIZE;
                          ++aesBlockNo)
                     {
                         const unsigned fixedPoint = DATA_INDEX + aesBlockNo * AES_BLOCK_SIZE;
-                        for (unsigned i = aesBlockNo * AES_BLOCK_SIZE;
-                             i < fixedPoint and i < CONNECTION_DATA_MAX_SIZE; ++i)
-                        {
-                            studyPlaintext[i] = std::byte{uniform_dist(gen)};
-                        }
-                        for (unsigned i = fixedPoint + 1;
-                             i < (aesBlockNo + 1) * AES_BLOCK_SIZE and i < CONNECTION_DATA_MAX_SIZE;
-                             ++i)
-                        {
-                            studyPlaintext[i] = std::byte{uniform_dist(gen)};
-                        }
-                        studyPlaintext[fixedPoint] = std::byte(value);
+                        studyPlaintext[fixedPoint] = static_cast<std::byte>(value);
                     }
                     if (not g_continueRunning)
+                    {
+                        connection.closeConnection();
                         break;
+                    }
                     auto result{connection.transmit(id, studyPlaintext)};
                     connection.closeConnection();
                     if (not result)
                     {
-                        std::cerr << "Lost packet with id:\t" << id
-                                  << " Loss rate: " << static_cast<float>(++lostPackages) / id
+                        std::cerr << "Lost packet with id:\t" << id << " Loss rate: "
+                                  << static_cast<float>(++lostPackages) /
+                                         (static_cast<float>(id) + 1.0)
                                   << '\n';
                         count--;
                         continue;
@@ -108,26 +133,19 @@ int main(int argc, char **argv)
                         result->outbound_nsec));
                 }
             };
-            // sampleData[value] = SampleData{std::move(sample)};
-            sampleData[value].insert(sample.begin(), sample.end());
-            std::cout << "Pass no: " << passNo << " Value no: " << value << '\n';
+            if (g_continueRunning)
+            {
+                sampleGroup.insert(value, sample.begin(), sample.end());
+                std::cout << "Pass no: " << passNo << " Value no: " << value << '\n';
+            }
         }
-        std::cout << "Saving current pass metrics to file." << std::endl;
-        std::ofstream csvFilePass;
-        const std::string filename = std::string{argv[3]} + std::to_string(passNo) + ".csv";
-        csvFilePass.open(filename);
-        if (!csvFilePass)
+
+        if (passNo % 8 == 7 or passNo == 0 or passNo + 1 == NO_PASSES or not g_continueRunning)
         {
-            std::cerr << "Could not open file: " << argv[3] << std::endl;
-            return EXIT_FAILURE;
-        }
-        csvFilePass << header;
-        for (unsigned value = 0; value < sampleData.size(); ++value)
-        {
-            SampleMetrics metrics = sampleData[value].metrics();
-            csvFilePass << static_cast<int>(static_cast<uint8_t>(value)) << ", "
-                        << std::setprecision(3) << std::fixed << metrics.mean << ", "
-                        << metrics.stdDev << "\n";
+            const std::string filename =
+                std::string{argv[3]} + "_" + std::to_string(passNo) + ".csv";
+            if (not saveToCsvFile(filename, sampleGroup))
+                return EXIT_FAILURE;
         }
     }
     std::cout << "Exiting..." << std::endl;
