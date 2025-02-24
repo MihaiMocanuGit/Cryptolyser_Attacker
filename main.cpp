@@ -136,17 +136,23 @@ int main(int argc, char **argv)
         {
             std::vector<long double> sample;
             sample.reserve(TRANSMISSION_COUNT);
+            std::vector<std::byte> studyPlaintext;
+            bool stopAndTryAgain = false;
+            size_t valueRetries{0}, networkRetries{0};
             for (size_t count{0}; count < TRANSMISSION_COUNT && g_continueRunning; ++count, ++id)
             {
                 if (connection.connect())
                 {
                     // Plaintext Construction
-                    std::vector<std::byte> studyPlaintext = constructRandomVector(DATA_SIZE);
-                    for (unsigned aesBlockNo = 0; aesBlockNo <= (DATA_SIZE - 1) / AES_BLOCK_SIZE;
-                         ++aesBlockNo)
+                    if (not stopAndTryAgain)
                     {
-                        const unsigned fixedPoint = DATA_INDEX + aesBlockNo * AES_BLOCK_SIZE;
-                        studyPlaintext[fixedPoint] = static_cast<std::byte>(value);
+                        studyPlaintext = constructRandomVector(DATA_SIZE);
+                        for (unsigned aesBlockNo = 0;
+                             aesBlockNo <= (DATA_SIZE - 1) / AES_BLOCK_SIZE; ++aesBlockNo)
+                        {
+                            const unsigned fixedPoint = DATA_INDEX + aesBlockNo * AES_BLOCK_SIZE;
+                            studyPlaintext[fixedPoint] = static_cast<std::byte>(value);
+                        }
                     }
                     if (not g_continueRunning)
                     {
@@ -158,21 +164,39 @@ int main(int argc, char **argv)
                     if (not result)
                     {
                         std::cerr << "Lost packet with id:\t" << id << " Loss rate: "
-                                  << static_cast<float>(++lostPackages) /
-                                         (static_cast<float>(id) + 1.0)
-                                  << '\n';
+                                  << static_cast<double>(++lostPackages) /
+                                         (static_cast<double>(id + valueRetries + networkRetries) +
+                                          1.0)
+                                  << std::endl;
+                        networkRetries++;
                         count--;
+                        id--;
+                        stopAndTryAgain = true;
                         continue;
                     }
-                    sample.push_back(TimingProcessing::computeDT<long double>(
+                    long double timing{TimingProcessing::computeDT<long double>(
                         result->inbound_sec, result->inbound_nsec, result->outbound_sec,
-                        result->outbound_nsec));
+                        result->outbound_nsec)};
+                    // TODO: Make a proper testing criteria, using the mean and variance
+                    if (timing < 17000.0)
+                        sample.push_back(timing);
+                    else
+                    {
+                        // TODO: If the same packet takes more than M tries, do accept it
+                        valueRetries++;
+                        count--;
+                        id--;
+                        stopAndTryAgain = true;
+                        continue;
+                    }
+                    stopAndTryAgain = false;
                 }
             };
             if (g_continueRunning)
             {
                 sampleGroup.insert(value, sample.begin(), sample.end());
-                std::cout << "Pass no: " << passNo << " Value no: " << value << '\n';
+                std::cout << "Pass no: " << passNo << " Value no: " << value
+                          << " Retries: " << valueRetries << '\n';
             }
         }
 
