@@ -32,27 +32,63 @@ std::vector<std::byte> constructRandomVector(size_t size)
     return randomized;
 }
 
-bool saveToCsvFile(const std::string &fileName, const SampleGroup<long double> &sampleGroup)
+bool saveMetrics(const std::string &fileName, const SampleGroup<long double> &sampleGroup)
 {
-    std::cout << "Saving current pass metrics to file." << std::endl;
-    std::ofstream csvFilePass;
-    csvFilePass.open(fileName);
-    if (!csvFilePass)
+    std::ofstream out;
+    out.open(fileName);
+    if (!out)
     {
         std::cerr << "Could not open file: " << fileName << std::endl;
         return false;
     }
     constexpr std::string_view header{
         "Value, Mean, StdDev, StandardizedMean, StandardizedStdDev\n"};
-    csvFilePass << header;
+    out << header;
     for (unsigned value = 0; value < sampleGroup.size(); ++value)
     {
         SampleMetrics metrics = sampleGroup.localMetrics(value);
         SampleMetrics standardizedMetrics = sampleGroup.standardizeLocalMetrics(value);
-        csvFilePass << static_cast<int>(static_cast<uint8_t>(value)) << ", " << std::setprecision(4)
-                    << std::fixed << metrics.mean << ", " << metrics.stdDev << ", "
-                    << standardizedMetrics.mean << ", " << standardizedMetrics.stdDev << "\n";
+        out << static_cast<int>(static_cast<uint8_t>(value)) << ", " << std::setprecision(4)
+            << std::fixed << metrics.mean << ", " << metrics.stdDev << ", "
+            << standardizedMetrics.mean << ", " << standardizedMetrics.stdDev << "\n";
     }
+    out.close();
+    return true;
+}
+
+bool saveData(const std::string &fileName, const SampleGroup<long double> &sampleGroup,
+              size_t passTransmissionCount)
+{
+    std::ofstream out;
+    out.open(fileName);
+    if (!out)
+    {
+        std::cerr << "Could not open file: " << fileName << std::endl;
+        return false;
+    }
+
+    SampleMetrics<long double> globalMetrics = sampleGroup.globalMetrics();
+    out << "Global size: " << globalMetrics.size << " mean: " << globalMetrics.mean
+        << " stdDev: " << globalMetrics.stdDev;
+    for (unsigned valueIndex = 0; valueIndex < sampleGroup.size(); ++valueIndex)
+    {
+        const SampleData<long double> &currentSample{sampleGroup[valueIndex]};
+        SampleMetrics<long double> currentMetrics = currentSample.metrics();
+        out << "\n\nValues for " << valueIndex << ":\n";
+        out << "Local size: " << currentMetrics.size << " mean: " << currentMetrics.mean
+            << " stdDev: " << currentMetrics.stdDev;
+        for (size_t i{0}; i < currentSample.data().size(); ++i)
+        {
+            if (i % passTransmissionCount == 0)
+                out << '\n';
+            out << currentSample.data()[i];
+            if ((i + 1) % passTransmissionCount != 0)
+                out << ", ";
+            else
+                out << ';';
+        }
+    }
+    out.close();
     return true;
 }
 } // namespace
@@ -140,14 +176,18 @@ int main(int argc, char **argv)
             }
         }
 
-        if (passNo % 8 == 7 or passNo == 0 or passNo + 1 == NO_PASSES or not g_continueRunning)
-        {
-            const std::string filename =
-                std::string{argv[3]} + "_" + std::to_string(passNo) + ".csv";
-            if (not saveToCsvFile(filename, sampleGroup))
-                return EXIT_FAILURE;
-        }
+        std::cout << "\nSaving pass " << passNo << " metrics to files.\n" << std::endl;
+        const std::string metricsFilename =
+            std::string{argv[3]} + '_' + std::to_string(passNo) + "_metrics.csv";
+        if (not saveMetrics(metricsFilename, sampleGroup))
+            return EXIT_FAILURE;
+
+        const std::string valuesFilename =
+            std::string{argv[3]} + '_' + std::to_string(passNo) + "_data.txt";
+        if (not saveData(valuesFilename, sampleGroup, TRANSMISSION_COUNT))
+            return EXIT_FAILURE;
     }
+
     std::cout << "Exiting..." << std::endl;
     return 0;
 }
