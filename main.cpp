@@ -178,7 +178,7 @@ int main(int argc, char **argv)
                         result->inbound_sec, result->inbound_nsec, result->outbound_sec,
                         result->outbound_nsec)};
                     // TODO: Make a proper testing criteria, using the mean and variance
-                    if (timing < 17000.0)
+                    if (timing > 500 and timing < 17000.0)
                         sample.push_back(timing);
                     else
                     {
