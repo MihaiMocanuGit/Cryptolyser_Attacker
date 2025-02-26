@@ -42,14 +42,14 @@ bool saveMetrics(const std::string &fileName, const SampleGroup<long double> &sa
         return false;
     }
     constexpr std::string_view header{
-        "Value, Mean, StdDev, StandardizedMean, StandardizedStdDev\n"};
+        "Value, Mean, StdDev, Size, StandardizedMean, StandardizedStdDev\n"};
     out << header;
     for (unsigned value = 0; value < sampleGroup.size(); ++value)
     {
         SampleMetrics metrics = sampleGroup.localMetrics(value);
         SampleMetrics standardizedMetrics = sampleGroup.standardizeLocalMetrics(value);
         out << static_cast<int>(static_cast<uint8_t>(value)) << ", " << std::setprecision(4)
-            << std::fixed << metrics.mean << ", " << metrics.stdDev << ", "
+            << std::fixed << metrics.mean << ", " << metrics.stdDev << ", " << metrics.size << ", "
             << standardizedMetrics.mean << ", " << standardizedMetrics.stdDev << "\n";
     }
     out.close();
