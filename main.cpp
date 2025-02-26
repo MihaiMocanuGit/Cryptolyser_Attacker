@@ -126,6 +126,8 @@ int main(int argc, char **argv)
     constexpr unsigned TRANSMISSION_COUNT{516};
     constexpr unsigned AES_BLOCK_SIZE{128};
     constexpr unsigned NO_PASSES{128};
+    constexpr long double TIMING_LB{500.0};
+    constexpr long double TIMING_UB{10000.0};
 
     SampleGroup<long double> sampleGroup{256, TRANSMISSION_COUNT * NO_PASSES};
 
@@ -136,6 +138,10 @@ int main(int argc, char **argv)
         {
             std::vector<long double> sample;
             sample.reserve(TRANSMISSION_COUNT);
+
+            std::vector<long double> badTimings;
+            sample.reserve(TRANSMISSION_COUNT);
+
             std::vector<std::byte> studyPlaintext;
             bool stopAndTryAgain = false;
             size_t valueRetries{0}, networkRetries{0};
@@ -178,10 +184,12 @@ int main(int argc, char **argv)
                         result->inbound_sec, result->inbound_nsec, result->outbound_sec,
                         result->outbound_nsec)};
                     // TODO: Make a proper testing criteria, using the mean and variance
-                    if (timing > 500 and timing < 17000.0)
+                    if (timing >= TIMING_LB and timing <= TIMING_UB)
                         sample.push_back(timing);
                     else
                     {
+                        badTimings.push_back(timing);
+
                         // TODO: If the same packet takes more than M tries, do accept it
                         valueRetries++;
                         count--;
@@ -197,6 +205,11 @@ int main(int argc, char **argv)
                 sampleGroup.insert(value, sample.begin(), sample.end());
                 std::cout << "Pass no: " << passNo << " Value no: " << value
                           << " Retries: " << valueRetries << '\n';
+
+                std::cout << "\tOutliers: ";
+                for (const auto &badTiming : badTimings)
+                    std::cout << badTiming << ", ";
+                std::cout << "\n\n";
             }
         }
 
