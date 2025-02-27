@@ -93,6 +93,23 @@ bool saveData(const std::string &fileName, const SampleGroup<long double> &sampl
 }
 } // namespace
 
+void warmup(const size_t warmupPasses, ServerConnection &connection, const size_t sampleSize)
+{
+    for (size_t i{0}; i < warmupPasses && g_continueRunning; ++i)
+    {
+        if (connection.connect())
+        {
+            if (not g_continueRunning)
+            {
+                connection.closeConnection();
+                break;
+            }
+            connection.transmit(-1, std::vector<std::byte>(sampleSize));
+            connection.closeConnection();
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 4)
@@ -123,17 +140,23 @@ int main(int argc, char **argv)
 
     constexpr unsigned DATA_SIZE{CONNECTION_DATA_MAX_SIZE};
     constexpr unsigned DATA_INDEX{5};
-    constexpr unsigned TRANSMISSION_COUNT{516};
+    constexpr unsigned TRANSMISSION_COUNT{2 * 516};
     constexpr unsigned AES_BLOCK_SIZE{128};
-    constexpr unsigned NO_PASSES{128};
+    constexpr unsigned NO_PASSES{2 * 128};
     constexpr long double TIMING_LB{500.0};
     constexpr long double TIMING_UB{10000.0};
+
+    constexpr unsigned WARMUP_START_PASS_NO{TRANSMISSION_COUNT / 2};
+    constexpr unsigned WARMUP_START_TRANSMISSION_NO{TRANSMISSION_COUNT / 4};
 
     SampleGroup<long double> sampleGroup{256, TRANSMISSION_COUNT * NO_PASSES};
 
     size_t id{0};
     for (size_t passNo{0}; passNo < NO_PASSES && g_continueRunning; passNo++)
     {
+
+        std::cout << "Warming up before starting the next pass...\n";
+        warmup(WARMUP_START_PASS_NO, connection, DATA_SIZE);
         for (unsigned value = 0; value < 256 && g_continueRunning; ++value)
         {
             std::vector<long double> sample;
@@ -145,6 +168,9 @@ int main(int argc, char **argv)
             std::vector<std::byte> studyPlaintext;
             bool stopAndTryAgain = false;
             size_t valueRetries{0}, networkRetries{0};
+
+            std::cout << "Warming up before starting the transmission...\n";
+            warmup(WARMUP_START_TRANSMISSION_NO, connection, DATA_SIZE);
             for (size_t count{0}; count < TRANSMISSION_COUNT && g_continueRunning; ++count, ++id)
             {
                 if (connection.connect())
