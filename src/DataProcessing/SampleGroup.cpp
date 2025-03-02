@@ -35,11 +35,21 @@ void SampleGroup<Real_t>::m_updateGlobalMetrics(SampleMetrics<Real_t> oldLocalMe
     Real_t SS_prime_m{v_prime_m * static_cast<Real_t>(pi_prime_m - 1) +
                       static_cast<Real_t>(pi_prime_m) * (u_prime_m - u_prime) *
                           (u_prime_m - u_prime)};
-    Real_t v_prime{
-        (static_cast<Real_t>(n - 1) * v + SS_prime_m - SS_m +
-         (u - u_prime) * (2 * static_cast<Real_t>(n) * u - static_cast<Real_t>(pi_m) * u_m -
-                          (u + u_prime) * static_cast<Real_t>(n - pi_m))) /
-        static_cast<Real_t>(n_prime - 1)};
+
+    Real_t v_prime;
+    if (n_prime - 1 == 0)
+    {
+        v_prime = v_prime_m;
+    }
+    else
+    {
+        v_prime =
+            (static_cast<Real_t>(n - 1) * v + SS_prime_m - SS_m +
+             (u - u_prime) * (2 * static_cast<Real_t>(n) * u - static_cast<Real_t>(pi_m) * u_m -
+                              (u + u_prime) * static_cast<Real_t>(n - pi_m))) /
+            static_cast<Real_t>(n_prime - 1);
+    }
+
     Real_t s_prime{static_cast<Real_t>(std::sqrtl(v_prime))};
 
     m_globalMetrics = SampleMetrics<Real_t>{sum_prime, n_prime, u_prime, v_prime, s_prime};
