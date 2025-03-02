@@ -4,8 +4,10 @@
 #include "ServerConnection/ServerConnection.hpp"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <csignal>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -32,83 +34,43 @@ std::vector<std::byte> constructRandomVector(size_t size)
     return randomized;
 }
 
-bool saveMetrics(const std::string &fileName, const SampleGroup<long double> &sampleGroup)
+template <size_t SIZE>
+bool saveMetrics(size_t currentCount, const std::string &saveFilePath,
+                 const std::array<SampleGroup<double>, SIZE> &sampleGroups)
 {
-    std::ofstream out;
-    out.open(fileName);
-    if (!out)
+    const std::string root{saveFilePath + "/" + std::to_string(currentCount)};
+    std::filesystem::create_directory(root);
+    for (unsigned i{0}; i < SIZE; ++i)
     {
-        std::cerr << "Could not open file: " << fileName << std::endl;
-        return false;
-    }
-    constexpr std::string_view header{
-        "Value, Mean, StdDev, Size, StandardizedMean, StandardizedStdDev\n"};
-    out << header;
-    for (unsigned value = 0; value < sampleGroup.size(); ++value)
-    {
-        SampleMetrics metrics = sampleGroup.localMetrics(value);
-        SampleMetrics standardizedMetrics = sampleGroup.standardizeLocalMetrics(value);
-        out << static_cast<int>(static_cast<uint8_t>(value)) << ", " << std::setprecision(4)
-            << std::fixed << metrics.mean << ", " << metrics.stdDev << ", " << metrics.size << ", "
-            << standardizedMetrics.mean << ", " << standardizedMetrics.stdDev << "\n";
-    }
-    out.close();
-    return true;
-}
-
-bool saveData(const std::string &fileName, const SampleGroup<long double> &sampleGroup,
-              size_t passTransmissionCount)
-{
-    std::ofstream out;
-    out.open(fileName);
-    if (!out)
-    {
-        std::cerr << "Could not open file: " << fileName << std::endl;
-        return false;
-    }
-
-    SampleMetrics<long double> globalMetrics = sampleGroup.globalMetrics();
-    out << "Global size: " << globalMetrics.size << " mean: " << globalMetrics.mean
-        << " stdDev: " << globalMetrics.stdDev;
-    for (unsigned valueIndex = 0; valueIndex < sampleGroup.size(); ++valueIndex)
-    {
-        const SampleData<long double> &currentSample{sampleGroup[valueIndex]};
-        SampleMetrics<long double> currentMetrics = currentSample.metrics();
-        out << "\n\nValues for " << valueIndex << ":\n";
-        out << "Local size: " << currentMetrics.size << " mean: " << currentMetrics.mean
-            << " stdDev: " << currentMetrics.stdDev;
-        for (size_t i{0}; i < currentSample.data().size(); ++i)
+        const std::string filepath{root + "/" + std::to_string(i) + ".csv"};
+        std::ofstream out;
+        out.open(filepath);
+        if (!out)
         {
-            if (i % passTransmissionCount == 0)
-                out << '\n';
-            out << currentSample.data()[i];
-            if ((i + 1) % passTransmissionCount != 0)
-                out << ", ";
-            else
-                out << ';';
+            std::cerr << "Could not create file: " << filepath << std::endl;
+            return false;
         }
+        constexpr std::string_view header{
+            "Value, Mean, StdDev, Size, StandardizedMean, StandardizedStdDev\n"};
+        out << header;
+        for (unsigned byteValue = 0; byteValue < sampleGroups[i].size(); ++byteValue)
+        {
+            SampleMetrics metrics = sampleGroups[i].localMetrics(byteValue);
+            SampleMetrics standardizedMetrics = sampleGroups[i].standardizeLocalMetrics(byteValue);
+            out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", " //
+                << std::setprecision(4) << std::fixed                        //
+                << metrics.mean << ", "                                      //
+                << metrics.stdDev << ", "                                    //
+                << metrics.size << ", "                                      //
+                << standardizedMetrics.mean << ", "                          //
+                << standardizedMetrics.stdDev << "\n";                       //
+        }
+        out.close();
     }
-    out.close();
+
     return true;
 }
 } // namespace
-
-void warmup(const size_t warmupPasses, ServerConnection &connection, const size_t sampleSize)
-{
-    for (size_t i{0}; i < warmupPasses && g_continueRunning; ++i)
-    {
-        if (connection.connect())
-        {
-            if (not g_continueRunning)
-            {
-                connection.closeConnection();
-                break;
-            }
-            connection.transmit(-1, std::vector<std::byte>(sampleSize));
-            connection.closeConnection();
-        }
-    }
-}
 
 int main(int argc, char **argv)
 {
@@ -119,6 +81,9 @@ int main(int argc, char **argv)
     }
 
     std::cout << "Starting..." << std::endl;
+    const std::string saveFilepath{argv[3]};
+    std::cout << "Creating directory: " + saveFilepath << std::endl;
+    std::filesystem::create_directory(saveFilepath);
 
     const std::string_view ip{argv[1]};
     const uint16_t port{static_cast<uint16_t>(std::stoi(argv[2]))};
@@ -138,120 +103,131 @@ int main(int argc, char **argv)
         }
     }
 
-    constexpr unsigned DATA_SIZE{CONNECTION_DATA_MAX_SIZE};
-    constexpr unsigned DATA_INDEX{5};
-    constexpr unsigned TRANSMISSION_COUNT{2 * 516};
     constexpr unsigned AES_BLOCK_SIZE{16};
-    constexpr unsigned NO_PASSES{2 * 128};
-    constexpr long double TIMING_LB{300.0};
-    constexpr long double TIMING_UB{3000.0};
+    constexpr unsigned SAMPLE_GROUP_SIZE{256};
 
-    constexpr unsigned WARMUP_START_PASS_NO{TRANSMISSION_COUNT / 2};
-    constexpr unsigned WARMUP_START_TRANSMISSION_NO{TRANSMISSION_COUNT / 4};
+    constexpr unsigned DESIRED_SIZE_OF_SAMPLE{2 * 4048};
+    constexpr unsigned DATA_SIZE{400};
 
-    SampleGroup<long double> sampleGroup{256, TRANSMISSION_COUNT * NO_PASSES};
+    constexpr double TIMING_LB{100.0};
+    constexpr double TIMING_UB{10000.0};
 
-    size_t id{0};
-    for (size_t passNo{0}; passNo < NO_PASSES && g_continueRunning; passNo++)
+    constexpr unsigned PRINT_FREQ{10'000};
+    constexpr unsigned SAVE_FREQ{500'000};
+
+    std::array<SampleGroup<double>, AES_BLOCK_SIZE> sampleGroups;
+    sampleGroups.fill({SAMPLE_GROUP_SIZE, DESIRED_SIZE_OF_SAMPLE});
+
+    constexpr size_t APPROXIMATE_TOTAL_COUNT{AES_BLOCK_SIZE * SAMPLE_GROUP_SIZE *
+                                             DESIRED_SIZE_OF_SAMPLE};
+    size_t outliersCountUB{0};
+    double outliersMeanUB{0};
+    double outliersMinUB{std::numeric_limits<double>::max()};
+
+    size_t outliersCountLB{0};
+    double outliersMeanLB{0};
+    double outliersMaxLB{std::numeric_limits<double>::min()};
+
+    size_t actualTotalCount =
+        APPROXIMATE_TOTAL_COUNT + lostPackages + outliersCountLB + outliersCountUB;
+
+    timespec startTime{};
+    clock_gettime(CLOCK_MONOTONIC, &startTime);
+
+    std::cout << "Starting the study..." << std::endl;
+    for (size_t count{0}; count < actualTotalCount and g_continueRunning; ++count)
     {
-
-        std::cout << "Warming up before starting the next pass...\n";
-        warmup(WARMUP_START_PASS_NO, connection, DATA_SIZE);
-        for (unsigned value = 0; value < 256 && g_continueRunning; ++value)
+        if (connection.connect())
         {
-            std::vector<long double> sample;
-            sample.reserve(TRANSMISSION_COUNT);
-
-            std::vector<long double> badTimings;
-            sample.reserve(TRANSMISSION_COUNT);
-
-            std::vector<std::byte> studyPlaintext;
-            bool stopAndTryAgain = false;
-            size_t valueRetries{0}, networkRetries{0};
-
-            std::cout << "Warming up before starting the transmission...\n";
-            warmup(WARMUP_START_TRANSMISSION_NO, connection, DATA_SIZE);
-            for (size_t count{0}; count < TRANSMISSION_COUNT && g_continueRunning; ++count, ++id)
+            std::vector<std::byte> studyPlaintext = constructRandomVector(DATA_SIZE);
+            const auto result{connection.transmit(count, studyPlaintext)};
+            connection.closeConnection();
+            if (not result)
             {
-                if (connection.connect())
-                {
-                    // Plaintext Construction
-                    if (not stopAndTryAgain)
-                    {
-                        studyPlaintext = constructRandomVector(DATA_SIZE);
-                        studyPlaintext[DATA_INDEX] = static_cast<std::byte>(value);
-                        // for (unsigned aesBlockNo = 0;
-                        //      aesBlockNo <= (DATA_SIZE - 1) / AES_BLOCK_SIZE; ++aesBlockNo)
-                        // {
-                        //     const unsigned fixedPoint = DATA_INDEX + aesBlockNo * AES_BLOCK_SIZE;
-                        //     studyPlaintext[fixedPoint] = static_cast<std::byte>(value);
-                        // }
-                    }
-                    if (not g_continueRunning)
-                    {
-                        connection.closeConnection();
-                        break;
-                    }
-                    auto result{connection.transmit(id, studyPlaintext)};
-                    connection.closeConnection();
-                    if (not result)
-                    {
-                        std::cerr << "Lost packet with id:\t" << id << " Loss rate: "
-                                  << static_cast<double>(++lostPackages) /
-                                         (static_cast<double>(id + valueRetries + networkRetries) +
-                                          1.0)
-                                  << std::endl;
-                        networkRetries++;
-                        count--;
-                        id--;
-                        stopAndTryAgain = true;
-                        continue;
-                    }
-                    long double timing{TimingProcessing::computeDT<long double>(
-                        result->inbound_sec, result->inbound_nsec, result->outbound_sec,
-                        result->outbound_nsec)};
-                    // TODO: Make a proper testing criteria, using the mean and variance
-                    if (timing >= TIMING_LB and timing <= TIMING_UB)
-                        sample.push_back(timing);
-                    else
-                    {
-                        badTimings.push_back(timing);
-
-                        // TODO: If the same packet takes more than M tries, do accept it
-                        valueRetries++;
-                        count--;
-                        id--;
-                        stopAndTryAgain = true;
-                        continue;
-                    }
-                    stopAndTryAgain = false;
-                }
-            };
-            if (g_continueRunning)
+                std::cerr << "Lost packet with id:\t" << count << " Loss rate: "
+                          << static_cast<double>(++lostPackages) / (static_cast<double>(count + 1))
+                          << std::endl;
+                continue;
+            }
+            const double timing{
+                TimingProcessing::computeDT<double>(result->inbound_sec, result->inbound_nsec,
+                                                    result->outbound_sec, result->outbound_nsec)};
+            // TODO: Make a proper testing criteria, using the mean and variance
+            if (timing < TIMING_LB)
             {
-                sampleGroup.insert(value, sample.begin(), sample.end());
-                std::cout << "Pass no: " << passNo << " Value no: " << value
-                          << " Retries: " << valueRetries << '\n';
+                outliersMeanLB = (outliersMeanLB * static_cast<double>(outliersCountLB) + timing) /
+                                 static_cast<double>(outliersCountLB + 1);
+                outliersCountLB++;
+                outliersMaxLB = std::max(outliersMaxLB, timing);
+            }
+            else if (timing > TIMING_UB)
+            {
+                outliersMeanUB = (outliersMeanUB * static_cast<double>(outliersCountUB) + timing) /
+                                 static_cast<double>(outliersCountUB + 1);
+                outliersCountUB++;
+                outliersMinUB = std::min(outliersMinUB, timing);
+            }
+            else
+            {
+                for (unsigned byteIndex{0}; byteIndex < AES_BLOCK_SIZE; ++byteIndex)
+                    sampleGroups[byteIndex].insert(static_cast<size_t>(studyPlaintext[byteIndex]),
+                                                   timing);
+            }
 
-                std::cout << "\tOutliers: ";
-                for (const auto &badTiming : badTimings)
-                    std::cout << badTiming << ", ";
+            actualTotalCount =
+                APPROXIMATE_TOTAL_COUNT + lostPackages + outliersCountLB + outliersCountUB;
+            if (count % PRINT_FREQ == 0 or count + 1 == actualTotalCount or
+                not g_continueRunning)
+            {
+
+                const double completionPercent{static_cast<double>(count + 1) /
+                                               static_cast<double>(actualTotalCount) * 100.0};
+
+                timespec elapsedTime{};
+                clock_gettime(CLOCK_MONOTONIC, &elapsedTime);
+                elapsedTime.tv_sec -= startTime.tv_sec;
+
+                // Estimated time until completion in minutes
+                const double ETA = (100.0 - completionPercent) *
+                                   static_cast<double>(elapsedTime.tv_sec) /
+                                   (completionPercent * 60.0);
+                // TODO: fixed width columns
+                std::cout << "Stats:\n";
+                std::cout << "\tETA: " << ETA << " minutes"
+                          << "\t Progress: " << count + 1 << '/' << actualTotalCount << " ("
+                          << completionPercent << "%)";
+                std::cout << '\n';
+
+                std::cout << "Sample Group:" << '\n';
+                std::cout << std::fixed << std::setprecision(3)
+                          << "\tSize: " << sampleGroups[0].globalMetrics().size
+                          << "\tMean: " << sampleGroups[0].globalMetrics().mean;
+                std::cout << '\n';
+
+                std::cout << "LB Outliers:\n";
+                std::cout << "\tCount:" << outliersCountLB << "\t Mean: " << outliersMeanLB
+                          << "\t Max: ";
+                if (outliersCountLB)
+                    std::cout << outliersMaxLB;
+                std::cout << '\n';
+
+                std::cout << "UB Outliers:\n";
+                std::cout << "\tCount:" << outliersCountUB << "\t Mean: " << outliersMeanUB
+                          << "\t Min: ";
+                if (outliersCountUB)
+                    std::cout << outliersMinUB;
                 std::cout << "\n\n";
             }
+
+            if (count % SAVE_FREQ == 0 or count + 1 == actualTotalCount or not g_continueRunning)
+            {
+                std::cout << "Writing file: " << count << "\n\n";
+                if (not saveMetrics(count, saveFilepath, sampleGroups))
+                    return EXIT_FAILURE;
+            }
         }
-
-        std::cout << "\nSaving pass " << passNo << " metrics to files.\n" << std::endl;
-        const std::string metricsFilename =
-            std::string{argv[3]} + '_' + std::to_string(passNo) + "_metrics.csv";
-        if (not saveMetrics(metricsFilename, sampleGroup))
-            return EXIT_FAILURE;
-
-        const std::string valuesFilename =
-            std::string{argv[3]} + '_' + std::to_string(passNo) + "_data.txt";
-        if (not saveData(valuesFilename, sampleGroup, TRANSMISSION_COUNT))
-            return EXIT_FAILURE;
     }
-
     std::cout << "Exiting..." << std::endl;
+    // TODO: Save the raw timing data in a serialized format.
     return 0;
 }
