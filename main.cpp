@@ -143,8 +143,8 @@ int main(int argc, char **argv)
     constexpr unsigned TRANSMISSION_COUNT{2 * 516};
     constexpr unsigned AES_BLOCK_SIZE{16};
     constexpr unsigned NO_PASSES{2 * 128};
-    constexpr long double TIMING_LB{500.0};
-    constexpr long double TIMING_UB{10000.0};
+    constexpr long double TIMING_LB{300.0};
+    constexpr long double TIMING_UB{3000.0};
 
     constexpr unsigned WARMUP_START_PASS_NO{TRANSMISSION_COUNT / 2};
     constexpr unsigned WARMUP_START_TRANSMISSION_NO{TRANSMISSION_COUNT / 4};
@@ -179,12 +179,13 @@ int main(int argc, char **argv)
                     if (not stopAndTryAgain)
                     {
                         studyPlaintext = constructRandomVector(DATA_SIZE);
-                        for (unsigned aesBlockNo = 0;
-                             aesBlockNo <= (DATA_SIZE - 1) / AES_BLOCK_SIZE; ++aesBlockNo)
-                        {
-                            const unsigned fixedPoint = DATA_INDEX + aesBlockNo * AES_BLOCK_SIZE;
-                            studyPlaintext[fixedPoint] = static_cast<std::byte>(value);
-                        }
+                        studyPlaintext[DATA_INDEX] = static_cast<std::byte>(value);
+                        // for (unsigned aesBlockNo = 0;
+                        //      aesBlockNo <= (DATA_SIZE - 1) / AES_BLOCK_SIZE; ++aesBlockNo)
+                        // {
+                        //     const unsigned fixedPoint = DATA_INDEX + aesBlockNo * AES_BLOCK_SIZE;
+                        //     studyPlaintext[fixedPoint] = static_cast<std::byte>(value);
+                        // }
                     }
                     if (not g_continueRunning)
                     {
