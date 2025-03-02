@@ -141,7 +141,7 @@ int main(int argc, char **argv)
     constexpr unsigned DATA_SIZE{CONNECTION_DATA_MAX_SIZE};
     constexpr unsigned DATA_INDEX{5};
     constexpr unsigned TRANSMISSION_COUNT{2 * 516};
-    constexpr unsigned AES_BLOCK_SIZE{128};
+    constexpr unsigned AES_BLOCK_SIZE{16};
     constexpr unsigned NO_PASSES{2 * 128};
     constexpr long double TIMING_LB{500.0};
     constexpr long double TIMING_UB{10000.0};
