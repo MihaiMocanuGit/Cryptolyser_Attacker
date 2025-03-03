@@ -138,18 +138,21 @@ int main(int argc, char **argv)
     size_t prevPacketCount{0};
 
     std::cout << "Starting the study..." << std::endl;
-    for (size_t count{0}; count < actualTotalCount and g_continueRunning; ++count)
+    if (connection.connect())
     {
-        if (connection.connect())
+        for (size_t count{0}; count < actualTotalCount and g_continueRunning; ++count)
         {
+
             std::vector<std::byte> studyPlaintext = constructRandomVector(DATA_SIZE);
             const auto result{connection.transmit(count, studyPlaintext)};
-            connection.closeConnection();
             if (not result)
             {
                 std::cerr << "Lost packet with id:\t" << count << " Loss rate: "
                           << static_cast<double>(++lostPackages) / (static_cast<double>(count + 1))
                           << std::endl;
+                // restart the connection
+                connection.closeConnection();
+                connection.connect();
                 continue;
             }
             const double timing{
@@ -236,6 +239,7 @@ int main(int argc, char **argv)
                     return EXIT_FAILURE;
             }
         }
+        connection.closeConnection();
     }
     std::cout << "Exiting..." << std::endl;
     // TODO: Save the raw timing data in a serialized format.
