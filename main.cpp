@@ -106,14 +106,14 @@ int main(int argc, char **argv)
     constexpr unsigned AES_BLOCK_SIZE{16};
     constexpr unsigned SAMPLE_GROUP_SIZE{256};
 
-    constexpr unsigned DESIRED_SIZE_OF_SAMPLE{2 * 4048};
+    constexpr unsigned DESIRED_SIZE_OF_SAMPLE{4048 / 2};
     constexpr unsigned DATA_SIZE{400};
 
     constexpr double TIMING_LB{100.0};
     constexpr double TIMING_UB{10000.0};
 
-    constexpr unsigned PRINT_FREQ{10'000};
-    constexpr unsigned SAVE_FREQ{500'000};
+    constexpr unsigned PRINT_FREQ{5'000};
+    constexpr unsigned SAVE_FREQ{50'000};
 
     std::array<SampleGroup<double>, AES_BLOCK_SIZE> sampleGroups;
     sampleGroups.fill({SAMPLE_GROUP_SIZE, DESIRED_SIZE_OF_SAMPLE});
@@ -133,6 +133,9 @@ int main(int argc, char **argv)
 
     timespec startTime{};
     clock_gettime(CLOCK_MONOTONIC, &startTime);
+
+    timespec prevTime{0, 0};
+    size_t prevPacketCount{0};
 
     std::cout << "Starting the study..." << std::endl;
     for (size_t count{0}; count < actualTotalCount and g_continueRunning; ++count)
@@ -176,7 +179,7 @@ int main(int argc, char **argv)
 
             actualTotalCount =
                 APPROXIMATE_TOTAL_COUNT + lostPackages + outliersCountLB + outliersCountUB;
-            if (count % PRINT_FREQ == 0 or count + 1 == actualTotalCount or
+            if ((count != 0 and count % PRINT_FREQ == 0) or count + 1 == actualTotalCount or
                 not g_continueRunning)
             {
 
@@ -191,11 +194,17 @@ int main(int argc, char **argv)
                 const double ETA = (100.0 - completionPercent) *
                                    static_cast<double>(elapsedTime.tv_sec) /
                                    (completionPercent * 60.0);
+
+                const double rate = static_cast<double>(count - prevPacketCount) /
+                                    static_cast<double>(elapsedTime.tv_sec - prevTime.tv_sec);
+                prevPacketCount = count;
+                prevTime = elapsedTime;
                 // TODO: fixed width columns
                 std::cout << "Stats:\n";
                 std::cout << "\tETA: " << ETA << " minutes"
                           << "\t Progress: " << count + 1 << '/' << actualTotalCount << " ("
-                          << completionPercent << "%)";
+                          << completionPercent << "%)"
+                          << "\t Study Rate: " << rate << " packets/second";
                 std::cout << '\n';
 
                 std::cout << "Sample Group:" << '\n';
@@ -205,21 +214,22 @@ int main(int argc, char **argv)
                 std::cout << '\n';
 
                 std::cout << "LB Outliers:\n";
-                std::cout << "\tCount:" << outliersCountLB << "\t Mean: " << outliersMeanLB
+                std::cout << "\tCount: " << outliersCountLB << "\t Mean: " << outliersMeanLB
                           << "\t Max: ";
                 if (outliersCountLB)
                     std::cout << outliersMaxLB;
                 std::cout << '\n';
 
                 std::cout << "UB Outliers:\n";
-                std::cout << "\tCount:" << outliersCountUB << "\t Mean: " << outliersMeanUB
+                std::cout << "\tCount: " << outliersCountUB << "\t Mean: " << outliersMeanUB
                           << "\t Min: ";
                 if (outliersCountUB)
                     std::cout << outliersMinUB;
                 std::cout << "\n\n";
             }
 
-            if (count % SAVE_FREQ == 0 or count + 1 == actualTotalCount or not g_continueRunning)
+            if ((count != 0 and count % SAVE_FREQ == 0) or count + 1 == actualTotalCount or
+                not g_continueRunning)
             {
                 std::cout << "Writing file: " << count << "\n\n";
                 if (not saveMetrics(count, saveFilepath, sampleGroups))
