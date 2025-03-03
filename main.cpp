@@ -34,13 +34,13 @@ std::vector<std::byte> constructRandomVector(size_t size)
     return randomized;
 }
 
-template <size_t SIZE>
+template <size_t GROUPS_COUNT>
 bool saveMetrics(size_t currentCount, const std::string &saveFilePath,
-                 const std::array<SampleGroup<double>, SIZE> &sampleGroups)
+                 const std::array<SampleGroup<double>, GROUPS_COUNT> &sampleGroups)
 {
     const std::string root{saveFilePath + "/" + std::to_string(currentCount)};
     std::filesystem::create_directory(root);
-    for (unsigned i{0}; i < SIZE; ++i)
+    for (unsigned i{0}; i < GROUPS_COUNT; ++i)
     {
         const std::string filepath{root + "/" + std::to_string(i) + ".csv"};
         std::ofstream out;
@@ -70,6 +70,56 @@ bool saveMetrics(size_t currentCount, const std::string &saveFilePath,
 
     return true;
 }
+
+template <size_t GROUPS_COUNT>
+bool saveRaw(const std::string &saveFilePath,
+             const std::array<SampleGroup<double>, GROUPS_COUNT> &sampleGroups)
+{
+    std::filesystem::create_directory(saveFilePath + "/Raw");
+    for (unsigned byteBlock{0}; byteBlock < GROUPS_COUNT; ++byteBlock)
+    {
+        const std::string filepath{saveFilePath + "/Raw/Byte_" + std::to_string(byteBlock) +
+                                   ".csv"};
+        const auto &sampleGroup{sampleGroups[byteBlock]};
+        std::ofstream out;
+        out.open(filepath);
+        if (!out)
+        {
+            std::cerr << "Could not create file: " << filepath << std::endl;
+            return false;
+        }
+        // Write the header depth, val_0, val_1, val_2, val_3, ... val_255
+        out << "depth";
+        for (unsigned byteValue{0}; byteValue < sampleGroup.size(); ++byteValue)
+        {
+            out << ", " << "val_" << byteValue;
+        }
+        out << '\n';
+        const size_t maxSize =
+            std::max_element(
+                sampleGroup.begin(), sampleGroup.end(),
+                [](const SampleData<double> &sample1, const SampleData<double> &sample2)
+                { return sample1.data().size() < sample2.data().size(); })
+                ->data()
+                .size();
+
+        for (size_t depth{0}; depth < maxSize; depth++)
+        {
+            out << depth;
+            for (unsigned byteValue{0}; byteValue < sampleGroup.size(); ++byteValue)
+            {
+                const auto &sampleData = sampleGroup[byteValue];
+                if (depth < sampleData.data().size())
+                    out << ", " << sampleData.data()[depth];
+                else
+                    out << ",";
+            }
+            out << '\n';
+        }
+    }
+    return true;
+}
+
 } // namespace
 
 int main(int argc, char **argv)
@@ -234,14 +284,18 @@ int main(int argc, char **argv)
             if ((count != 0 and count % SAVE_FREQ == 0) or count + 1 == actualTotalCount or
                 not g_continueRunning)
             {
-                std::cout << "Writing file: " << count << "\n\n";
+                std::cout << "Writing Metrics File: " << count << "\n\n";
                 if (not saveMetrics(count, saveFilepath, sampleGroups))
                     return EXIT_FAILURE;
             }
         }
         connection.closeConnection();
     }
+
+    std::cout << "Saving Raw Data File:" << std::endl;
+    if (not saveRaw(saveFilepath, sampleGroups))
+        return EXIT_FAILURE;
+
     std::cout << "Exiting..." << std::endl;
-    // TODO: Save the raw timing data in a serialized format.
     return 0;
 }
