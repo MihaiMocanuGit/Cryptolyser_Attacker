@@ -78,43 +78,29 @@ bool saveRaw(const std::string &saveFilePath,
     std::filesystem::create_directory(saveFilePath + "/Raw");
     for (unsigned byteBlock{0}; byteBlock < GROUPS_COUNT; ++byteBlock)
     {
-        const std::string filepath{saveFilePath + "/Raw/Byte_" + std::to_string(byteBlock) +
-                                   ".csv"};
+        std::string currentLevelPath{saveFilePath + "/Raw/Byte_" + std::to_string(byteBlock)};
+        std::filesystem::create_directory(currentLevelPath);
         const auto &sampleGroup{sampleGroups[byteBlock]};
-        std::ofstream out;
-        out.open(filepath);
-        if (!out)
+        for (unsigned value{0}; value < sampleGroup.size(); ++value)
         {
-            std::cerr << "Could not create file: " << filepath << std::endl;
-            return false;
-        }
-        // Write the header depth, val_0, val_1, val_2, val_3, ... val_255
-        out << "depth";
-        for (unsigned byteValue{0}; byteValue < sampleGroup.size(); ++byteValue)
-        {
-            out << ", " << "val_" << byteValue;
-        }
-        out << '\n';
-        const size_t maxSize =
-            std::max_element(
-                sampleGroup.begin(), sampleGroup.end(),
-                [](const SampleData<double> &sample1, const SampleData<double> &sample2)
-                { return sample1.data().size() < sample2.data().size(); })
-                ->data()
-                .size();
-
-        for (size_t depth{0}; depth < maxSize; depth++)
-        {
-            out << depth;
-            for (unsigned byteValue{0}; byteValue < sampleGroup.size(); ++byteValue)
+            std::ofstream out;
+            out.open(currentLevelPath + "/Value_" + std::to_string(value) + ".csv");
+            if (!out)
             {
-                const auto &sampleData = sampleGroup[byteValue];
-                if (depth < sampleData.data().size())
-                    out << ", " << sampleData.data()[depth];
-                else
-                    out << ",";
+                std::cerr << "Could not create file: "
+                          << currentLevelPath + "/Value_" + std::to_string(value) << std::endl;
+                return false;
             }
-            out << '\n';
+            const auto &data{sampleGroup[value].data()};
+            out << "INDICES, VALUES, SIZE\n";
+            if (data.size() > 0)
+            {
+                out << 0 << ", " << data[0] << ", " << data.size() << '\n';
+            }
+            for (size_t i{1}; i < data.size(); ++i)
+            {
+                out << i << ", " << data[i] << ",\n";
+            }
         }
     }
     return true;
@@ -156,14 +142,14 @@ int main(int argc, char **argv)
     constexpr unsigned AES_BLOCK_SIZE{16};
     constexpr unsigned SAMPLE_GROUP_SIZE{256};
 
-    constexpr unsigned DESIRED_SIZE_OF_SAMPLE{4048 / 2};
-    constexpr unsigned DATA_SIZE{400};
+    constexpr unsigned DESIRED_SIZE_OF_SAMPLE{4048 * 6};
+    constexpr unsigned DATA_SIZE{512};
 
     constexpr double TIMING_LB{100.0};
-    constexpr double TIMING_UB{10000.0};
+    constexpr double TIMING_UB{12000.0};
 
-    constexpr unsigned PRINT_FREQ{5'000};
-    constexpr unsigned SAVE_FREQ{50'000};
+    constexpr unsigned PRINT_FREQ{200'000};
+    constexpr unsigned SAVE_FREQ{1000'000};
 
     std::array<SampleGroup<double>, AES_BLOCK_SIZE> sampleGroups;
     sampleGroups.fill({SAMPLE_GROUP_SIZE, DESIRED_SIZE_OF_SAMPLE});
@@ -190,7 +176,8 @@ int main(int argc, char **argv)
     std::cout << "Starting the study..." << std::endl;
     if (connection.connect())
     {
-        for (size_t count{0}; count < actualTotalCount and g_continueRunning; ++count)
+        size_t count{0};
+        for (count = 0; count < actualTotalCount and g_continueRunning; ++count)
         {
 
             std::vector<std::byte> studyPlaintext = constructRandomVector(DATA_SIZE);
@@ -281,8 +268,7 @@ int main(int argc, char **argv)
                 std::cout << "\n\n";
             }
 
-            if ((count != 0 and count % SAVE_FREQ == 0) or count + 1 == actualTotalCount or
-                not g_continueRunning)
+            if ((count != 0 and count % SAVE_FREQ == 0) or count + 1 == actualTotalCount)
             {
                 std::cout << "Writing Metrics File: " << count << "\n\n";
                 if (not saveMetrics(count, saveFilepath, sampleGroups))
@@ -290,6 +276,13 @@ int main(int argc, char **argv)
             }
         }
         connection.closeConnection();
+
+        if (not g_continueRunning)
+        {
+            std::cout << "Writing Metrics File: " << count << "\n\n";
+            if (not saveMetrics(count, saveFilepath, sampleGroups))
+                return EXIT_FAILURE;
+        }
     }
 
     std::cout << "Saving Raw Data File:" << std::endl;
