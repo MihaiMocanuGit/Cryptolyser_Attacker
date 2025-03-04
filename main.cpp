@@ -58,7 +58,7 @@ bool saveMetrics(size_t currentCount, const std::string &saveFilePath,
             SampleMetrics metrics = sampleGroups[i].localMetrics(byteValue);
             SampleMetrics standardizedMetrics = sampleGroups[i].standardizeLocalMetrics(byteValue);
             out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", " //
-                << std::setprecision(4) << std::fixed                        //
+                << std::setprecision(8) << std::fixed                        //
                 << metrics.mean << ", "                                      //
                 << metrics.stdDev << ", "                                    //
                 << metrics.size << ", "                                      //
