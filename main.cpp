@@ -142,7 +142,7 @@ int main(int argc, char **argv)
     constexpr unsigned AES_BLOCK_SIZE{16};
     constexpr unsigned SAMPLE_GROUP_SIZE{256};
 
-    constexpr unsigned DESIRED_SIZE_OF_SAMPLE{4048 * 6};
+    constexpr unsigned DESIRED_SIZE_OF_SAMPLE{4048 * 3};
     constexpr unsigned DATA_SIZE{512};
 
     constexpr double TIMING_LB{100.0};
@@ -192,9 +192,8 @@ int main(int argc, char **argv)
                 connection.connect();
                 continue;
             }
-            const double timing{
-                TimingProcessing::computeDT<double>(result->inbound_sec, result->inbound_nsec,
-                                                    result->outbound_sec, result->outbound_nsec)};
+            const double timing{TimingProcessing::computeDT<double>(
+                result->inbound_t1, result->inbound_t2, result->outbound_t1, result->outbound_t2)};
             // TODO: Make a proper testing criteria, using the mean and variance
             if (timing < TIMING_LB)
             {

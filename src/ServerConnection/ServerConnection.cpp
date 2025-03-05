@@ -89,10 +89,10 @@ std::optional<connection_timing_t> ServerConnection::transmit(uint32_t packet_id
         return {};
     }
     responseTimingData.packet_id = be32toh(responseTimingData.packet_id);
-    responseTimingData.inbound_sec = be64toh(responseTimingData.inbound_sec);
-    responseTimingData.inbound_nsec = be64toh(responseTimingData.inbound_nsec);
-    responseTimingData.outbound_sec = be64toh(responseTimingData.outbound_sec);
-    responseTimingData.outbound_nsec = be64toh(responseTimingData.outbound_nsec);
+    responseTimingData.inbound_t1 = be64toh(responseTimingData.inbound_t1);
+    responseTimingData.inbound_t2 = be64toh(responseTimingData.inbound_t2);
+    responseTimingData.outbound_t1 = be64toh(responseTimingData.outbound_t1);
+    responseTimingData.outbound_t2 = be64toh(responseTimingData.outbound_t2);
     return {responseTimingData};
 }
 
