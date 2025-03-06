@@ -211,7 +211,8 @@ int main(int argc, char **argv)
             }
             else
             {
-                for (unsigned byteIndex{0}; byteIndex < AES_BLOCK_SIZE; ++byteIndex)
+                for (unsigned byteIndex{0}; byteIndex < AES_BLOCK_SIZE and byteIndex < DATA_SIZE;
+                     ++byteIndex)
                     sampleGroups[byteIndex].insert(static_cast<size_t>(studyPlaintext[byteIndex]),
                                                    timing);
             }

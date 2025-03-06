@@ -66,7 +66,8 @@ std::optional<connection_timing_t> ServerConnection::transmit(uint32_t packet_id
     connection_packet_t packet{};
     packet.packet_id = htobe32(packet_id);
     packet.data_length = htobe32(bytes.size());
-    std::memcpy(packet.byte_data, bytes.data(), bytes.size());
+    if (not bytes.empty())
+        std::memcpy(packet.byte_data, bytes.data(), bytes.size());
     if (sendto(m_sock, &packet, sizeof(packet), 0,
                reinterpret_cast<struct sockaddr *>(&m_receiverAddr), sizeof(m_receiverAddr)) < 0)
     {
