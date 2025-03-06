@@ -24,8 +24,8 @@ void exitHandler(int signal)
 
 std::vector<std::byte> constructRandomVector(size_t size)
 {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
+    // static std::random_device rd;
+    static std::mt19937 gen(0);
     static std::uniform_int_distribution<uint8_t> uniform_dist(0, 255);
     std::vector<std::byte> randomized;
     randomized.reserve(size);
@@ -142,11 +142,11 @@ int main(int argc, char **argv)
     constexpr unsigned AES_BLOCK_SIZE{16};
     constexpr unsigned SAMPLE_GROUP_SIZE{256};
 
-    constexpr unsigned DESIRED_SIZE_OF_SAMPLE{4048 * 3};
+    constexpr unsigned DESIRED_SIZE_OF_SAMPLE{4048};
     constexpr unsigned DATA_SIZE{512};
 
-    constexpr double TIMING_LB{100.0};
-    constexpr double TIMING_UB{12000.0};
+    constexpr double TIMING_LB{25.0};
+    constexpr double TIMING_UB{10000.0};
 
     constexpr unsigned PRINT_FREQ{200'000};
     constexpr unsigned SAVE_FREQ{1000'000};
@@ -176,15 +176,19 @@ int main(int argc, char **argv)
     std::cout << "Starting the study..." << std::endl;
     if (connection.connect())
     {
+        bool tryAgain = false;
+        size_t id{0};
+        std::vector<std::byte> studyPlaintext;
         size_t count{0};
         for (count = 0; count < actualTotalCount and g_continueRunning; ++count)
         {
-
-            std::vector<std::byte> studyPlaintext = constructRandomVector(DATA_SIZE);
-            const auto result{connection.transmit(count, studyPlaintext)};
+            if (not tryAgain)
+                studyPlaintext = constructRandomVector(DATA_SIZE);
+            const auto result{connection.transmit(id, studyPlaintext)};
             if (not result)
             {
-                std::cerr << "Lost packet with id:\t" << count << " Loss rate: "
+                tryAgain = true;
+                std::cerr << "Lost packet with id:\t" << id << " Loss rate: "
                           << static_cast<double>(++lostPackages) / (static_cast<double>(count + 1))
                           << std::endl;
                 // restart the connection
@@ -197,6 +201,7 @@ int main(int argc, char **argv)
             // TODO: Make a proper testing criteria, using the mean and variance
             if (timing < TIMING_LB)
             {
+                tryAgain = true;
                 outliersMeanLB = (outliersMeanLB * static_cast<double>(outliersCountLB) + timing) /
                                  static_cast<double>(outliersCountLB + 1);
                 outliersCountLB++;
@@ -204,6 +209,7 @@ int main(int argc, char **argv)
             }
             else if (timing > TIMING_UB)
             {
+                tryAgain = true;
                 outliersMeanUB = (outliersMeanUB * static_cast<double>(outliersCountUB) + timing) /
                                  static_cast<double>(outliersCountUB + 1);
                 outliersCountUB++;
@@ -211,6 +217,8 @@ int main(int argc, char **argv)
             }
             else
             {
+                tryAgain = false;
+                id++;
                 for (unsigned byteIndex{0}; byteIndex < AES_BLOCK_SIZE and byteIndex < DATA_SIZE;
                      ++byteIndex)
                     sampleGroups[byteIndex].insert(static_cast<size_t>(studyPlaintext[byteIndex]),
@@ -254,15 +262,17 @@ int main(int argc, char **argv)
                 std::cout << '\n';
 
                 std::cout << "LB Outliers:\n";
-                std::cout << "\tCount: " << outliersCountLB << "\t Mean: " << outliersMeanLB
-                          << "\t Max: ";
+                std::cout << "\tCount: " << outliersCountLB                                     //
+                          << " (" << static_cast<double>(outliersCountLB * 100) / count << "%)" //
+                          << "\t Mean: " << outliersMeanLB << "\t Max: ";                       //
                 if (outliersCountLB)
                     std::cout << outliersMaxLB;
                 std::cout << '\n';
 
                 std::cout << "UB Outliers:\n";
-                std::cout << "\tCount: " << outliersCountUB << "\t Mean: " << outliersMeanUB
-                          << "\t Min: ";
+                std::cout << "\tCount: " << outliersCountUB                                     //
+                          << " (" << static_cast<double>(outliersCountUB * 100) / count << "%)" //
+                          << "\t Mean: " << outliersMeanUB << "\t Min: ";                       //
                 if (outliersCountUB)
                     std::cout << outliersMinUB;
                 std::cout << "\n\n";
