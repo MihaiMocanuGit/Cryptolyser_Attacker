@@ -103,4 +103,18 @@ void ServerConnection::closeConnection()
     std::memset(&m_receiverAddr, 0, sizeof(m_receiverAddr));
 }
 
+ServerConnection::ServerConnection(ServerConnection &&serverConnection) noexcept
+    : m_ip{serverConnection.m_ip}, m_port{serverConnection.m_port}, m_sock{serverConnection.m_port},
+      m_receiverAddr{serverConnection.m_receiverAddr},
+      m_isConnectionActive{serverConnection.m_isConnectionActive}
+{
+}
+
+ServerConnection &ServerConnection::operator=(ServerConnection &&rhs) noexcept
+{
+    this->closeConnection();
+    std::swap(*this, rhs);
+    return *this;
+}
+
 ServerConnection::~ServerConnection() { this->closeConnection(); }

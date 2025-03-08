@@ -24,9 +24,12 @@ class ServerConnection
   public:
     static const uint32_t DATA_MAX_SIZE;
     ServerConnection(std::string_view ip, uint16_t port);
+    ServerConnection(ServerConnection &&serverConnection) noexcept;
+    ServerConnection &operator=(ServerConnection &&rhs) noexcept;
+    ~ServerConnection();
+
     ServerConnection(const ServerConnection &serverConnection) = delete;
     ServerConnection &operator=(const ServerConnection &rhs) = delete;
-    ~ServerConnection();
 
     bool connect();
 
