@@ -1,6 +1,5 @@
-#include "DataProcessing/SampleData.hpp"
-#include "DataProcessing/TimingProcessing.hpp"
-#include "SampleGroup.hpp"
+#include "DataProcessing/Samples/SampleGroup.hpp"
+#include "DataProcessing/Timings/TimingProcessing.hpp"
 #include "ServerConnection/ServerConnection.hpp"
 
 #include <algorithm>

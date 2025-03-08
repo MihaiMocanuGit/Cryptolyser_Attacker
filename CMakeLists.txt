@@ -21,5 +21,4 @@ add_subdirectory(src)
 
 add_executable(${PROJECT_NAME} main.cpp)
 
-target_include_directories(${PROJECT_NAME} PRIVATE src)
-target_link_libraries(${PROJECT_NAME} PRIVATE ServerConnection Cryptolyser_Common DataProcessing)
+target_link_libraries(${PROJECT_NAME} PRIVATE Cryptolyser_Common src)

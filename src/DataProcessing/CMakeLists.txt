@@ -1,9 +1,9 @@
-add_subdirectory(unit-tests)
+add_subdirectory(Samples)
+add_subdirectory(Timings)
 
-add_library(DataProcessing STATIC
-        SampleMetrics.hpp SampleMetrics.cpp
-        SampleData.hpp SampleData.cpp
-        TimingProcessing.hpp TimingProcessing.cpp
-        SampleGroup.cpp SampleGroup.hpp
+add_library(DataProcessing INTERFACE)
+target_link_libraries(DataProcessing INTERFACE
+        Samples
+        Timings
 )
-target_include_directories(DataProcessing PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(DataProcessing INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
