@@ -6,4 +6,3 @@ target_link_libraries(DataProcessing INTERFACE
         Samples
         Timings
 )
-target_include_directories(DataProcessing INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
