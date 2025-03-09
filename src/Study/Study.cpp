@@ -417,3 +417,76 @@ void Study::start(size_t desiredAvgSampleSize, const DisplayParams &displayParam
     }
 }
 const std::vector<SampleGroup<double>> &Study::data() const { return m_sampleGroups; }
+
+Study::TimingBoundaryParams Study::calibrate(const std::string &saveTo, size_t transmissionsCount,
+                                             double confidenceLB, double confidenceUB)
+{
+    if (m_connection.connect())
+    {
+        SampleData<double> sample;
+        sample.reserve(transmissionsCount);
+        std::vector<std::byte> studyPlaintext{m_DATA_PACKET_LENGTH};
+        for (size_t currentCount{0}; currentCount < transmissionsCount && m_continueRunning;
+             ++currentCount)
+        {
+            const auto result{m_connection.transmit(-1, studyPlaintext)};
+            if (not result)
+            {
+                std::cerr << "Lost packet." << std::endl;
+                // restart the connection
+                m_connection.closeConnection();
+                m_connection.connect();
+                currentCount--;
+                continue;
+            }
+            const double timing{TimingProcessing::computeDT<double>(
+                result->inbound_t1, result->inbound_t2, result->outbound_t1, result->outbound_t2)};
+            sample.insert(timing);
+        }
+
+        const double max = sample.metrics().max;
+        const double min = sample.metrics().min;
+        const size_t blockCount{static_cast<size_t>(max - min + 1.0)};
+
+        std::vector<unsigned> blockGroup(blockCount, 0);
+        for (const double value : sample)
+        {
+            size_t index{static_cast<size_t>(value - min)};
+            assert(index < blockCount);
+            blockGroup[index]++;
+        }
+        double lb{min};
+        double ub{max};
+        size_t partialSum{0};
+        const size_t totalSum{transmissionsCount};
+        for (size_t pos{0}; pos < blockCount; pos++)
+        {
+            partialSum += blockGroup[pos];
+            double ratio = static_cast<double>(partialSum) / static_cast<double>(totalSum);
+            if (ratio <= confidenceLB)
+            {
+                lb = min + static_cast<double>(pos);
+            }
+            if (1.0 - ratio <= confidenceUB)
+            {
+                ub = min + static_cast<double>(pos);
+                break;
+            }
+        }
+
+        std::ofstream out;
+        out.open(saveTo + "/Distribution.csv");
+        for (size_t i{0}; i < static_cast<size_t>(min); ++i)
+        {
+            out << 0 << ",\n";
+        }
+        for (const auto &block : blockGroup)
+        {
+            out << block << ",\n";
+        }
+
+        return {.lb = lb, .ub = ub};
+    }
+
+    return {0, std::numeric_limits<double>::max()};
+}

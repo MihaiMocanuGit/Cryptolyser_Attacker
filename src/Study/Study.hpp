@@ -31,17 +31,23 @@ class Study
     Study(const Study &) = delete;
     Study &operator=(const Study &) = delete;
 
-    TimingBoundaryParams calibrate(size_t transmissions);
     void start(size_t desiredAvgSampleSize, const DisplayParams &display,
                const TimingBoundaryParams &bounds);
+
+    [[nodiscard]] TimingBoundaryParams calibrate(const std::string &saveTo,
+                                                 size_t transmissionsCount = 100'000,
+                                                 double confidenceLB = 0.000025,
+                                                 double confidenceUB = 0.0005);
+
+    [[nodiscard]] const std::vector<SampleGroup<double>> &data() const;
 
     void loadPreviousStudyData(const std::string &prevRawDir);
 
     static void saveDataRaw(const std::string &directory,
                             const std::vector<SampleGroup<double>> &data);
+
     static void saveDataMetrics(const std::string &directory,
                                 const std::vector<SampleGroup<double>> &data);
-    [[nodiscard]] const std::vector<SampleGroup<double>> &data() const;
 
   private:
     const size_t m_DATA_PACKET_LENGTH;
@@ -53,7 +59,6 @@ class Study
     size_t m_totalCount(const StudyContext &ctx) const;
     bool filterCurrentValue(StudyContext &ctx, double timing);
     void printStats(StudyContext &ctx);
-
     bool isSaveTime(const StudyContext &ctx) const;
 };
 

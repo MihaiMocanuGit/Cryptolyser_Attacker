@@ -67,12 +67,14 @@ int main(int argc, char **argv)
         .saveFreq = 2'000'000,
         .savePath = saveFolderPath,
     };
-    constexpr Study::TimingBoundaryParams boundary{
-        .lb = 25.0,
-        .ub = 3000.0,
-    };
+
     Study study{std::move(connection), g_continueRunning, dataPacketLength};
-    study.start(desiredAvgSampleSize, display, boundary);
+    std::cout << "Calibrating bounds..." << std::endl;
+    Study::TimingBoundaryParams computedBd = study.calibrate(saveFolderPath);
+    std::cout << "Computed bounds: " << computedBd.lb << ", " << computedBd.ub << std::endl;
+    std::cout << "Starting study..." << std::endl;
+
+    study.start(desiredAvgSampleSize, display, computedBd);
 
     std::cout << "Exiting..." << std::endl;
     return 0;
