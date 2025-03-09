@@ -37,11 +37,11 @@ class Study
 
     void loadPreviousStudyData(const std::string &prevRawDir);
 
-    static void saveDataRaw(const std::string directory,
+    static void saveDataRaw(const std::string &directory,
                             const std::vector<SampleGroup<double>> &data);
-    static void saveDataMetrics(const std::string directoryName,
+    static void saveDataMetrics(const std::string &directory,
                                 const std::vector<SampleGroup<double>> &data);
-    const std::vector<SampleGroup<double>> &data() const;
+    [[nodiscard]] const std::vector<SampleGroup<double>> &data() const;
 
   private:
     const size_t m_DATA_PACKET_LENGTH;

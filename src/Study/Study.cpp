@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <format>
 #include <iostream>
+#include <thread>
 
 namespace
 {
@@ -189,109 +190,154 @@ void Study::printStats(StudyContext &ctx)
     }
 }
 
-void Study::saveDataRaw(const std::string directory, const std::vector<SampleGroup<double>> &data)
+namespace
 {
+
+void saveRawByteBlockThread(std::string directory, unsigned byteBlock,
+                            const SampleGroup<double> &sampleGroup)
+{
+    std::string currentLevelPath{directory + "/Raw/Byte_" + std::to_string(byteBlock)};
+    std::filesystem::create_directory(currentLevelPath);
+    for (unsigned value{0}; value < sampleGroup.size(); ++value)
+    {
+        std::ofstream out;
+        out.open(currentLevelPath + "/Value_" + std::to_string(value) + ".csv");
+        if (!out)
+            throw std::runtime_error("Saving Raw Data | Could not create file: " +
+                                     currentLevelPath + "/Value_" + std::to_string(value) + ".csv");
+
+        const auto &sampleData{sampleGroup[value].data()};
+        out << "INDICES, VALUES, SIZE\n";
+        if (!sampleData.empty())
+        {
+            out << 0 << ", " << sampleData[0] << ", " << sampleData.size() << '\n';
+        }
+        for (size_t i{1}; i < sampleData.size(); ++i)
+        {
+            out << i << ", " << sampleData[i] << ",\n";
+        }
+    }
+}
+
+void saveMetricsByteBlockThread(std::string directory, unsigned byteBlock,
+                                const SampleGroup<double> &sampleGroup)
+{
+    const std::string filepath{directory + "/" + std::to_string(byteBlock) + ".csv"};
+    std::ofstream out;
+    out.open(filepath);
+    if (!out)
+        throw std::runtime_error("Saving Metrics Data | Could not create file: " + filepath);
+
+    constexpr std::string_view header{
+        "Value, Mean, StdDev, Size, StandardizedMean, StandardizedStdDev, Min, Max\n"};
+    out << header;
+    for (unsigned byteValue = 0; byteValue < sampleGroup.size(); ++byteValue)
+    {
+        SampleMetrics metrics = sampleGroup.localMetrics(byteValue);
+        SampleMetrics standardizedMetrics = sampleGroup.standardizeLocalMetrics(byteValue);
+        out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", " //
+            << std::setprecision(8) << std::fixed                        //
+            << metrics.mean << ", "                                      //
+            << metrics.stdDev << ", "                                    //
+            << metrics.size << ", "                                      //
+            << standardizedMetrics.mean << ", "                          //
+            << standardizedMetrics.stdDev << ", "                        //
+            << metrics.min << ", "                                       //
+            << metrics.max << "\n";                                      //
+    }
+    out.close();
+}
+
+void loadByteBlockThread(std::string byteBlockDir, SampleGroup<double> &sampleGroup)
+{
+    for (unsigned byteValue{0}; byteValue < Study::SAMPLE_GROUP_SIZE; ++byteValue)
+    {
+        std::ifstream in;
+        in.open(byteBlockDir + "/Value_" + std::to_string(byteValue) + ".csv");
+        if (!in)
+            throw std::runtime_error("Loading from Data | Could not create open file: " +
+                                     byteBlockDir + "/Value_" + std::to_string(byteValue) + ".csv");
+        // Example file:
+        // INDICES, VALUES, SIZE
+        // 0, 972, 65085
+        // 1, 989,
+        // 2, 972,
+        // 3, 964,
+        // 4, 972,
+        std::vector<double> sampleData;
+        std::string header;
+        std::getline(in, header);
+
+        // first line with values:
+        size_t index, value, size;
+        char comma1, comma2;
+        in >> index >> comma1 >> value >> comma2 >> size;
+        sampleData.reserve(size);
+        sampleData.push_back(value);
+        for (size_t i{1}; i < size; ++i)
+        {
+            in >> index >> comma1 >> value >> comma2;
+            sampleData.push_back(value);
+        }
+        sampleGroup.insert(byteValue, sampleData.begin(), sampleData.end());
+    }
+}
+
+} // namespace
+
+void Study::saveDataRaw(const std::string &directory, const std::vector<SampleGroup<double>> &data)
+{
+
     std::filesystem::create_directory(directory);
     std::filesystem::create_directory(directory + "/Raw");
+    std::vector<std::thread> threads;
+    threads.reserve(AES_BLOCK_SIZE);
     for (unsigned byteBlock{0}; byteBlock < AES_BLOCK_SIZE; ++byteBlock)
     {
-        // TODO: Threads
-        std::string currentLevelPath{directory + "/Raw/Byte_" + std::to_string(byteBlock)};
-        std::filesystem::create_directory(currentLevelPath);
-        const auto &sampleGroup{data[byteBlock]};
-        for (unsigned value{0}; value < sampleGroup.size(); ++value)
-        {
-            std::ofstream out;
-            out.open(currentLevelPath + "/Value_" + std::to_string(value) + ".csv");
-            if (!out)
-                throw std::runtime_error(
-                    "Saving Raw Data | Could not create file: " + currentLevelPath + "/Value_" +
-                    std::to_string(value) + ".csv");
-
-            const auto &sampleData{sampleGroup[value].data()};
-            out << "INDICES, VALUES, SIZE\n";
-            if (sampleData.size() > 0)
-            {
-                out << 0 << ", " << sampleData[0] << ", " << sampleData.size() << '\n';
-            }
-            for (size_t i{1}; i < sampleData.size(); ++i)
-            {
-                out << i << ", " << sampleData[i] << ",\n";
-            }
-        }
+        // Doesn't use mutexes as every sampleGroup is independent of the other.
+        threads.emplace_back(saveRawByteBlockThread, directory, byteBlock,
+                             std::ref(data[byteBlock]));
     }
-}
-void Study::loadPreviousStudyData(const std::string &prevRawDir)
-{
+
     for (unsigned byteBlock{0}; byteBlock < AES_BLOCK_SIZE; ++byteBlock)
     {
-        // TODO: Threads
-        std::string currentLevelPath{prevRawDir + "/Byte_" + std::to_string(byteBlock)};
-        for (unsigned byteValue{0}; byteValue < SAMPLE_GROUP_SIZE; ++byteValue)
-        {
-            std::ifstream in;
-            in.open(currentLevelPath + "/Value_" + std::to_string(byteValue) + ".csv");
-            if (!in)
-                throw std::runtime_error(
-                    "Loading from Data | Could not create open file: " + currentLevelPath +
-                    "/Value_" + std::to_string(byteValue) + ".csv");
-            // Example file:
-            // INDICES, VALUES, SIZE
-            // 0, 972, 65085
-            // 1, 989,
-            // 2, 972,
-            // 3, 964,
-            // 4, 972,
-            std::vector<double> sampleData;
-            std::string header;
-            std::getline(in, header);
-
-            // first line with values:
-            size_t index, value, size;
-            char comma1, comma2;
-            in >> index >> comma1 >> value >> comma2 >> size;
-            sampleData.reserve(size);
-            sampleData.push_back(value);
-            for (size_t i{1}; i < size; ++i)
-            {
-                in >> index >> comma1 >> value >> comma2;
-                sampleData.push_back(value);
-            }
-            m_sampleGroups[byteBlock].insert(byteValue, sampleData.begin(), sampleData.end());
-        }
+        threads[byteBlock].join();
     }
 }
 
-void Study::saveDataMetrics(const std::string directoryName,
+void Study::saveDataMetrics(const std::string &directory,
                             const std::vector<SampleGroup<double>> &data)
 {
-    std::filesystem::create_directory(directoryName);
-    for (unsigned i{0}; i < AES_BLOCK_SIZE; ++i)
+    std::filesystem::create_directory(directory);
+    std::vector<std::thread> threads;
+    threads.reserve(AES_BLOCK_SIZE);
+    for (unsigned byteBlock{0}; byteBlock < AES_BLOCK_SIZE; ++byteBlock)
     {
-        const std::string filepath{directoryName + "/" + std::to_string(i) + ".csv"};
-        std::ofstream out;
-        out.open(filepath);
-        if (!out)
-            throw std::runtime_error("Saving Metrics Data | Could not create file: " + filepath);
+        threads.emplace_back(saveMetricsByteBlockThread, directory, byteBlock,
+                             std::ref(data[byteBlock]));
+    }
 
-        constexpr std::string_view header{
-            "Value, Mean, StdDev, Size, StandardizedMean, StandardizedStdDev, Min, Max\n"};
-        out << header;
-        for (unsigned byteValue = 0; byteValue < data[i].size(); ++byteValue)
-        {
-            SampleMetrics metrics = data[i].localMetrics(byteValue);
-            SampleMetrics standardizedMetrics = data[i].standardizeLocalMetrics(byteValue);
-            out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", " //
-                << std::setprecision(8) << std::fixed                        //
-                << metrics.mean << ", "                                      //
-                << metrics.stdDev << ", "                                    //
-                << metrics.size << ", "                                      //
-                << standardizedMetrics.mean << ", "                          //
-                << standardizedMetrics.stdDev << ", "                        //
-                << metrics.min << ", "                                       //
-                << metrics.max << "\n";                                      //
-        }
-        out.close();
+    for (unsigned byteBlock{0}; byteBlock < AES_BLOCK_SIZE; ++byteBlock)
+    {
+        threads[byteBlock].join();
+    }
+}
+
+void Study::loadPreviousStudyData(const std::string &prevRawDir)
+{
+    std::vector<std::thread> threads;
+    threads.reserve(AES_BLOCK_SIZE);
+    for (unsigned byteBlock{0}; byteBlock < AES_BLOCK_SIZE; ++byteBlock)
+    {
+        // Doesn't use mutexes as every sampleGroup is independent of the other.
+        std::string currentLevelPath{prevRawDir + "/Byte_" + std::to_string(byteBlock)};
+        threads.emplace_back(loadByteBlockThread, currentLevelPath,
+                             std::ref(m_sampleGroups[byteBlock]));
+    }
+
+    for (unsigned byteBlock{0}; byteBlock < AES_BLOCK_SIZE; ++byteBlock)
+    {
+        threads[byteBlock].join();
     }
 }
 
