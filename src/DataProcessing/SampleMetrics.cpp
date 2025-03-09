@@ -27,7 +27,9 @@ SampleMetrics<Real_t> SampleMetrics<Real_t>::combineMetrics(const SampleMetrics 
         static_cast<Real_t>((metric1.size + metric2.size) * (metric1.size + metric2.size - 1))};
     Real_t variance{numerator1 / denominator1 + numerator2 / denominator2};
     Real_t stdDev{static_cast<Real_t>(std::sqrtl(variance))};
-    return {sum, size, mean, variance, stdDev};
+    Real_t min{std::min(metric1.min, metric2.min)};
+    Real_t max{std::max(metric1.max, metric2.max)};
+    return {sum, size, mean, variance, stdDev, min, max};
 }
 
 template struct SampleMetrics<int>;

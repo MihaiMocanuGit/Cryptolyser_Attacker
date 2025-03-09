@@ -11,18 +11,24 @@ void SampleGroup<Real_t>::m_updateGlobalMetrics(SampleMetrics<Real_t> oldLocalMe
     Real_t sum{m_globalMetrics.sum};
     Real_t u{m_globalMetrics.mean};
     Real_t v{m_globalMetrics.variance};
+    Real_t min{m_globalMetrics.min};
+    Real_t max{m_globalMetrics.max};
 
-    // Old sample metrics.
+    // Old local sample metrics.
     size_t pi_m{oldLocalMetrics.size};
     Real_t sum_m{oldLocalMetrics.sum};
     Real_t u_m{oldLocalMetrics.mean};
     Real_t v_m{oldLocalMetrics.variance};
+    Real_t min_m{oldLocalMetrics.min};
+    Real_t max_m{oldLocalMetrics.max};
 
-    // New sample metrics.
+    // New local sample metrics.
     size_t pi_prime_m{newLocalMetrics.size};
     Real_t sum_prime_m{newLocalMetrics.sum};
     Real_t u_prime_m{newLocalMetrics.mean};
     Real_t v_prime_m{newLocalMetrics.variance};
+    Real_t min_prime_m{oldLocalMetrics.min};
+    Real_t max_prime_m{oldLocalMetrics.max};
 
     // Updated global metrics.
     size_t n_prime{n - pi_m + pi_prime_m};
@@ -35,7 +41,6 @@ void SampleGroup<Real_t>::m_updateGlobalMetrics(SampleMetrics<Real_t> oldLocalMe
     Real_t SS_prime_m{v_prime_m * static_cast<Real_t>(pi_prime_m - 1) +
                       static_cast<Real_t>(pi_prime_m) * (u_prime_m - u_prime) *
                           (u_prime_m - u_prime)};
-
     Real_t v_prime;
     if (n_prime - 1 == 0)
     {
@@ -49,10 +54,12 @@ void SampleGroup<Real_t>::m_updateGlobalMetrics(SampleMetrics<Real_t> oldLocalMe
                               (u + u_prime) * static_cast<Real_t>(n - pi_m))) /
             static_cast<Real_t>(n_prime - 1);
     }
-
     Real_t s_prime{static_cast<Real_t>(std::sqrtl(v_prime))};
+    Real_t min_prime{std::min(min, min_prime_m)};
+    Real_t max_prime{std::max(max, max_prime_m)};
 
-    m_globalMetrics = SampleMetrics<Real_t>{sum_prime, n_prime, u_prime, v_prime, s_prime};
+    m_globalMetrics =
+        SampleMetrics<Real_t>{sum_prime, n_prime, u_prime, v_prime, s_prime, min_prime, max_prime};
 }
 
 template <typename Real_t>
