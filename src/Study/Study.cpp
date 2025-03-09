@@ -20,63 +20,120 @@ std::vector<std::byte> m_constructRandomVector(size_t size)
 }
 } // namespace
 
-size_t Study::m_totalCount() const
+struct Study::StudyContext
 {
-    return m_APPROXIMATE_TOTAL_COUNT + m_lostNetworkPackages + m_sampleLB.data().size() +
-           m_sampleUB.data().size();
+    struct State
+    {
+        size_t currentCount{0};
+        size_t currentId{0};
+        size_t lostNetworkPackages{0};
+
+        timespec startStudyTime{};
+        timespec prevPassTime{.tv_sec = 0, .tv_nsec = 0};
+        size_t prevPassPacketCount{0};
+    } state;
+
+    const size_t AVG_SAMPLE_SIZE;
+    const size_t APPROX_TOTAL_COUNT{Study::AES_BLOCK_SIZE * Study::SAMPLE_GROUP_SIZE *
+                                    AVG_SAMPLE_SIZE};
+    struct Display
+    {
+        const size_t PRINT_FREQ;
+        const size_t SAVE_FREQ;
+        const std::string SAVE_FOLDER_PATH;
+
+        Display(size_t printFreq, size_t saveFreq, std::string savePath)
+            : PRINT_FREQ{printFreq}, SAVE_FREQ{saveFreq}, SAVE_FOLDER_PATH{savePath}
+        {
+        }
+
+        Display(const Study::DisplayParams &display)
+            : Display{display.printFreq, display.saveFreq, display.savePath}
+        {
+        }
+    } display;
+    struct Boundary
+    {
+        const double TIMING_LB;
+        const double TIMING_UB;
+        SampleData<double> sampleLB{};
+        SampleData<double> sampleUB{};
+
+        Boundary(double timingLB, double timingUB) : TIMING_LB{timingLB}, TIMING_UB{timingUB} {}
+        Boundary(const Study::TimingBoundaryParams &bounds) : Boundary{bounds.lb, bounds.ub} {}
+    } bd;
+
+    StudyContext(size_t avgSampleSize, const Study::DisplayParams &display,
+                 const Study::TimingBoundaryParams &bounds)
+        : AVG_SAMPLE_SIZE{avgSampleSize}, display{display}, bd{bounds}
+    {
+    }
+};
+
+size_t Study::m_totalCount(const StudyContext &ctx) const
+{
+    const StudyContext::State &state = ctx.state;
+    const StudyContext::Boundary &bd = ctx.bd;
+    return ctx.APPROX_TOTAL_COUNT + state.lostNetworkPackages + bd.sampleLB.data().size() +
+           bd.sampleUB.data().size();
 }
 
-bool Study::filterCurrentValue(double timing)
+bool Study::filterCurrentValue(StudyContext &ctx, double timing)
 {
-    if (timing < m_TIMING_LB)
+    StudyContext::Boundary &bd = ctx.bd;
+    if (timing < bd.TIMING_LB)
     {
-        m_sampleLB.insert(timing);
+        bd.sampleLB.insert(timing);
         return true;
     }
-    if (timing > m_TIMING_UB)
+    if (timing > bd.TIMING_UB)
     {
-        m_sampleUB.insert(timing);
+        bd.sampleUB.insert(timing);
         return true;
     }
     return false;
 }
 
-void Study::printStats()
+void Study::printStats(StudyContext &ctx)
 {
-    if ((m_currentCount != 0 and m_currentCount % m_PRINT_FREQ == 0) or
-        m_currentCount + 1 == m_totalCount())
+    StudyContext::State &state = ctx.state;
+    StudyContext::Display &display = ctx.display;
+    StudyContext::Boundary &bd = ctx.bd;
+    if ((state.currentCount != 0 and state.currentCount % display.PRINT_FREQ == 0) or
+        state.currentCount + 1 == m_totalCount(ctx))
     {
 
-        const double completionPercent{static_cast<double>(m_currentCount) /
-                                       static_cast<double>(m_totalCount()) * 100.0};
+        const double completionPercent{static_cast<double>(state.currentCount) /
+                                       static_cast<double>(m_totalCount(ctx)) * 100.0};
 
         timespec currentTime{};
         clock_gettime(CLOCK_MONOTONIC, &currentTime);
-        double totalElapsedTime{
-            TimingProcessing::computeDT<double>(m_startStudyTime.tv_sec, m_startStudyTime.tv_nsec,
-                                                currentTime.tv_sec, currentTime.tv_nsec)};
+        double totalElapsedTime{TimingProcessing::computeDT<double>(
+            state.startStudyTime.tv_sec, state.startStudyTime.tv_nsec, currentTime.tv_sec,
+            currentTime.tv_nsec)};
         totalElapsedTime *= 1.0e-9; // nanosec to sec
         // Estimated time until completion in minutes
         const double ETA = (100.0 - completionPercent) * static_cast<double>(totalElapsedTime) /
                            (completionPercent * 60.0);
 
-        double passTime{
-            TimingProcessing::computeDT<double>(m_prevPassTime.tv_sec, m_prevPassTime.tv_nsec,
-                                                currentTime.tv_sec, currentTime.tv_nsec)};
+        double passTime{TimingProcessing::computeDT<double>(
+            state.prevPassTime.tv_sec, state.prevPassTime.tv_nsec, currentTime.tv_sec,
+            currentTime.tv_nsec)};
         passTime *= 1.0e-9; // nanosec to sec
-        const double rate{static_cast<double>(m_currentCount - m_prevPassPacketCount) / passTime};
+        const double rate{static_cast<double>(state.currentCount - state.prevPassPacketCount) /
+                          passTime};
 
-        m_prevPassTime = currentTime;
-        m_prevPassPacketCount = m_currentCount;
+        state.prevPassTime = currentTime;
+        state.prevPassPacketCount = state.currentCount;
         // TODO: convert to fixed width columns
-        std::cout << "Stats:\n"                                                     //
-                  << "\tETA: " << ETA << " minutes"                                 //
-                  << "\t Progress: " << m_currentCount + 1 << '/' << m_totalCount() //
-                  << " (" << completionPercent << "%)"                              //
-                  << "\t Study Rate: " << rate << " packets/second"                 //
-                  << '\n';                                                          //
+        std::cout << "Stats:\n"                                                            //
+                  << "\tETA: " << ETA << " minutes"                                        //
+                  << "\t Progress: " << state.currentCount + 1 << '/' << m_totalCount(ctx) //
+                  << " (" << completionPercent << "%)"                                     //
+                  << "\t Study Rate: " << rate << " packets/second"                        //
+                  << '\n';                                                                 //
 
-        const size_t avgSampleSize{m_sampleGroups[0].globalMetrics().size / m_SAMPLE_GROUP_SIZE};
+        const size_t avgSampleSize{m_sampleGroups[0].globalMetrics().size / SAMPLE_GROUP_SIZE};
         double min = m_sampleGroups[0].globalMetrics().min;
         double max = m_sampleGroups[0].globalMetrics().max;
         for (const auto &sampleGroup : m_sampleGroups)
@@ -98,140 +155,195 @@ void Study::printStats()
                       << '\n';                                                    //
         }
 
-        float ratio = static_cast<float>(m_sampleLB.metrics().size) / m_currentCount * 100.0;
-        std::cout << "LB values for: " << m_TIMING_LB << '\n';
-        if (m_sampleLB.metrics().size == 0)
+        float ratio = static_cast<float>(bd.sampleLB.metrics().size) / state.currentCount * 100.0;
+        std::cout << "LB values for: " << bd.TIMING_LB << '\n';
+        if (bd.sampleLB.metrics().size == 0)
             std::cout << "\tEmpty.\n";
         else
         {
-            std::cout << std::fixed << std::setprecision(3)                               //
-                      << "\tMean: " << m_sampleLB.metrics().mean                          //
-                      << "\tStdDev: " << m_sampleLB.metrics().stdDev                      //
-                      << "\tSize: " << m_sampleLB.metrics().size << " (" << ratio << "%)" //
-                      << "\tMin: " << m_sampleLB.metrics().min                            //
-                      << "\tMax: " << m_sampleLB.metrics().max                            //
-                      << '\n';                                                            //
+            std::cout << std::fixed << std::setprecision(3)                                //
+                      << "\tMean: " << bd.sampleLB.metrics().mean                          //
+                      << "\tStdDev: " << bd.sampleLB.metrics().stdDev                      //
+                      << "\tSize: " << bd.sampleLB.metrics().size << " (" << ratio << "%)" //
+                      << "\tMin: " << bd.sampleLB.metrics().min                            //
+                      << "\tMax: " << bd.sampleLB.metrics().max                            //
+                      << '\n';                                                             //
         }
 
-        ratio = static_cast<float>(m_sampleUB.metrics().size) / m_currentCount * 100.0;
-        std::cout << "UB values for: " << m_TIMING_UB << '\n';
-        if (m_sampleUB.metrics().size == 0)
+        ratio = static_cast<float>(bd.sampleUB.metrics().size) / state.currentCount * 100.0;
+        std::cout << "UB values for: " << bd.TIMING_UB << '\n';
+        if (bd.sampleUB.metrics().size == 0)
             std::cout << "\tEmpty.\n";
         else
         {
-            std::cout << std::fixed << std::setprecision(3)                               //
-                      << "\tMean: " << m_sampleUB.metrics().mean                          //
-                      << "\tStdDev: " << m_sampleUB.metrics().stdDev                      //
-                      << "\tSize: " << m_sampleUB.metrics().size << " (" << ratio << "%)" //
-                      << "\tMin: " << m_sampleUB.metrics().min                            //
-                      << "\tMax: " << m_sampleUB.metrics().max                            //
-                      << '\n';                                                            //
+            std::cout << std::fixed << std::setprecision(3)                                //
+                      << "\tMean: " << bd.sampleUB.metrics().mean                          //
+                      << "\tStdDev: " << bd.sampleUB.metrics().stdDev                      //
+                      << "\tSize: " << bd.sampleUB.metrics().size << " (" << ratio << "%)" //
+                      << "\tMin: " << bd.sampleUB.metrics().min                            //
+                      << "\tMax: " << bd.sampleUB.metrics().max                            //
+                      << '\n';                                                             //
         }
 
         std::cout << '\n';
     }
 }
 
-void Study::saveMetrics() const
+void Study::saveDataRaw(const std::string directory, const std::vector<SampleGroup<double>> &data)
 {
-    if ((m_currentCount != 0 and m_currentCount % m_SAVE_FREQ == 0) or
-        m_currentCount + 1 == m_totalCount() or not m_continueRunning)
+    std::filesystem::create_directory(directory);
+    std::filesystem::create_directory(directory + "/Raw");
+    for (unsigned byteBlock{0}; byteBlock < AES_BLOCK_SIZE; ++byteBlock)
     {
-        std::cout << "Writing Metrics Data: " << m_currentCount << "\n\n";
-        const std::string root{m_SAVE_FOLDER_PATH + "/" + std::to_string(m_currentCount)};
-        std::filesystem::create_directory(root);
-        for (unsigned i{0}; i < m_AES_BLOCK_SIZE; ++i)
-        {
-            const std::string filepath{root + "/" + std::to_string(i) + ".csv"};
-            std::ofstream out;
-            out.open(filepath);
-            if (!out)
-                throw std::runtime_error("Saving Metrics Data | Could not create file: " +
-                                         filepath);
-
-            constexpr std::string_view header{
-                "Value, Mean, StdDev, Size, StandardizedMean, StandardizedStdDev, Min, Max\n"};
-            out << header;
-            for (unsigned byteValue = 0; byteValue < m_sampleGroups[i].size(); ++byteValue)
-            {
-                SampleMetrics metrics = m_sampleGroups[i].localMetrics(byteValue);
-                SampleMetrics standardizedMetrics =
-                    m_sampleGroups[i].standardizeLocalMetrics(byteValue);
-                out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", " //
-                    << std::setprecision(8) << std::fixed                        //
-                    << metrics.mean << ", "                                      //
-                    << metrics.stdDev << ", "                                    //
-                    << metrics.size << ", "                                      //
-                    << standardizedMetrics.mean << ", "                          //
-                    << standardizedMetrics.stdDev << ", "                        //
-                    << metrics.min << ", "                                       //
-                    << metrics.max << "\n";                                      //
-            }
-            out.close();
-        }
-    }
-}
-
-void Study::saveRaw() const
-{
-    std::cout << "Writing Raw Data: " << m_currentCount << "\n\n";
-    std::filesystem::create_directory(m_SAVE_FOLDER_PATH + "/Raw");
-    for (unsigned byteBlock{0}; byteBlock < m_AES_BLOCK_SIZE; ++byteBlock)
-    {
-        std::string currentLevelPath{m_SAVE_FOLDER_PATH + "/Raw/Byte_" + std::to_string(byteBlock)};
+        // TODO: Threads
+        std::string currentLevelPath{directory + "/Raw/Byte_" + std::to_string(byteBlock)};
         std::filesystem::create_directory(currentLevelPath);
-        const auto &sampleGroup{m_sampleGroups[byteBlock]};
+        const auto &sampleGroup{data[byteBlock]};
         for (unsigned value{0}; value < sampleGroup.size(); ++value)
         {
             std::ofstream out;
             out.open(currentLevelPath + "/Value_" + std::to_string(value) + ".csv");
             if (!out)
-                throw std::runtime_error("Saving Raw Data | Could not create file: " +
-                                         currentLevelPath + "/Value_" + std::to_string(value));
+                throw std::runtime_error(
+                    "Saving Raw Data | Could not create file: " + currentLevelPath + "/Value_" +
+                    std::to_string(value) + ".csv");
 
-            const auto &data{sampleGroup[value].data()};
+            const auto &sampleData{sampleGroup[value].data()};
             out << "INDICES, VALUES, SIZE\n";
-            if (data.size() > 0)
+            if (sampleData.size() > 0)
             {
-                out << 0 << ", " << data[0] << ", " << data.size() << '\n';
+                out << 0 << ", " << sampleData[0] << ", " << sampleData.size() << '\n';
             }
-            for (size_t i{1}; i < data.size(); ++i)
+            for (size_t i{1}; i < sampleData.size(); ++i)
             {
-                out << i << ", " << data[i] << ",\n";
+                out << i << ", " << sampleData[i] << ",\n";
             }
         }
     }
 }
+void Study::loadPreviousStudyData(const std::string &prevRawDir)
+{
+    for (unsigned byteBlock{0}; byteBlock < AES_BLOCK_SIZE; ++byteBlock)
+    {
+        // TODO: Threads
+        std::string currentLevelPath{prevRawDir + "/Byte_" + std::to_string(byteBlock)};
+        for (unsigned byteValue{0}; byteValue < SAMPLE_GROUP_SIZE; ++byteValue)
+        {
+            std::ifstream in;
+            in.open(currentLevelPath + "/Value_" + std::to_string(byteValue) + ".csv");
+            if (!in)
+                throw std::runtime_error(
+                    "Loading from Data | Could not create open file: " + currentLevelPath +
+                    "/Value_" + std::to_string(byteValue) + ".csv");
+            // Example file:
+            // INDICES, VALUES, SIZE
+            // 0, 972, 65085
+            // 1, 989,
+            // 2, 972,
+            // 3, 964,
+            // 4, 972,
+            std::vector<double> sampleData;
+            std::string header;
+            std::getline(in, header);
 
-Study::Study(ServerConnection &&connection, const volatile sig_atomic_t &continueRunningFlag,
-             const Data &data, const Display &display, const TimingBoundary &bounds)
-    : m_DESIRED_MEAN_SAMPLE_SIZE{data.desiredMeanSampleSize},
-      m_DATA_PACKET_LENGTH{data.dataPacketLength}, m_connection{std::move(connection)},
-      m_continueRunning{continueRunningFlag}, m_SAVE_FOLDER_PATH{display.savePath},
-      m_PRINT_FREQ{display.printFreq}, m_SAVE_FREQ{display.saveFreq}, m_TIMING_LB{bounds.lb},
-      m_TIMING_UB{bounds.ub}
+            // first line with values:
+            size_t index, value, size;
+            char comma1, comma2;
+            in >> index >> comma1 >> value >> comma2 >> size;
+            sampleData.reserve(size);
+            sampleData.push_back(value);
+            for (size_t i{1}; i < size; ++i)
+            {
+                in >> index >> comma1 >> value >> comma2;
+                sampleData.push_back(value);
+            }
+            m_sampleGroups[byteBlock].insert(byteValue, sampleData.begin(), sampleData.end());
+        }
+    }
+}
+
+void Study::saveDataMetrics(const std::string directoryName,
+                            const std::vector<SampleGroup<double>> &data)
+{
+    std::filesystem::create_directory(directoryName);
+    for (unsigned i{0}; i < AES_BLOCK_SIZE; ++i)
+    {
+        const std::string filepath{directoryName + "/" + std::to_string(i) + ".csv"};
+        std::ofstream out;
+        out.open(filepath);
+        if (!out)
+            throw std::runtime_error("Saving Metrics Data | Could not create file: " + filepath);
+
+        constexpr std::string_view header{
+            "Value, Mean, StdDev, Size, StandardizedMean, StandardizedStdDev, Min, Max\n"};
+        out << header;
+        for (unsigned byteValue = 0; byteValue < data[i].size(); ++byteValue)
+        {
+            SampleMetrics metrics = data[i].localMetrics(byteValue);
+            SampleMetrics standardizedMetrics = data[i].standardizeLocalMetrics(byteValue);
+            out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", " //
+                << std::setprecision(8) << std::fixed                        //
+                << metrics.mean << ", "                                      //
+                << metrics.stdDev << ", "                                    //
+                << metrics.size << ", "                                      //
+                << standardizedMetrics.mean << ", "                          //
+                << standardizedMetrics.stdDev << ", "                        //
+                << metrics.min << ", "                                       //
+                << metrics.max << "\n";                                      //
+        }
+        out.close();
+    }
+}
+
+bool Study::isSaveTime(const StudyContext &ctx) const
+{
+    return (ctx.state.currentCount != 0 and ctx.state.currentCount % ctx.display.SAVE_FREQ == 0) or
+           ctx.state.currentCount + 1 == m_totalCount(ctx) or not m_continueRunning;
+}
+
+Study::Study(ServerConnection &&connection, volatile const int &continueRunningFlag,
+             size_t dataPacketLength)
+    : m_DATA_PACKET_LENGTH{dataPacketLength}, m_connection{std::move(connection)},
+      m_continueRunning{continueRunningFlag}
 {
 }
 
-void Study::start()
+void Study::start(size_t desiredAvgSampleSize, const DisplayParams &displayParams,
+                  const TimingBoundaryParams &bounds)
 {
     if (m_connection.connect())
     {
-        clock_gettime(CLOCK_MONOTONIC, &m_startStudyTime);
-        m_prevPassTime = m_startStudyTime;
-        for (m_currentCount = 0; m_currentCount < m_totalCount() && m_continueRunning;
-             ++m_currentCount)
+        StudyContext ctx(desiredAvgSampleSize, displayParams, bounds);
+        StudyContext::State &state = ctx.state;
+        StudyContext::Display &display = ctx.display;
+
+        for (auto &sampleGroup : m_sampleGroups)
         {
-            this->printStats();
-            this->saveMetrics();
+            constexpr float assumedDeviationFactor = 1.15;
+            sampleGroup.reserveForAll(ctx.AVG_SAMPLE_SIZE * assumedDeviationFactor);
+        }
+
+        clock_gettime(CLOCK_MONOTONIC, &state.startStudyTime);
+        state.prevPassTime = state.startStudyTime;
+        for (state.currentCount = 0; state.currentCount < m_totalCount(ctx) && m_continueRunning;
+             ++state.currentCount)
+        {
+            this->printStats(ctx);
+            if (isSaveTime(ctx))
+            {
+                std::cout << "Writing Metrics Data: " << state.currentCount << "\n\n";
+                const std::string saveDir{display.SAVE_FOLDER_PATH + "/" +
+                                          std::to_string(state.currentCount)};
+                Study::saveDataMetrics(saveDir, m_sampleGroups);
+            }
 
             std::vector<std::byte> studyPlaintext = m_constructRandomVector(m_DATA_PACKET_LENGTH);
-            const auto result{m_connection.transmit(m_currentId, studyPlaintext)};
+            const auto result{m_connection.transmit(state.currentId, studyPlaintext)};
             if (not result)
             {
-                std::cerr << "Lost packet with id:\t" << m_currentId << " Loss rate: "
-                          << static_cast<double>(++m_lostNetworkPackages) /
-                                 (static_cast<double>(m_currentCount + 1))
+                std::cerr << "Lost packet with id:\t" << state.currentId << " Loss rate: "
+                          << static_cast<double>(++state.lostNetworkPackages) /
+                                 (static_cast<double>(state.currentCount + 1))
                           << std::endl;
                 // restart the connection
                 m_connection.closeConnection();
@@ -240,16 +352,22 @@ void Study::start()
             }
             const double timing{TimingProcessing::computeDT<double>(
                 result->inbound_t1, result->inbound_t2, result->outbound_t1, result->outbound_t2)};
-            if (not filterCurrentValue(timing))
+            if (not filterCurrentValue(ctx, timing))
             {
-                m_currentId++;
+                state.currentId++;
                 for (unsigned byteIndex{0};
-                     byteIndex < m_AES_BLOCK_SIZE and byteIndex < m_DATA_PACKET_LENGTH; ++byteIndex)
+                     byteIndex < AES_BLOCK_SIZE and byteIndex < m_DATA_PACKET_LENGTH; ++byteIndex)
                     m_sampleGroups[byteIndex].insert(static_cast<size_t>(studyPlaintext[byteIndex]),
                                                      timing);
             }
         }
-        this->saveMetrics();
-        this->saveRaw();
+
+        std::cout << "Writing Final Metrics Data: " << state.currentCount << "\n\n";
+        const std::string saveDir{display.SAVE_FOLDER_PATH + "/" + "Final"};
+        Study::saveDataMetrics(saveDir, m_sampleGroups);
+
+        std::cout << "Writing Raw Data: " << state.currentCount << "\n\n";
+        Study::saveDataRaw(display.SAVE_FOLDER_PATH, m_sampleGroups);
     }
 }
+const std::vector<SampleGroup<double>> &Study::data() const { return m_sampleGroups; }

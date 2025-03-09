@@ -60,21 +60,19 @@ int main(int argc, char **argv)
         }
     }
 
-    constexpr Study::Data data{
-        .dataPacketLength = 512,
-        .desiredMeanSampleSize = 4048 * 4,
-    };
-    const Study::Display display{
+    constexpr size_t dataPacketLength = 512;
+    constexpr size_t desiredAvgSampleSize = 4048 * 4;
+    const Study::DisplayParams display{
         .printFreq = 200'000,
         .saveFreq = 2'000'000,
         .savePath = saveFolderPath,
     };
-    constexpr Study::TimingBoundary boundary{
+    constexpr Study::TimingBoundaryParams boundary{
         .lb = 25.0,
         .ub = 3000.0,
     };
-    Study study{std::move(connection), g_continueRunning, data, display, boundary};
-    study.start();
+    Study study{std::move(connection), g_continueRunning, dataPacketLength};
+    study.start(desiredAvgSampleSize, display, boundary);
 
     std::cout << "Exiting..." << std::endl;
     return 0;

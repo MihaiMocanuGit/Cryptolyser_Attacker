@@ -10,65 +10,51 @@
 
 class Study
 {
-    static constexpr unsigned m_AES_BLOCK_SIZE{16};
-    static constexpr unsigned m_SAMPLE_GROUP_SIZE{256};
-
-    const size_t m_DESIRED_MEAN_SAMPLE_SIZE;
-    const size_t m_DATA_PACKET_LENGTH;
-    ServerConnection m_connection;
-    const volatile sig_atomic_t &m_continueRunning;
-    const size_t m_APPROXIMATE_TOTAL_COUNT{m_AES_BLOCK_SIZE * m_SAMPLE_GROUP_SIZE *
-                                           m_DESIRED_MEAN_SAMPLE_SIZE};
-    std::vector<SampleGroup<double>> m_sampleGroups{
-        m_AES_BLOCK_SIZE, SampleGroup<double>{m_SAMPLE_GROUP_SIZE, m_DESIRED_MEAN_SAMPLE_SIZE}};
-
-    size_t m_currentCount{0};
-    size_t m_currentId{0};
-    size_t m_lostNetworkPackages{0};
-    size_t m_ignoredValues{0};
-
-    timespec m_startStudyTime{};
-    timespec m_prevPassTime{.tv_sec = 0, .tv_nsec = 0};
-    size_t m_prevPassPacketCount{0};
-
-    const std::string m_SAVE_FOLDER_PATH;
-    const size_t m_PRINT_FREQ;
-    const size_t m_SAVE_FREQ;
-    const double m_TIMING_LB;
-    SampleData<double> m_sampleLB;
-    const double m_TIMING_UB;
-    SampleData<double> m_sampleUB;
-
-    [[nodiscard]] size_t m_totalCount() const;
-    bool filterCurrentValue(double timing);
-    void printStats();
-    void saveMetrics() const;
-    void saveRaw() const;
-
   public:
-    struct Data
-    {
-        size_t dataPacketLength;
-        size_t desiredMeanSampleSize;
-    };
-
-    struct Display
+    struct DisplayParams
     {
         size_t printFreq;
         size_t saveFreq;
         std::string savePath;
     };
 
-    struct TimingBoundary
+    struct TimingBoundaryParams
     {
         double lb;
         double ub;
     };
+    static constexpr unsigned AES_BLOCK_SIZE{16};
+    static constexpr unsigned SAMPLE_GROUP_SIZE{256};
 
     Study(ServerConnection &&connection, const volatile sig_atomic_t &continueRunningFlag,
-          const Data &data, const Display &display, const TimingBoundary &bounds);
+          size_t dataPacketLength);
+    Study(const Study &) = delete;
+    Study &operator=(const Study &) = delete;
 
-    void start();
+    TimingBoundaryParams calibrate(size_t transmissions);
+    void start(size_t desiredAvgSampleSize, const DisplayParams &display,
+               const TimingBoundaryParams &bounds);
+
+    void loadPreviousStudyData(const std::string &prevRawDir);
+
+    static void saveDataRaw(const std::string directory,
+                            const std::vector<SampleGroup<double>> &data);
+    static void saveDataMetrics(const std::string directoryName,
+                                const std::vector<SampleGroup<double>> &data);
+    const std::vector<SampleGroup<double>> &data() const;
+
+  private:
+    const size_t m_DATA_PACKET_LENGTH;
+    ServerConnection m_connection;
+    const volatile sig_atomic_t &m_continueRunning;
+    std::vector<SampleGroup<double>> m_sampleGroups{AES_BLOCK_SIZE,
+                                                    SampleGroup<double>{SAMPLE_GROUP_SIZE}};
+    struct StudyContext;
+    size_t m_totalCount(const StudyContext &ctx) const;
+    bool filterCurrentValue(StudyContext &ctx, double timing);
+    void printStats(StudyContext &ctx);
+
+    bool isSaveTime(const StudyContext &ctx) const;
 };
 
 #endif // CRYPTOLYSER_ATTACKER_STUDY_HPP
