@@ -18,8 +18,15 @@ namespace
 volatile sig_atomic_t g_continueRunning{true};
 void exitHandler(int signal)
 {
+    static int count = 0;
     (void)signal;
+    if (count > 0)
+    {
+        std::cout << "Forced quit." << std::endl;
+        exit(EXIT_SUCCESS);
+    }
     g_continueRunning = false;
+    count++;
 }
 } // namespace
 
