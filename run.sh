@@ -8,4 +8,4 @@ echo "Setting build options"
 time (cmake -DCMAKE_BUILD_TYPE="$build_type" -S . -B build-"$build_type" && echo "Building $build_type" && cmake --build build-"$build_type")
 
 echo "Running"
-script -c "time (build-"$build_type"/Cryptolyser_Attacker $2 $3 $4)" "$4"_run.log
+time (build-"$build_type"/Cryptolyser_Attacker "$2" "$3" "$4")
