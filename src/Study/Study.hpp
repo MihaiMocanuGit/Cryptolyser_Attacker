@@ -41,7 +41,7 @@ class Study
 
     [[nodiscard]] const std::vector<SampleGroup<double>> &data() const;
 
-    void loadPreviousStudyData(const std::string &prevRawDir);
+    void loadRawStudyData(const std::string &rawDataDir);
 
     static void saveDataRaw(const std::string &directory,
                             const std::vector<SampleGroup<double>> &data);

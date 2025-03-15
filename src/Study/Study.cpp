@@ -255,8 +255,7 @@ void loadByteBlockThread(std::string byteBlockDir, SampleGroup<double> &sampleGr
         std::ifstream in;
         in.open(byteBlockDir + "/Value_" + std::to_string(byteValue) + ".csv");
         if (!in)
-            throw std::runtime_error("Loading from Data | Could not create open file: " +
-                                     byteBlockDir + "/Value_" + std::to_string(byteValue) + ".csv");
+            throw std::runtime_error("Loading from Data | Could not open file: " + byteBlockDir + "/Value_" + std::to_string(byteValue) + ".csv");
         // Example file:
         // INDICES, VALUES, SIZE
         // 0, 972, 65085
@@ -323,14 +322,14 @@ void Study::saveDataMetrics(const std::string &directory,
     }
 }
 
-void Study::loadPreviousStudyData(const std::string &prevRawDir)
+void Study::loadRawStudyData(const std::string &rawDataDir)
 {
     std::vector<std::thread> threads;
     threads.reserve(AES_BLOCK_SIZE);
     for (unsigned byteBlock{0}; byteBlock < AES_BLOCK_SIZE; ++byteBlock)
     {
         // Doesn't use mutexes as every sampleGroup is independent of the other.
-        std::string currentLevelPath{prevRawDir + "/Byte_" + std::to_string(byteBlock)};
+        std::string currentLevelPath{rawDataDir + "/Byte_" + std::to_string(byteBlock)};
         threads.emplace_back(loadByteBlockThread, currentLevelPath,
                              std::ref(m_sampleGroups[byteBlock]));
     }
