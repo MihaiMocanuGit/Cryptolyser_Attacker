@@ -1,0 +1,126 @@
+#include "ServerKeyConnection.hpp"
+
+#include "Cryptolyser_Common/connection_data_types.h"
+
+#include <arpa/inet.h>
+#include <cstring>
+#include <iostream>
+#include <string>
+#include <unistd.h>
+
+constexpr uint32_t ServerKeyConnection::DATA_MAX_SIZE{CONNECTION_DATA_MAX_SIZE};
+
+void ServerKeyConnection::m_closeSocket()
+{
+    close(m_sock);
+    m_isConnectionActive = false;
+}
+
+ServerKeyConnection::ServerKeyConnection(std::string_view ip, uint16_t port)
+    : m_ip{ip}, m_port{port}
+{
+}
+
+bool ServerKeyConnection::connect()
+{
+    m_sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (m_sock < 0)
+    {
+        std::cerr << "Error creating socket" << std::endl;
+        return false;
+    }
+
+    int broadcast{1};
+    // Set the broadcast option on the socket
+    if (setsockopt(m_sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0)
+    {
+        std::cerr << "Error in setting Broadcast option." << std::endl;
+        m_closeSocket();
+        return false;
+    }
+    if (setsockopt(m_sock, SOL_SOCKET, SO_RCVTIMEO, &M_RECV_TIMEOUT, sizeof(M_RECV_TIMEOUT)) < 0)
+    {
+        std::cerr << "Error in setting RECV TIMEOUT option." << std::endl;
+        m_closeSocket();
+        return false;
+    }
+
+    std::memset(&m_receiverAddr, 0, sizeof(m_receiverAddr));
+    m_receiverAddr.sin_family = AF_INET;
+    m_receiverAddr.sin_port = htobe16(m_port);
+
+    m_receiverAddr.sin_addr.s_addr = inet_addr(m_ip.data());
+    m_isConnectionActive = true;
+
+    return true;
+}
+
+std::optional<connection_timing_t>
+    ServerKeyConnection::transmit(uint32_t packet_id,
+                                  const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &key,
+                                  const std::vector<std::byte> &bytes)
+{
+    if (not m_isConnectionActive)
+        return {};
+    if (CONNECTION_DATA_MAX_SIZE < bytes.size())
+    {
+        std::cerr << "Error, too many bytes for a single packet." << std::endl;
+        m_closeSocket();
+        return {};
+    }
+    connection_key_packet_t packet{};
+    packet.packet_id = htobe32(packet_id);
+    std::memcpy(packet.key, key.data(), key.size());
+    packet.data_length = htobe32(bytes.size());
+    if (not bytes.empty())
+        std::memcpy(packet.byte_data, bytes.data(), bytes.size());
+    if (sendto(m_sock, &packet, sizeof(packet), 0,
+               reinterpret_cast<struct sockaddr *>(&m_receiverAddr), sizeof(m_receiverAddr)) < 0)
+    {
+        std::cerr << "Error in sending data packet." << std::endl;
+        m_closeSocket();
+        return {};
+    }
+
+    connection_timing_t responseTimingData{};
+    socklen_t len{sizeof(struct sockaddr_in)};
+    if (recvfrom(m_sock, &responseTimingData, sizeof(responseTimingData), 0,
+                 reinterpret_cast<struct sockaddr *>(&m_receiverAddr), &len) < 0)
+    {
+        std::cerr << "Error in receiving message" << std::endl;
+        if (errno == EWOULDBLOCK)
+        {
+            std::cerr << "Reason: timeout." << std::endl;
+        }
+        m_closeSocket();
+        return {};
+    }
+    responseTimingData.packet_id = be32toh(responseTimingData.packet_id);
+    responseTimingData.inbound_t1 = be64toh(responseTimingData.inbound_t1);
+    responseTimingData.inbound_t2 = be64toh(responseTimingData.inbound_t2);
+    responseTimingData.outbound_t1 = be64toh(responseTimingData.outbound_t1);
+    responseTimingData.outbound_t2 = be64toh(responseTimingData.outbound_t2);
+    return {responseTimingData};
+}
+
+void ServerKeyConnection::closeConnection()
+{
+    m_closeSocket();
+    std::memset(&m_receiverAddr, 0, sizeof(m_receiverAddr));
+}
+
+ServerKeyConnection::ServerKeyConnection(ServerKeyConnection &&ServerKeyConnection) noexcept
+    : m_ip{ServerKeyConnection.m_ip}, m_port{ServerKeyConnection.m_port},
+      m_sock{ServerKeyConnection.m_port}, m_receiverAddr{ServerKeyConnection.m_receiverAddr},
+      m_isConnectionActive{ServerKeyConnection.m_isConnectionActive}
+{
+}
+
+ServerKeyConnection &ServerKeyConnection::operator=(ServerKeyConnection &&rhs) noexcept
+{
+    this->closeConnection();
+    std::swap(*this, rhs);
+    return *this;
+}
+
+ServerKeyConnection::~ServerKeyConnection() { this->closeConnection(); }
