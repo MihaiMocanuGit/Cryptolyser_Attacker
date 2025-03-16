@@ -3,12 +3,16 @@
 
 #include "Cryptolyser_Common/connection_data_types.h"
 
+#include <array>
 #include <cstdint>
+#include <cstring>
+#include <iostream>
 #include <netinet/in.h>
 #include <optional>
 #include <string>
 #include <vector>
 
+template <bool KnownKey>
 class ServerConnection
 {
   private:
@@ -33,10 +37,112 @@ class ServerConnection
 
     bool connect();
 
-    std::optional<connection_timing_t> transmit(uint32_t packet_id,
-                                                const std::vector<std::byte> &bytes);
+    template <bool T = KnownKey>
+    typename std::enable_if<T, std::optional<connection_timing_t>>::type
+        transmit(uint32_t packet_id, const std::array<std::byte, AES_BLOCK_BYTE_SIZE> &key,
+                 const std::vector<std::byte> &bytes);
+
+    template <bool T = not KnownKey>
+    typename std::enable_if<T, std::optional<connection_timing_t>>::type
+        transmit(uint32_t packet_id, const std::vector<std::byte> &bytes);
 
     void closeConnection();
 };
+
+template <bool KnownKey>
+template <bool T>
+typename std::enable_if<T, std::optional<connection_timing_t>>::type
+    ServerConnection<KnownKey>::transmit(uint32_t packet_id, const std::array<std::byte, 16> &key,
+                                         const std::vector<std::byte> &bytes)
+{
+    if (not m_isConnectionActive)
+        return {};
+    if (CONNECTION_DATA_MAX_SIZE < bytes.size())
+    {
+        std::cerr << "Error, too many bytes for a single packet." << std::endl;
+        m_closeSocket();
+        return {};
+    }
+    connection_key_packet_t packet{};
+    packet.packet_id = htobe32(packet_id);
+    packet.data_length = htobe32(bytes.size());
+    std::memcpy(packet.key, key.data(), AES_BLOCK_BYTE_SIZE);
+    if (not bytes.empty())
+        std::memcpy(packet.byte_data, bytes.data(), bytes.size());
+    if (sendto(m_sock, &packet, sizeof(packet), 0,
+               reinterpret_cast<struct sockaddr *>(&m_receiverAddr), sizeof(m_receiverAddr)) < 0)
+    {
+        std::cerr << "Error in sending data packet." << std::endl;
+        m_closeSocket();
+        return {};
+    }
+
+    connection_timing_t responseTimingData{};
+    socklen_t len{sizeof(struct sockaddr_in)};
+    if (recvfrom(m_sock, &responseTimingData, sizeof(responseTimingData), 0,
+                 reinterpret_cast<struct sockaddr *>(&m_receiverAddr), &len) < 0)
+    {
+        std::cerr << "Error in receiving message" << std::endl;
+        if (errno == EWOULDBLOCK)
+        {
+            std::cerr << "Reason: timeout." << std::endl;
+        }
+        m_closeSocket();
+        return {};
+    }
+    responseTimingData.packet_id = be32toh(responseTimingData.packet_id);
+    responseTimingData.inbound_t1 = be64toh(responseTimingData.inbound_t1);
+    responseTimingData.inbound_t2 = be64toh(responseTimingData.inbound_t2);
+    responseTimingData.outbound_t1 = be64toh(responseTimingData.outbound_t1);
+    responseTimingData.outbound_t2 = be64toh(responseTimingData.outbound_t2);
+    return {responseTimingData};
+}
+
+template <bool KnownKey>
+template <bool T>
+typename std::enable_if<T, std::optional<connection_timing_t>>::type
+    ServerConnection<KnownKey>::transmit(uint32_t packet_id, const std::vector<std::byte> &bytes)
+{
+    if (not m_isConnectionActive)
+        return {};
+    if (CONNECTION_DATA_MAX_SIZE < bytes.size())
+    {
+        std::cerr << "Error, too many bytes for a single packet." << std::endl;
+        m_closeSocket();
+        return {};
+    }
+    connection_packet_t packet{};
+    packet.packet_id = htobe32(packet_id);
+    packet.data_length = htobe32(bytes.size());
+    if (not bytes.empty())
+        std::memcpy(packet.byte_data, bytes.data(), bytes.size());
+    if (sendto(m_sock, &packet, sizeof(packet), 0,
+               reinterpret_cast<struct sockaddr *>(&m_receiverAddr), sizeof(m_receiverAddr)) < 0)
+    {
+        std::cerr << "Error in sending data packet." << std::endl;
+        m_closeSocket();
+        return {};
+    }
+
+    connection_timing_t responseTimingData{};
+    socklen_t len{sizeof(struct sockaddr_in)};
+    if (recvfrom(m_sock, &responseTimingData, sizeof(responseTimingData), 0,
+                 reinterpret_cast<struct sockaddr *>(&m_receiverAddr), &len) < 0)
+    {
+        std::cerr << "Error in receiving message" << std::endl;
+        if (errno == EWOULDBLOCK)
+        {
+            std::cerr << "Reason: timeout." << std::endl;
+        }
+        m_closeSocket();
+        return {};
+    }
+    responseTimingData.packet_id = be32toh(responseTimingData.packet_id);
+    responseTimingData.inbound_t1 = be64toh(responseTimingData.inbound_t1);
+    responseTimingData.inbound_t2 = be64toh(responseTimingData.inbound_t2);
+    responseTimingData.outbound_t1 = be64toh(responseTimingData.outbound_t1);
+    responseTimingData.outbound_t2 = be64toh(responseTimingData.outbound_t2);
+    return {responseTimingData};
+}
 
 #endif // CRYPTOLYSER_ATTACKER_SERVERCONNECTION_HPP

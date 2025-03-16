@@ -8,17 +8,24 @@
 #include <string>
 #include <unistd.h>
 
-constexpr uint32_t ServerConnection::DATA_MAX_SIZE{CONNECTION_DATA_MAX_SIZE};
+template <bool KnownKey>
+constexpr uint32_t ServerConnection<KnownKey>::DATA_MAX_SIZE{CONNECTION_DATA_MAX_SIZE};
 
-void ServerConnection::m_closeSocket()
+template <bool KnownKey>
+void ServerConnection<KnownKey>::m_closeSocket()
 {
     close(m_sock);
     m_isConnectionActive = false;
 }
 
-ServerConnection::ServerConnection(std::string_view ip, uint16_t port) : m_ip{ip}, m_port{port} {}
+template <bool KnownKey>
+ServerConnection<KnownKey>::ServerConnection(std::string_view ip, uint16_t port)
+    : m_ip{ip}, m_port{port}
+{
+}
 
-bool ServerConnection::connect()
+template <bool KnownKey>
+bool ServerConnection<KnownKey>::connect()
 {
     m_sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (m_sock < 0)
@@ -52,69 +59,35 @@ bool ServerConnection::connect()
     return true;
 }
 
-std::optional<connection_timing_t> ServerConnection::transmit(uint32_t packet_id,
-                                                              const std::vector<std::byte> &bytes)
-{
-    if (not m_isConnectionActive)
-        return {};
-    if (CONNECTION_DATA_MAX_SIZE < bytes.size())
-    {
-        std::cerr << "Error, too many bytes for a single packet." << std::endl;
-        m_closeSocket();
-        return {};
-    }
-    connection_packet_t packet{};
-    packet.packet_id = htobe32(packet_id);
-    packet.data_length = htobe32(bytes.size());
-    if (not bytes.empty())
-        std::memcpy(packet.byte_data, bytes.data(), bytes.size());
-    if (sendto(m_sock, &packet, sizeof(packet), 0,
-               reinterpret_cast<struct sockaddr *>(&m_receiverAddr), sizeof(m_receiverAddr)) < 0)
-    {
-        std::cerr << "Error in sending data packet." << std::endl;
-        m_closeSocket();
-        return {};
-    }
-
-    connection_timing_t responseTimingData{};
-    socklen_t len{sizeof(struct sockaddr_in)};
-    if (recvfrom(m_sock, &responseTimingData, sizeof(responseTimingData), 0,
-                 reinterpret_cast<struct sockaddr *>(&m_receiverAddr), &len) < 0)
-    {
-        std::cerr << "Error in receiving message" << std::endl;
-        if (errno == EWOULDBLOCK)
-        {
-            std::cerr << "Reason: timeout." << std::endl;
-        }
-        m_closeSocket();
-        return {};
-    }
-    responseTimingData.packet_id = be32toh(responseTimingData.packet_id);
-    responseTimingData.inbound_t1 = be64toh(responseTimingData.inbound_t1);
-    responseTimingData.inbound_t2 = be64toh(responseTimingData.inbound_t2);
-    responseTimingData.outbound_t1 = be64toh(responseTimingData.outbound_t1);
-    responseTimingData.outbound_t2 = be64toh(responseTimingData.outbound_t2);
-    return {responseTimingData};
-}
-
-void ServerConnection::closeConnection()
+template <bool KnownKey>
+void ServerConnection<KnownKey>::closeConnection()
 {
     m_closeSocket();
     std::memset(&m_receiverAddr, 0, sizeof(m_receiverAddr));
 }
 
-ServerConnection::ServerConnection(ServerConnection &&serverConnection) noexcept
+template <bool KnownKey>
+ServerConnection<KnownKey>::ServerConnection(ServerConnection &&serverConnection) noexcept
     : m_ip{serverConnection.m_ip}, m_port{serverConnection.m_port}, m_sock{serverConnection.m_port},
       m_receiverAddr{serverConnection.m_receiverAddr},
       m_isConnectionActive{serverConnection.m_isConnectionActive}
 {
 }
 
-ServerConnection &ServerConnection::operator=(ServerConnection &&rhs) noexcept
+template <bool KnownKey>
+ServerConnection<KnownKey> &
+    ServerConnection<KnownKey>::operator=(ServerConnection<KnownKey> &&rhs) noexcept
 {
     this->closeConnection();
     std::swap(*this, rhs);
     return *this;
 }
 
-ServerConnection::~ServerConnection() { this->closeConnection(); }
+template <bool KnownKey>
+ServerConnection<KnownKey>::~ServerConnection()
+{
+    this->closeConnection();
+}
+
+template class ServerConnection<true>;
+template class ServerConnection<false>;
