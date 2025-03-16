@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 
     const std::string_view ip{argv[1]};
     const uint16_t port{static_cast<uint16_t>(std::stoi(argv[2]))};
-    ServerConnection connection{ip, port};
+    ServerConnection<true> connection{ip, port};
 
     struct sigaction sigactionExit{};
     sigactionExit.sa_handler = exitHandler;
@@ -60,21 +60,6 @@ int main(int argc, char **argv)
         }
     }
 
-    constexpr size_t dataPacketLength = 512;
-    constexpr size_t desiredAvgSampleSize = 4048 * 4;
-    const Study::DisplayParams display{
-        .printFreq = 200'000,
-        .saveFreq = 2'000'000,
-        .savePath = saveFolderPath,
-    };
-
-    Study study{std::move(connection), g_continueRunning, dataPacketLength};
-    std::cout << "Calibrating bounds..." << std::endl;
-    Study::TimingBoundaryParams computedBd = study.calibrate(saveFolderPath);
-    std::cout << "Computed bounds: " << computedBd.lb << ", " << computedBd.ub << std::endl;
-    std::cout << "Starting study..." << std::endl;
-
-    study.start(desiredAvgSampleSize, display, computedBd);
 
     std::cout << "Exiting..." << std::endl;
     return 0;
