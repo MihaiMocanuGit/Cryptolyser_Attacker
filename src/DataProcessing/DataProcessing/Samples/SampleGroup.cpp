@@ -19,16 +19,16 @@ void SampleGroup<Real_t>::m_updateGlobalMetrics(SampleMetrics<Real_t> oldLocalMe
     Real_t sum_m{oldLocalMetrics.sum};
     Real_t u_m{oldLocalMetrics.mean};
     Real_t v_m{oldLocalMetrics.variance};
-    Real_t min_m{oldLocalMetrics.min};
-    Real_t max_m{oldLocalMetrics.max};
+    [[maybe_unused]] Real_t min_m{oldLocalMetrics.min};
+    [[maybe_unused]] Real_t max_m{oldLocalMetrics.max};
 
     // New local sample metrics.
     size_t pi_prime_m{newLocalMetrics.size};
     Real_t sum_prime_m{newLocalMetrics.sum};
     Real_t u_prime_m{newLocalMetrics.mean};
     Real_t v_prime_m{newLocalMetrics.variance};
-    Real_t min_prime_m{oldLocalMetrics.min};
-    Real_t max_prime_m{oldLocalMetrics.max};
+    Real_t min_prime_m{newLocalMetrics.min};
+    Real_t max_prime_m{newLocalMetrics.max};
 
     // Updated global metrics.
     size_t n_prime{n - pi_m + pi_prime_m};
