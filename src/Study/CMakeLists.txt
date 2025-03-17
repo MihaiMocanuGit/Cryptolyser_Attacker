@@ -1,13 +1,15 @@
-add_subdirectory(TimingData)
-add_subdirectory(Gatherer)
-add_subdirectory(Logger)
-add_subdirectory(Saver)
+add_subdirectory(Study/TimingData)
+add_subdirectory(Study/Gatherer)
+add_subdirectory(Study/Logger)
+add_subdirectory(Study/Saver)
 
 add_library(Study STATIC
-        Study.hpp Study.cpp)
-target_link_libraries(Study INTERFACE
+        Study/Study.hpp Study/Study.cpp)
+target_link_libraries(Study PUBLIC
         TimingData
         Gatherer
         Logger
         Saver
 )
+target_include_directories(Study
+        PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
