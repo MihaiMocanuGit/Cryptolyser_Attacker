@@ -1,0 +1,294 @@
+#include "SaveLoad.hpp"
+
+#include <format>
+#include <fstream>
+#include <thread>
+
+namespace SaveLoad
+{
+void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
+                                const SampleGroup<double> &sampleGroup)
+{
+    std::filesystem::path directory = filename;
+    directory.remove_filename();
+    std::filesystem::create_directories(directory);
+
+    constexpr std::string_view CSV_HEADER{
+        "Value, Mean, StdDev, Size, StandardizedMean, StandardizedStdDev, Min, Max\n"};
+    std::ofstream out;
+    out.open(filename);
+    if (!out)
+        throw std::runtime_error(
+            "Saving Metrics From Sample Group ERROR | Could not create file: " + filename.string());
+    out << CSV_HEADER;
+    for (unsigned byteValue = 0; byteValue < sampleGroup.size(); ++byteValue)
+    {
+        SampleMetrics metrics = sampleGroup.localMetrics(byteValue);
+        SampleMetrics standardizedMetrics = sampleGroup.standardizeLocalMetrics(byteValue);
+        out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", " //
+            << std::setprecision(8) << std::fixed                        //
+            << metrics.mean << ", "                                      //
+            << metrics.stdDev << ", "                                    //
+            << metrics.size << ", "                                      //
+            << standardizedMetrics.mean << ", "                          //
+            << standardizedMetrics.stdDev << ", "                        //
+            << metrics.min << ", "                                       //
+            << metrics.max << "\n";                                      //
+    }
+    out.close();
+}
+
+template <bool KnownKey>
+void saveMetricsFromTimingData(const std::filesystem::path &directory,
+                               const TimingData<KnownKey> &timingData)
+{
+    std::filesystem::create_directories(directory);
+    constexpr unsigned NO_THREADS = 8;
+    std::vector<std::thread> threads;
+    threads.reserve(NO_THREADS);
+    const unsigned FILES_PER_THREAD = timingData.blockTimings.size() / NO_THREADS;
+    const unsigned REMAINING_FILES = timingData.blockTimings.size() % NO_THREADS;
+
+    auto threadBlock = [&](unsigned threadNo, unsigned filesNo)
+    {
+        for (unsigned file{0}; file < filesNo; ++file)
+        {
+            const unsigned byteBlock = file + threadNo * filesNo;
+            const std::filesystem::path filename =
+                directory / ("Byte_" + std::to_string(byteBlock) + ".csv");
+            saveMetricsFromSampleGroup(filename, timingData.blockTimings[byteBlock]);
+        }
+    };
+
+    for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
+        threads.emplace_back(threadBlock, thread, FILES_PER_THREAD);
+    // The last thread will also be responsible for the remaining number files.
+    threads.emplace_back(threadBlock, NO_THREADS - 1, FILES_PER_THREAD + REMAINING_FILES);
+
+    for (unsigned thread{0}; thread < NO_THREADS; ++thread)
+        threads[thread].join();
+}
+
+void saveRawFromSampleData(const std::filesystem::path &filename,
+                           const SampleData<double> &sampleData)
+{
+    std::filesystem::path directory = filename;
+    directory.remove_filename();
+    std::filesystem::create_directories(directory);
+
+    constexpr std::string_view CSV_HEADER{"Index, Value, Mean, StdDev, Size, Min, Max\n"};
+    std::ofstream out;
+    out.open(filename);
+    if (!out)
+        throw std::runtime_error("Saving Raw From Sample Data ERROR | Could not create file: " +
+                                 filename.string());
+    out << CSV_HEADER;
+
+    if (not sampleData.data().empty())
+        out << "0," << std::format("{}", sampleData.data()[0]) << ',';
+    else
+        out << ",,";
+    out << sampleData.metrics().mean << ',' << sampleData.metrics().stdDev << ','
+        << sampleData.metrics().size << ',' << sampleData.metrics().min << ','
+        << sampleData.metrics().max << '\n';
+
+    for (size_t i{1}; i < sampleData.data().size(); ++i)
+        out << i << ',' << std::format("{}", sampleData.data()[i]) << '\n';
+}
+
+void loadRawFromSampleData(const std::filesystem::path &filename, SampleData<double> &sampleData)
+{
+    std::ifstream in;
+    in.open(filename);
+    if (!in)
+        throw std::runtime_error("Loading from SampleData ERROR | Could not open file: " +
+                                 filename.string());
+    // Example file:
+    // Value, Mean, StdDev, Size, Min, Max
+    // 0,972,975,32,7664,950,1000
+    // 1,989
+    // 2,972
+    // 3,964
+    // 4,972
+    std::string header;
+    std::getline(in, header);
+
+    // first line with values:
+    std::string line;
+    std::getline(in, line);
+    const size_t firstComma = line.find(',');
+    const size_t secondComma = line.find(',', firstComma + 1);
+    const size_t thirdComma = line.find(',', secondComma + 1);
+    const size_t fourthComma = line.find(',', thirdComma + 1);
+    const size_t fifthComma = line.find(',', fourthComma + 1);
+
+    const size_t size = std::stoull(line.substr(fourthComma + 1, fifthComma - (fourthComma + 1)));
+    // the first value needs to be extracted with special care as there exists additional data on
+    // this line
+    if (size > 0)
+    {
+        const double firstValue =
+            std::stod(line.substr(firstComma + 1, secondComma - (firstComma + 1)));
+        sampleData.insert(firstValue);
+    }
+
+    for (size_t i{1}; i < size; ++i)
+    {
+        size_t index;
+        char comma;
+        double value;
+        in >> index >> comma >> value;
+        sampleData.insert(value);
+    }
+}
+
+void saveRawFromSampleGroup(const std::filesystem::path &directory,
+                            const SampleGroup<double> &sampleGroup)
+{
+    std::filesystem::create_directories(directory);
+    constexpr unsigned NO_THREADS = 8;
+    std::vector<std::thread> threads;
+    threads.reserve(NO_THREADS);
+    const unsigned FILES_PER_THREAD = sampleGroup.size() / NO_THREADS;
+    const unsigned REMAINING_FILES = sampleGroup.size() % NO_THREADS;
+
+    auto threadBlock = [&](unsigned threadNo, unsigned filesNo)
+    {
+        for (unsigned file{0}; file < filesNo; ++file)
+        {
+            const unsigned byteValue = file + threadNo * filesNo;
+            const std::filesystem::path filename =
+                directory / ("Value_" + std::to_string(byteValue) + ".csv");
+            saveRawFromSampleData(filename, sampleGroup[byteValue]);
+        }
+    };
+
+    for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
+        threads.emplace_back(threadBlock, thread, FILES_PER_THREAD);
+    // The last thread will also be responsible for the remaining number files.
+    threads.emplace_back(threadBlock, NO_THREADS - 1, FILES_PER_THREAD + REMAINING_FILES);
+
+    for (unsigned thread{0}; thread < NO_THREADS; ++thread)
+        threads[thread].join();
+}
+
+void loadRawFromSampleGroup(const std::filesystem::path &directory,
+                            SampleGroup<double> &sampleGroup)
+{
+    constexpr unsigned NO_THREADS = 8;
+    std::vector<std::thread> threads;
+    threads.reserve(NO_THREADS);
+    const unsigned FILES_PER_THREAD = sampleGroup.size() / NO_THREADS;
+    const unsigned REMAINING_FILES = sampleGroup.size() % NO_THREADS;
+
+    auto threadBlock = [&](unsigned threadNo, unsigned filesNo)
+    {
+        for (unsigned file{0}; file < filesNo; ++file)
+        {
+            const unsigned byteValue = file + threadNo * filesNo;
+            const std::filesystem::path filename =
+                directory / ("Value_" + std::to_string(byteValue) + ".csv");
+            SampleData<double> result{};
+            loadRawFromSampleData(filename, result);
+            sampleGroup.insert(byteValue, result.begin(), result.end());
+        }
+    };
+
+    for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
+        threads.emplace_back(threadBlock, thread, FILES_PER_THREAD);
+    // The last thread will also be responsible for the remaining number of files.
+    threads.emplace_back(threadBlock, NO_THREADS - 1, FILES_PER_THREAD + REMAINING_FILES);
+
+    for (unsigned thread{0}; thread < NO_THREADS; ++thread)
+        threads[thread].join();
+}
+
+template <bool KnownKey>
+void saveRawFromTimingData(const std::filesystem::path &directory,
+                           const TimingData<KnownKey> &timingData)
+{
+    std::filesystem::create_directories(directory);
+    constexpr unsigned NO_THREADS = 8;
+    std::vector<std::thread> threads;
+    threads.reserve(NO_THREADS);
+    const unsigned DIRS_PER_THREAD = timingData.blockTimings.size() / NO_THREADS;
+    const unsigned REMAINING_DIRS = timingData.blockTimings.size() % NO_THREADS;
+
+    auto threadBlock = [&](unsigned threadNo, unsigned dirsNo)
+    {
+        for (unsigned dir{0}; dir < dirsNo; ++dir)
+        {
+            const unsigned byteValue = dir + threadNo * dirsNo;
+            const std::filesystem::path directoryPath =
+                directory / ("Byte_" + std::to_string(byteValue));
+            saveRawFromSampleGroup(directoryPath, timingData.blockTimings[byteValue]);
+        }
+    };
+
+    for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
+        threads.emplace_back(threadBlock, thread, DIRS_PER_THREAD);
+    // The last thread will also be responsible for the remaining number of directories.
+    threads.emplace_back(threadBlock, NO_THREADS - 1, DIRS_PER_THREAD + REMAINING_DIRS);
+
+    // Storing additional information about the timing data.
+    // This file will be ignored when loadRawFromTimingData is called().
+    std::ofstream out;
+    out.open(directory / "info.txt");
+    out << "Data Size: " << timingData.dataSize() << '\n';
+    if constexpr (KnownKey)
+    {
+        out << "Key: ";
+        for (std::byte byte : timingData.key())
+            out << std::hex << std::uppercase << static_cast<unsigned>(byte) << ' ';
+        out << '\n';
+    }
+    for (unsigned thread{0}; thread < NO_THREADS; ++thread)
+        threads[thread].join();
+}
+
+template <bool KnownKey>
+void loadRawFromTimingData(const std::filesystem::path &directory, TimingData<KnownKey> &timingData)
+{
+    constexpr unsigned NO_THREADS = 8;
+    std::vector<std::thread> threads;
+    threads.reserve(NO_THREADS);
+    const unsigned DIRS_PER_THREAD = timingData.blockTimings.size() / NO_THREADS;
+    const unsigned REMAINING_DIRS = timingData.blockTimings.size() % NO_THREADS;
+
+    auto threadBlock = [&](unsigned threadNo, unsigned dirsNo)
+    {
+        for (unsigned dir{0}; dir < dirsNo; ++dir)
+        {
+            const unsigned byteValue = dir + threadNo * dirsNo;
+            const std::filesystem::path directoryPath =
+                directory / ("Byte_" + std::to_string(byteValue));
+            loadRawFromSampleGroup(directoryPath, timingData.blockTimings[byteValue]);
+        }
+    };
+
+    for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
+        threads.emplace_back(threadBlock, thread, DIRS_PER_THREAD);
+    // The last thread will also be responsible for the remaining number of directories.
+    threads.emplace_back(threadBlock, NO_THREADS - 1, DIRS_PER_THREAD + REMAINING_DIRS);
+
+    for (unsigned thread{0}; thread < NO_THREADS; ++thread)
+        threads[thread].join();
+}
+
+// EXPLICIT TEMPLATE INSTANTIATION:
+template void saveMetricsFromTimingData<true>(const std::filesystem::path &filename,
+                                              const TimingData<true> &timingData);
+template void saveMetricsFromTimingData<false>(const std::filesystem::path &filename,
+                                               const TimingData<false> &timingData);
+
+template void saveRawFromTimingData<true>(const std::filesystem::path &filename,
+                                          const TimingData<true> &timingData);
+template void saveRawFromTimingData<false>(const std::filesystem::path &filename,
+                                           const TimingData<false> &timingData);
+
+template void loadRawFromTimingData<true>(const std::filesystem::path &filename,
+                                          TimingData<true> &timingData);
+template void loadRawFromTimingData<false>(const std::filesystem::path &filename,
+                                           TimingData<false> &timingData);
+
+} // namespace SaveLoad
