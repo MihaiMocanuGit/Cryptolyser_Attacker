@@ -16,7 +16,7 @@ template <bool KnownKey>
 class ServerConnection
 {
   private:
-    const std::string_view m_ip;
+    std::string_view m_ip;
     uint16_t m_port;
     int m_sock{-1};
     sockaddr_in m_receiverAddr{};
@@ -24,6 +24,7 @@ class ServerConnection
     static constexpr timeval M_RECV_TIMEOUT{/*.tv_sec*/ 1, /*.tv_usec*/ 0};
 
     void m_closeSocket();
+    static void m_swap(ServerConnection &server1, ServerConnection &server2);
 
   public:
     static const uint32_t DATA_MAX_SIZE;

@@ -12,6 +12,15 @@ template <bool KnownKey>
 constexpr uint32_t ServerConnection<KnownKey>::DATA_MAX_SIZE{CONNECTION_DATA_MAX_SIZE};
 
 template <bool KnownKey>
+void ServerConnection<KnownKey>::m_swap(ServerConnection &server1, ServerConnection &server2)
+{
+    std::swap(server1.m_ip, server2.m_ip);
+    std::swap(server1.m_port, server2.m_port);
+    std::swap(server1.m_sock, server2.m_sock);
+    std::swap(server1.m_isConnectionActive, server2.m_isConnectionActive);
+}
+
+template <bool KnownKey>
 void ServerConnection<KnownKey>::m_closeSocket()
 {
     close(m_sock);
@@ -78,8 +87,11 @@ template <bool KnownKey>
 ServerConnection<KnownKey> &
     ServerConnection<KnownKey>::operator=(ServerConnection<KnownKey> &&rhs) noexcept
 {
-    this->closeConnection();
-    std::swap(*this, rhs);
+    if (this != &rhs)
+    {
+        this->closeConnection();
+        m_swap(*this, rhs);
+    }
     return *this;
 }
 
