@@ -122,7 +122,8 @@ void Study<KnownKey>::run(size_t desiredCount, size_t logFreq, size_t saveMetric
     uint32_t packageId{0};
     while (m_gatherer.validValuesCount() < desiredCount && m_continueRunningFlag)
     {
-        m_gatherer.obtain(packageId);
+        auto status{m_gatherer.obtain(packageId)};
+
         auto isTimeTo = [this, &gatherer = m_gatherer, desiredCount](size_t freq)
         {
             size_t packageCount{gatherer.validValuesCount()};
@@ -130,15 +131,18 @@ void Study<KnownKey>::run(size_t desiredCount, size_t logFreq, size_t saveMetric
                    packageCount + 1 == desiredCount or not m_continueRunningFlag;
         };
 
-        if (isTimeTo(logFreq))
-            m_logger.printStats();
-
-        if (isTimeTo(saveMetricsFreq))
+        if (status == Gatherer<KnownKey>::ObtainStatus::success)
         {
-            std::cout << "Saving Metrics: " << m_gatherer.validValuesCount() << std::endl;
-            SaveLoad::saveMetricsFromTimingData(m_saveDirPath /
-                                                    std::to_string(m_gatherer.validValuesCount()),
-                                                m_gatherer.timingData());
+            if (isTimeTo(logFreq))
+                m_logger.printStats();
+
+            if (isTimeTo(saveMetricsFreq))
+            {
+                std::cout << "Saving Metrics: " << m_gatherer.validValuesCount() << std::endl;
+                SaveLoad::saveMetricsFromTimingData(
+                    m_saveDirPath / std::to_string(m_gatherer.validValuesCount()),
+                    m_gatherer.timingData());
+            }
         }
         packageId++;
     }
