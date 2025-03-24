@@ -27,18 +27,41 @@ void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
     out << CSV_HEADER;
     for (unsigned byteValue = 0; byteValue < sampleGroup.size(); ++byteValue)
     {
+        long double peakValue{0};
+        long double weight{0};
+        // Experimental metric used to create a statistic from the peak value, and it's right tail.
+        // The motivation of the right tail is that perhaps this would better represent the cache
+        // misses.
+        for (unsigned tests{0}; tests < 16; ++tests)
+        {
+            size_t index = distributions.distributions()[byteValue].peakValue() -
+                           distributions.distributions()[byteValue].start();
+            index += tests;
+            if (index <= distributions.distributions()[byteValue].stop())
+            {
+                long double w{static_cast<long double>(
+                    distributions.distributions()[byteValue].frequency().data()[index])};
+                peakValue += w * index;
+                weight += w;
+            }
+            else
+                break;
+        }
+        peakValue /= weight;
+        peakValue += distributions.distributions()[byteValue].start();
+
         SampleMetrics metrics = sampleGroup.localMetrics(byteValue);
         SampleMetrics standardizedMetrics = sampleGroup.standardizeLocalMetrics(byteValue);
-        out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", "     //
-            << std::setprecision(8) << std::fixed                            //
-            << metrics.mean << ", "                                          //
-            << metrics.stdDev << ", "                                        //
-            << metrics.size << ", "                                          //
-            << standardizedMetrics.mean << ", "                              //
-            << standardizedMetrics.stdDev << ", "                            //
-            << metrics.min << ", "                                           //
-            << metrics.max << ", "                                           //
-            << distributions.distributions()[byteValue].peakValue() << "\n"; //
+        out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", " // Value
+            << std::setprecision(8) << std::fixed                        //
+            << metrics.mean << ", "                                      // Mean
+            << metrics.stdDev << ", "                                    // StdDev
+            << metrics.size << ", "                                      // Size
+            << standardizedMetrics.mean << ", "                          // StdMean
+            << standardizedMetrics.stdDev << ", "                        // StdDev
+            << metrics.min << ", "                                       // Min
+            << metrics.max << ", "                                       // Max
+            << peakValue << "\n";                                        // Peak
     }
     out.close();
 }
