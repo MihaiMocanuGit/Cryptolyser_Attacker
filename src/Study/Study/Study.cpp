@@ -14,15 +14,6 @@ std::vector<std::byte> constructRandomVector(size_t dataSize)
         randomized.push_back(static_cast<std::byte>(uniform_dist(gen)));
     return randomized;
 }
-std::array<std::byte, PACKET_KEY_BYTE_SIZE> constructRandomKey()
-{
-    static std::mt19937 gen(0);
-    static std::uniform_int_distribution<uint8_t> uniform_dist(0, 255);
-    std::array<std::byte, PACKET_KEY_BYTE_SIZE> randomized{};
-    for (size_t i{0}; i < PACKET_KEY_BYTE_SIZE; ++i)
-        randomized[i] = static_cast<std::byte>(uniform_dist(gen));
-    return randomized;
-}
 } // namespace
 
 template <bool KnownKey>
@@ -41,10 +32,8 @@ std::pair<double, double> Study<KnownKey>::calibrateBounds(size_t transmissionsC
 
             std::optional<connection_response_t> result;
             if constexpr (KnownKey)
-            {
-                std::array<std::byte, PACKET_KEY_BYTE_SIZE> studiedKey{constructRandomKey()};
-                result = m_gatherer.connection().transmit(-1, studiedKey, studyPlaintext);
-            }
+                result = m_gatherer.connection().transmit(-1, m_gatherer.timingData().key(),
+                                                          studyPlaintext);
             else
                 result = m_gatherer.connection().transmit(-1, studyPlaintext);
 
