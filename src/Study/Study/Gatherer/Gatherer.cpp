@@ -20,7 +20,7 @@ template <bool KnownKey>
 Gatherer<KnownKey>::ObtainStatus Gatherer<KnownKey>::obtain(uint32_t id)
 {
     std::vector<std::byte> studyData{m_constructRandomVector()};
-    std::optional<connection_timing_t> result;
+    std::optional<connection_response_t> result;
     if constexpr (KnownKey)
         result = m_connection.transmit(id, m_timingData.key(), studyData);
     else

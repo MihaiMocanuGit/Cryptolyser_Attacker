@@ -39,7 +39,7 @@ std::pair<double, double> Study<KnownKey>::calibrateBounds(size_t transmissionsC
             std::vector<std::byte> studyPlaintext{
                 constructRandomVector(m_gatherer.timingData().dataSize())};
 
-            std::optional<connection_timing_t> result;
+            std::optional<connection_response_t> result;
             if constexpr (KnownKey)
             {
                 std::array<std::byte, PACKET_KEY_BYTE_SIZE> studiedKey{constructRandomKey()};
