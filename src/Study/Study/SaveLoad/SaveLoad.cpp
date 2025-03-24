@@ -1,5 +1,7 @@
 #include "SaveLoad.hpp"
 
+#include "DataProcessing/Distribution/DistributionByteBlock.hpp"
+
 #include <format>
 #include <fstream>
 #include <thread>
@@ -13,8 +15,10 @@ void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
     directory.remove_filename();
     std::filesystem::create_directories(directory);
 
+    DistributionByteBlock distributions{sampleGroup};
+
     constexpr std::string_view CSV_HEADER{
-        "Value, Mean, StdDev, Size, StandardizedMean, StandardizedStdDev, Min, Max\n"};
+        "Value, Mean, StdDev, Size, StandardizedMean, StandardizedStdDev, Min, Max, PeakPos\n"};
     std::ofstream out;
     out.open(filename);
     if (!out)
@@ -25,15 +29,16 @@ void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
     {
         SampleMetrics metrics = sampleGroup.localMetrics(byteValue);
         SampleMetrics standardizedMetrics = sampleGroup.standardizeLocalMetrics(byteValue);
-        out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", " //
-            << std::setprecision(8) << std::fixed                        //
-            << metrics.mean << ", "                                      //
-            << metrics.stdDev << ", "                                    //
-            << metrics.size << ", "                                      //
-            << standardizedMetrics.mean << ", "                          //
-            << standardizedMetrics.stdDev << ", "                        //
-            << metrics.min << ", "                                       //
-            << metrics.max << "\n";                                      //
+        out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", "     //
+            << std::setprecision(8) << std::fixed                            //
+            << metrics.mean << ", "                                          //
+            << metrics.stdDev << ", "                                        //
+            << metrics.size << ", "                                          //
+            << standardizedMetrics.mean << ", "                              //
+            << standardizedMetrics.stdDev << ", "                            //
+            << metrics.min << ", "                                           //
+            << metrics.max << ", "                                           //
+            << distributions.distributions()[byteValue].peakValue() << "\n"; //
     }
     out.close();
 }
@@ -69,8 +74,9 @@ void saveMetricsFromTimingData(const std::filesystem::path &directory,
         threads[thread].join();
 }
 
+template <typename Real_t>
 void saveRawFromSampleData(const std::filesystem::path &filename,
-                           const SampleData<double> &sampleData)
+                           const SampleData<Real_t> &sampleData)
 {
     std::filesystem::path directory = filename;
     directory.remove_filename();
@@ -157,9 +163,13 @@ void saveRawFromSampleGroup(const std::filesystem::path &directory,
         for (unsigned file{0}; file < filesNo; ++file)
         {
             const unsigned byteValue = file + threadNo * filesNo;
-            const std::filesystem::path filename =
+            std::filesystem::path filename =
                 directory / ("Value_" + std::to_string(byteValue) + ".csv");
             saveRawFromSampleData(filename, sampleGroup[byteValue]);
+
+            DistributionByteValue distribution{sampleGroup[byteValue]};
+            filename = directory / ("ValueDistribution_" + std::to_string(byteValue) + ".csv");
+            saveRawFromSampleData(filename, distribution.frequency());
         }
     };
 
@@ -276,6 +286,12 @@ void loadRawFromTimingData(const std::filesystem::path &directory, TimingData<Kn
 }
 
 // EXPLICIT TEMPLATE INSTANTIATION:
+template void saveRawFromSampleData<double>(const std::filesystem::path &samplePath,
+                                            const SampleData<double> &sampleData);
+
+template void saveRawFromSampleData<size_t>(const std::filesystem::path &samplePath,
+                                            const SampleData<size_t> &sampleData);
+
 template void saveMetricsFromTimingData<true>(const std::filesystem::path &filename,
                                               const TimingData<true> &timingData);
 template void saveMetricsFromTimingData<false>(const std::filesystem::path &filename,

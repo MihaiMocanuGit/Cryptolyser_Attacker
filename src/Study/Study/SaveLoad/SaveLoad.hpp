@@ -1,5 +1,6 @@
 #ifndef CRYPTOLYSER_ATTACKER_SAVELOAD_HPP
 #define CRYPTOLYSER_ATTACKER_SAVELOAD_HPP
+#include "DataProcessing/Distribution/DistributionByteValue.hpp"
 #include "DataProcessing/Samples/SampleGroup.hpp"
 #include "Study/TimingData/TimingData.hpp"
 
@@ -17,8 +18,9 @@ void saveMetricsFromTimingData(const std::filesystem::path &directory,
                                const TimingData<KnownKey> &timingData);
 
 // RAW SAMPLE DATA
-void saveRawFromSampleData(const std::filesystem::path &filename,
-                           const SampleData<double> &sampleData);
+template <typename Real_t>
+void saveRawFromSampleData(const std::filesystem::path &samplePath,
+                           const SampleData<Real_t> &sampleData);
 
 void loadRawFromSampleData(const std::filesystem::path &filename, SampleGroup<double> &sampleData);
 
