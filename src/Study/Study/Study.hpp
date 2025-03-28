@@ -23,8 +23,8 @@ class Study
     void run(size_t desiredCount, size_t logFreq, size_t saveMetricsFreq, double lb = 0,
              double ub = std::numeric_limits<double>::max());
 
-    std::pair<double, double> calibrateBounds(size_t transmissionsCount = 500'000,
-                                              double confidenceLB = 0.0000125,
+    DistributionByteValue::Bounds calibrateBounds(size_t transmissionsCount = 500'000,
+                                                  double confidenceLB = 0.0000125,
                                               double confidenceUB = 0.0005);
 
     Gatherer<KnownKey> release();

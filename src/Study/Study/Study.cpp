@@ -17,8 +17,8 @@ std::vector<std::byte> constructRandomVector(size_t dataSize)
 } // namespace
 
 template <bool KnownKey>
-std::pair<double, double> Study<KnownKey>::calibrateBounds(size_t transmissionsCount,
-                                                           double confidenceLB, double confidenceUB)
+DistributionByteValue::Bounds Study<KnownKey>::calibrateBounds(size_t transmissionsCount,
+                                                               double confidenceLB, double confidenceUB)
 {
     if (m_gatherer.connection().connect())
     {
@@ -50,46 +50,16 @@ std::pair<double, double> Study<KnownKey>::calibrateBounds(size_t transmissionsC
                 result->inbound_t1, result->inbound_t2, result->outbound_t1, result->outbound_t2)};
             sample.insert(timing);
         }
-
-        const double max = sample.metrics().max;
-        const double min = sample.metrics().min;
-        const size_t blockCount{static_cast<size_t>(max + 1.0)};
-
-        // using double instead of size_t because saveRawFromSampleData() was only defined for
-        // SampleData<double>
-        std::vector<double> blockGroup(blockCount, 0);
-        for (const double value : sample)
-            blockGroup[static_cast<size_t>(value)]++;
-
-        double lb{min};
-        double ub{max};
-        double partialSum{0};
-        const size_t totalSum{transmissionsCount};
-        for (size_t pos{static_cast<size_t>(min) - 1}; pos < static_cast<size_t>(max) + 1; pos++)
-        {
-            partialSum += blockGroup[pos];
-            double ratio = partialSum / static_cast<double>(totalSum);
-            if (ratio <= confidenceLB)
-            {
-                lb = static_cast<double>(pos);
-            }
-            if (1.0 - ratio <= confidenceUB)
-            {
-                ub = static_cast<double>(pos);
-                break;
-            }
-        }
-
+        DistributionByteValue distribution{sample};
+        const auto &frequency = distribution.frequency();
         SaveLoad::saveRawFromSampleData(m_saveDirPath / "Calibrate" / "values.csv", sample);
-
-        SampleData<double> savedDistrib(std::move(blockGroup));
         SaveLoad::saveRawFromSampleData(m_saveDirPath / "Calibrate" / "distribution.csv",
-                                        savedDistrib);
+                                        frequency);
 
-        return {lb, ub};
+        return distribution.bounds(confidenceLB, confidenceUB);
     }
 
-    return {0, std::numeric_limits<double>::max()};
+    return {0, std::numeric_limits<size_t>::max()};
 }
 
 template <bool KnownKey>
