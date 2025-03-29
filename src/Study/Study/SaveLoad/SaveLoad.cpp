@@ -8,6 +8,45 @@
 
 namespace SaveLoad
 {
+
+void saveDistributionByteValue(const std::filesystem::path &filename,
+                               const DistributionByteValue &distribution)
+{
+    std::filesystem::path directory = filename;
+    directory.remove_filename();
+    std::filesystem::create_directories(directory);
+
+    constexpr std::string_view CSV_HEADER{"Position, Frequency, Size, Start, Peak, Stop\n"};
+    std::ofstream out;
+    out.open(filename);
+    if (!out)
+        throw std::runtime_error("Saving Distribution Byte Value ERROR | Could not create file: " +
+                                 filename.string());
+    out << CSV_HEADER;
+
+    size_t startPos{distribution.start()};
+    size_t stopPos{distribution.stop()};
+
+    // The distribution only holds frequencies starting from the first non-zero value. For usability
+    // reasons, when saving to file, there will be appended at the beginning a count of startPos
+    // zeros.
+    // The first line is tricky, as it also holds other metrics. Moreover, the case when
+    // startPos == 0 needs to be taken care of.
+    out << '0' << ','                             // Position
+        << ((startPos > 0) ? 0 : startPos) << ',' // Frequency
+        << distribution.frequency().size() << ',' // Size
+        << startPos << ','                        // Start
+        << distribution.peakValue() << ','        // Peak
+        << stopPos << '\n';                       // Stop
+
+    // Append the necessary zeros
+    for (size_t i{1}; i < startPos; ++i)
+        out << i << ',' << 0 << '\n';
+
+    for (size_t i{(startPos > 0) ? startPos : startPos + 1}; i <= stopPos; ++i)
+        out << i << ',' << distribution.frequency()[i - startPos] << '\n';
+}
+
 void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
                                 const SampleGroup<double> &sampleGroup)
 {
@@ -191,8 +230,9 @@ void saveRawFromSampleGroup(const std::filesystem::path &directory,
             saveRawFromSampleData(filename, sampleGroup[byteValue]);
 
             DistributionByteValue distribution{sampleGroup[byteValue]};
-            filename = directory / ("ValueDistribution_" + std::to_string(byteValue) + ".csv");
-            saveRawFromSampleData(filename, distribution.frequency());
+            filename =
+                directory / ("Value_" + std::to_string(byteValue) + "_Distribution" + ".csv");
+            saveDistributionByteValue(filename, distribution);
         }
     };
 

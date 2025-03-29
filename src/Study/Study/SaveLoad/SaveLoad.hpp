@@ -1,5 +1,6 @@
 #ifndef CRYPTOLYSER_ATTACKER_SAVELOAD_HPP
 #define CRYPTOLYSER_ATTACKER_SAVELOAD_HPP
+#include "DataProcessing/Distribution/DistributionByteBlock.hpp"
 #include "DataProcessing/Distribution/DistributionByteValue.hpp"
 #include "DataProcessing/Samples/SampleGroup.hpp"
 #include "Study/TimingData/TimingData.hpp"
@@ -8,6 +9,13 @@
 
 namespace SaveLoad
 {
+// DISTRIBUTION
+void saveDistributionByteValue(const std::filesystem::path &filename,
+                               const DistributionByteValue &distribution);
+
+void saveDistributionByteBlock(const std::filesystem::path &filename,
+                               const DistributionByteBlock &distribution);
+
 // METRICS SAMPLE GROUP
 void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
                                 const SampleGroup<double> &sampleGroup);

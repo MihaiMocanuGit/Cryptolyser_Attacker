@@ -18,7 +18,8 @@ std::vector<std::byte> constructRandomVector(size_t dataSize)
 
 template <bool KnownKey>
 DistributionByteValue::Bounds Study<KnownKey>::calibrateBounds(size_t transmissionsCount,
-                                                               double confidenceLB, double confidenceUB)
+                                                               double confidenceLB,
+                                                               double confidenceUB)
 {
     if (m_gatherer.connection().connect())
     {
@@ -51,10 +52,9 @@ DistributionByteValue::Bounds Study<KnownKey>::calibrateBounds(size_t transmissi
             sample.insert(timing);
         }
         DistributionByteValue distribution{sample};
-        const auto &frequency = distribution.frequency();
         SaveLoad::saveRawFromSampleData(m_saveDirPath / "Calibrate" / "values.csv", sample);
-        SaveLoad::saveRawFromSampleData(m_saveDirPath / "Calibrate" / "distribution.csv",
-                                        frequency);
+        SaveLoad::saveDistributionByteValue(m_saveDirPath / "Calibrate" / "distribution.csv",
+                                            distribution);
 
         return distribution.bounds(confidenceLB, confidenceUB);
     }
