@@ -52,5 +52,9 @@ class SampleData
     [[nodiscard]] const SampleMetrics<Real_t> &metrics() const noexcept;
 
     const std::vector<Real_t> &data() const noexcept;
+
+    size_t size() const noexcept;
+
+    const Real_t &operator[](size_t index) const;
 };
 #endif // CRYPTOLYSER_ATTACKER_SAMPLEDATA_HPP

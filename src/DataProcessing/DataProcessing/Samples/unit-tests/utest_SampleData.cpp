@@ -30,8 +30,8 @@ TEST_CASE("SampleData creation", "[SampleData]")
         {
             constexpr double value = 1.0 / 8.0; // should be representable as a double with no loss.
             sampleData.insert(value);
-            REQUIRE(sampleData.data().size() == 1);
-            REQUIRE(sampleData.data()[0] == value);
+            REQUIRE(sampleData.size() == 1);
+            REQUIRE(sampleData[0] == value);
             REQUIRE(++sampleData.begin() == sampleData.end());
 
             const auto &metrics{sampleData.metrics()};
@@ -48,7 +48,7 @@ TEST_CASE("SampleData creation", "[SampleData]")
         {
             std::vector<double> data = {1, 2, 3, 4, 5};
             SampleData<double> sampleData{data};
-            REQUIRE(sampleData.data().size() == data.size());
+            REQUIRE(sampleData.size() == data.size());
             REQUIRE(sampleData.begin() + data.size() == sampleData.end());
 
             SECTION("Metrics for sample")
@@ -66,7 +66,7 @@ TEST_CASE("SampleData creation", "[SampleData]")
             std::vector<double> data = {1, 2, 3, 4, 5};
             constexpr size_t size = 5;
             SampleData<double> sampleData{std::move(data)};
-            REQUIRE(sampleData.data().size() == size);
+            REQUIRE(sampleData.size() == size);
             REQUIRE(sampleData.begin() + size == sampleData.end());
 
             SECTION("Metrics for sample")
@@ -84,7 +84,7 @@ TEST_CASE("SampleData creation", "[SampleData]")
     {
         std::vector<double> data = {1, 2, 3, 4, 5};
         SampleData<double> sampleData{data.begin(), data.end()};
-        REQUIRE(sampleData.data().size() == data.size());
+        REQUIRE(sampleData.size() == data.size());
         REQUIRE(sampleData.begin() + data.size() == sampleData.end());
 
         SECTION("Metrics for sample")
@@ -146,7 +146,7 @@ TEST_CASE("Metric Computation from SampleData", "[SampleData]")
                           });
             // The metrics for the current generated data.
             SampleData<double> currentSample{data};
-            REQUIRE(currentSample.data().size() == data.size());
+            REQUIRE(currentSample.size() == data.size());
             REQUIRE(currentSample.begin() + data.size() == currentSample.end());
             const auto &currentMetrics{currentSample.metrics()};
             REQUIRE(currentMetrics.size == data.size());
@@ -165,7 +165,7 @@ TEST_CASE("Metric Computation from SampleData", "[SampleData]")
 
             // The metrics for the combined new and old data;
             totalSample.insert(data.begin(), data.end());
-            REQUIRE(totalSample.data().size() == count * data.size());
+            REQUIRE(totalSample.size() == count * data.size());
             REQUIRE(totalSample.begin() + count * data.size() == totalSample.end());
             const auto &totalMetrics{totalSample.metrics()};
             REQUIRE(totalMetrics.size == count * data.size());

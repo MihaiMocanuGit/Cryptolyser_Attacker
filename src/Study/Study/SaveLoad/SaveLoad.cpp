@@ -40,7 +40,7 @@ void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
             if (index <= distributions.distributions()[byteValue].stop())
             {
                 long double w{static_cast<long double>(
-                    distributions.distributions()[byteValue].frequency().data()[index])};
+                    distributions.distributions()[byteValue].frequency()[index])};
                 peakValue += w * index;
                 weight += w;
             }
@@ -114,15 +114,15 @@ void saveRawFromSampleData(const std::filesystem::path &filename,
     out << CSV_HEADER;
 
     if (not sampleData.data().empty())
-        out << "0," << std::format("{}", sampleData.data()[0]) << ',';
+        out << "0," << std::format("{}", sampleData[0]) << ',';
     else
         out << ",,";
     out << sampleData.metrics().mean << ',' << sampleData.metrics().stdDev << ','
         << sampleData.metrics().size << ',' << sampleData.metrics().min << ','
         << sampleData.metrics().max << '\n';
 
-    for (size_t i{1}; i < sampleData.data().size(); ++i)
-        out << i << ',' << std::format("{}", sampleData.data()[i]) << '\n';
+    for (size_t i{1}; i < sampleData.size(); ++i)
+        out << i << ',' << std::format("{}", sampleData[i]) << '\n';
 }
 
 void loadRawFromSampleData(const std::filesystem::path &filename, SampleData<double> &sampleData)

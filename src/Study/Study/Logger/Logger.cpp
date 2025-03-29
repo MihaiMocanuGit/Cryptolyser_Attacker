@@ -109,8 +109,7 @@ size_t Logger<KnownKey>::m_totalValidCount() const
 template <bool KnownKey>
 size_t Logger<KnownKey>::m_totalReceivedCount() const
 {
-    return m_totalValidCount() + m_gatherer.sampleLB().data().size() +
-           m_gatherer.sampleUB().data().size();
+    return m_totalValidCount() + m_gatherer.sampleLB().size() + m_gatherer.sampleUB().size();
 }
 
 template <bool KnownKey>

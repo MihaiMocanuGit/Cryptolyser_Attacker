@@ -61,6 +61,18 @@ const std::vector<Real_t> &SampleData<Real_t>::data() const noexcept
     return m_data;
 }
 
+template <typename Real_t>
+size_t SampleData<Real_t>::size() const noexcept
+{
+    return m_data.size();
+}
+
+template <typename Real_t>
+const Real_t &SampleData<Real_t>::operator[](size_t index) const
+{
+    return m_data[index];
+}
+
 template class SampleData<int>;
 template class SampleData<uint64_t>;
 template class SampleData<float>;
