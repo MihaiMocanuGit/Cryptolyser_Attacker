@@ -71,12 +71,13 @@ void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
         // Experimental metric used to create a statistic from the peak value, and it's right tail.
         // The motivation of the right tail is that perhaps this would better represent the cache
         // misses.
+        size_t peakIndex = distributions.distributions()[byteValue].peakValue() -
+                           distributions.distributions()[byteValue].start();
         for (unsigned tests{0}; tests < 16; ++tests)
         {
-            size_t index = distributions.distributions()[byteValue].peakValue() -
-                           distributions.distributions()[byteValue].start();
-            index += tests;
-            if (index <= distributions.distributions()[byteValue].stop())
+            size_t index{peakIndex + tests};
+            size_t indexPos{index + distributions.distributions()[byteValue].start()};
+            if (indexPos <= distributions.distributions()[byteValue].stop())
             {
                 long double w{static_cast<long double>(
                     distributions.distributions()[byteValue].frequency()[index])};
