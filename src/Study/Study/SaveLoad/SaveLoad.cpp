@@ -255,7 +255,7 @@ void loadRawFromSampleGroup(const std::filesystem::path &directory,
     threads.reserve(NO_THREADS);
     const unsigned FILES_PER_THREAD = sampleGroup.size() / NO_THREADS;
     const unsigned REMAINING_FILES = sampleGroup.size() % NO_THREADS;
-
+    std::mutex sampleGroupMutex;
     auto threadBlock = [&](unsigned threadNo, unsigned filesNo)
     {
         for (unsigned file{0}; file < filesNo; ++file)
@@ -265,6 +265,9 @@ void loadRawFromSampleGroup(const std::filesystem::path &directory,
                 directory / ("Value_" + std::to_string(byteValue) + ".csv");
             SampleData<double> result{};
             loadRawFromSampleData(filename, result);
+            // A lock is necessary as inserting a sample into the sampleGroup modifies the global
+            // metrics and the local sample metrics
+            const std::lock_guard<std::mutex> lockGuard{sampleGroupMutex};
             sampleGroup.insert(byteValue, result.begin(), result.end());
         }
     };
