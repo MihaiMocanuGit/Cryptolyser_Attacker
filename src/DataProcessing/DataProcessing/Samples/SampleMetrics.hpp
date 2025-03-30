@@ -47,7 +47,7 @@ struct SampleMetrics
             squareSum += (*it - aMean) * (*it - aMean);
             if (*it < aMin)
                 aMin = *it;
-            else if (*it > aMax)
+            if (*it > aMax)
                 aMax = *it;
         }
         Real_t aVariance{squareSum / static_cast<Real_t>(aSize - 1)};
