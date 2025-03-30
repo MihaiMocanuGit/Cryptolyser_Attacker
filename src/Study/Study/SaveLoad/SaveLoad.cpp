@@ -192,6 +192,7 @@ void loadRawFromSampleData(const std::filesystem::path &filename, SampleData<dou
     const size_t fifthComma = line.find(',', fourthComma + 1);
 
     const size_t size = std::stoull(line.substr(fourthComma + 1, fifthComma - (fourthComma + 1)));
+    sampleData.reserve(sampleData.size() + size);
     // the first value needs to be extracted with special care as there exists additional data on
     // this line
     if (size > 0)
