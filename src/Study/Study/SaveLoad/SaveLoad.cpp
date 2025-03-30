@@ -111,7 +111,7 @@ void saveMetricsFromTimingData(const std::filesystem::path &directory,
                                const TimingData<KnownKey> &timingData)
 {
     std::filesystem::create_directories(directory);
-    constexpr unsigned NO_THREADS = 8;
+    constexpr unsigned NO_THREADS = 4;
     std::vector<std::thread> threads;
     threads.reserve(NO_THREADS);
     const unsigned FILES_PER_THREAD = timingData.blockTimings.size() / NO_THREADS;
@@ -216,7 +216,7 @@ void saveRawFromSampleGroup(const std::filesystem::path &directory,
                             const SampleGroup<double> &sampleGroup)
 {
     std::filesystem::create_directories(directory);
-    constexpr unsigned NO_THREADS = 8;
+    constexpr unsigned NO_THREADS = 4;
     std::vector<std::thread> threads;
     threads.reserve(NO_THREADS);
     const unsigned FILES_PER_THREAD = sampleGroup.size() / NO_THREADS;
@@ -250,7 +250,7 @@ void saveRawFromSampleGroup(const std::filesystem::path &directory,
 void loadRawFromSampleGroup(const std::filesystem::path &directory,
                             SampleGroup<double> &sampleGroup)
 {
-    constexpr unsigned NO_THREADS = 8;
+    constexpr unsigned NO_THREADS = 4;
     std::vector<std::thread> threads;
     threads.reserve(NO_THREADS);
     const unsigned FILES_PER_THREAD = sampleGroup.size() / NO_THREADS;
@@ -286,7 +286,7 @@ void saveRawFromTimingData(const std::filesystem::path &directory,
                            const TimingData<KnownKey> &timingData)
 {
     std::filesystem::create_directories(directory);
-    constexpr unsigned NO_THREADS = 8;
+    constexpr unsigned NO_THREADS = 4;
     std::vector<std::thread> threads;
     threads.reserve(NO_THREADS);
     const unsigned DIRS_PER_THREAD = timingData.blockTimings.size() / NO_THREADS;
@@ -327,7 +327,7 @@ void saveRawFromTimingData(const std::filesystem::path &directory,
 template <bool KnownKey>
 void loadRawFromTimingData(const std::filesystem::path &directory, TimingData<KnownKey> &timingData)
 {
-    constexpr unsigned NO_THREADS = 8;
+    constexpr unsigned NO_THREADS = 4;
     std::vector<std::thread> threads;
     threads.reserve(NO_THREADS);
     const unsigned DIRS_PER_THREAD = timingData.blockTimings.size() / NO_THREADS;
