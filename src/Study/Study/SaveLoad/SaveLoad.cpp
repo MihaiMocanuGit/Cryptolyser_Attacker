@@ -131,9 +131,9 @@ void saveMetricsFromTimingData(const std::filesystem::path &directory,
     for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
         threads.emplace_back(threadBlock, thread, FILES_PER_THREAD);
     // The last thread will also be responsible for the remaining number files.
-    threads.emplace_back(threadBlock, NO_THREADS - 1, FILES_PER_THREAD + REMAINING_FILES);
+    threadBlock(NO_THREADS - 1, FILES_PER_THREAD + REMAINING_FILES);
 
-    for (unsigned thread{0}; thread < NO_THREADS; ++thread)
+    for (unsigned thread{0}; thread < NO_THREADS - 1; ++thread)
         threads[thread].join();
 }
 
@@ -240,9 +240,9 @@ void saveRawFromSampleGroup(const std::filesystem::path &directory,
     for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
         threads.emplace_back(threadBlock, thread, FILES_PER_THREAD);
     // The last thread will also be responsible for the remaining number files.
-    threads.emplace_back(threadBlock, NO_THREADS - 1, FILES_PER_THREAD + REMAINING_FILES);
+    threadBlock(NO_THREADS - 1, FILES_PER_THREAD + REMAINING_FILES);
 
-    for (unsigned thread{0}; thread < NO_THREADS; ++thread)
+    for (unsigned thread{0}; thread < NO_THREADS - 1; ++thread)
         threads[thread].join();
 }
 
@@ -271,9 +271,9 @@ void loadRawFromSampleGroup(const std::filesystem::path &directory,
     for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
         threads.emplace_back(threadBlock, thread, FILES_PER_THREAD);
     // The last thread will also be responsible for the remaining number of files.
-    threads.emplace_back(threadBlock, NO_THREADS - 1, FILES_PER_THREAD + REMAINING_FILES);
+    threadBlock(NO_THREADS - 1, FILES_PER_THREAD + REMAINING_FILES);
 
-    for (unsigned thread{0}; thread < NO_THREADS; ++thread)
+    for (unsigned thread{0}; thread < NO_THREADS - 1; ++thread)
         threads[thread].join();
 }
 
@@ -302,7 +302,7 @@ void saveRawFromTimingData(const std::filesystem::path &directory,
     for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
         threads.emplace_back(threadBlock, thread, DIRS_PER_THREAD);
     // The last thread will also be responsible for the remaining number of directories.
-    threads.emplace_back(threadBlock, NO_THREADS - 1, DIRS_PER_THREAD + REMAINING_DIRS);
+    threadBlock(NO_THREADS - 1, DIRS_PER_THREAD + REMAINING_DIRS);
 
     // Storing additional information about the timing data.
     // This file will be ignored when loadRawFromTimingData is called().
@@ -316,7 +316,7 @@ void saveRawFromTimingData(const std::filesystem::path &directory,
             out << std::hex << std::uppercase << static_cast<unsigned>(byte) << ' ';
         out << '\n';
     }
-    for (unsigned thread{0}; thread < NO_THREADS; ++thread)
+    for (unsigned thread{0}; thread < NO_THREADS - 1; ++thread)
         threads[thread].join();
 }
 
@@ -343,9 +343,9 @@ void loadRawFromTimingData(const std::filesystem::path &directory, TimingData<Kn
     for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
         threads.emplace_back(threadBlock, thread, DIRS_PER_THREAD);
     // The last thread will also be responsible for the remaining number of directories.
-    threads.emplace_back(threadBlock, NO_THREADS - 1, DIRS_PER_THREAD + REMAINING_DIRS);
+    threadBlock(NO_THREADS - 1, DIRS_PER_THREAD + REMAINING_DIRS);
 
-    for (unsigned thread{0}; thread < NO_THREADS; ++thread)
+    for (unsigned thread{0}; thread < NO_THREADS - 1; ++thread)
         threads[thread].join();
 }
 
