@@ -50,7 +50,7 @@ void studyRun(const std::filesystem::path &saveFolderPath,
     Study<false> studyKeyless{std::move(gathererKeyless), g_continueRunning, saveFolderPath};
 
     std::cout << "Started calibration..." << std::endl;
-    auto [lb, ub] = studyKeyless.calibrateBounds(1'000'000, 0, 0.0015);
+    auto [lb, ub] = studyKeyless.calibrateBounds(1'000'000, 0, 0.05);
     std::cout << "Computed bounds: [" << lb << " " << ub << "]" << std::endl;
 
     std::cout << "Started run..." << std::endl;
@@ -123,13 +123,15 @@ void convert(const std::filesystem::path &saveResultPath, const std::filesystem:
     }
 };
 
-void correlate(const std::filesystem::path &saveResultPath, const std::filesystem::path &studyPath)
+void correlate(const std::filesystem::path &saveResultPath,
+               const std::filesystem::path &studyVictimPath,
+               const std::filesystem::path &studyDoppelPath)
 {
-    TimingData<false> u{400, 2048 * 2048};
-    SaveLoad::loadRawFromTimingData(studyPath / "u" / "Raw", u);
+    TimingData<false> t{16, 2048 * 2048};
+    SaveLoad::loadRawFromTimingData(studyDoppelPath, t);
 
-    TimingData<false> t{400, 2048 * 2048};
-    SaveLoad::loadRawFromTimingData(studyPath / "t" / "Raw", t);
+    TimingData<false> u{16, 2048 * 2048};
+    SaveLoad::loadRawFromTimingData(studyVictimPath, u);
 
     TimingData<false> result(400, 4);
 
@@ -140,8 +142,10 @@ void correlate(const std::filesystem::path &saveResultPath, const std::filesyste
             long double correlation_i{0.0};
             for (unsigned j{0}; j < 256; ++j)
             {
-                long double t_j{t.blockTimings[0].standardizeLocalMetrics(j).mean};
-                long double u_i_j{u.blockTimings[0].standardizeLocalMetrics(i ^ j).mean};
+                long double t_j{t.blockTimings[byte][j].metrics().mean};
+                t_j -= t.blockTimings[byte].globalMetrics().mean;
+                long double u_i_j{u.blockTimings[byte][i ^ j].metrics().mean};
+                u_i_j -= u.blockTimings[byte].globalMetrics().mean;
                 long double value{t_j * u_i_j};
 
                 correlation_i += value;
@@ -150,7 +154,6 @@ void correlate(const std::filesystem::path &saveResultPath, const std::filesyste
         }
     }
     SaveLoad::saveMetricsFromTimingData(saveResultPath, result);
-    //    SaveLoad::saveMetricsFromSampleGroup(saveResultPath / "Byte_0/metrics.csv", result);
 }
 
 } // namespace Experimental
@@ -198,8 +201,27 @@ int main(int argc, char **argv)
     auto key6 = std::bit_cast<std::array<std::byte, 16>>(
         std::to_array<uint8_t>({15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15}));
 
-    //    Experimental::studyRun(saveFolderPath / "Key1_response/t", connectionKeyless);
-    //    Experimental::studyRun(saveFolderPath / "Key1_response/u", connectionKeyless);
+    //    Experimental::studyRun(saveFolderPath / "Key4_victim/t", connectionKeyless);
+    //    Experimental::studyRun(saveFolderPath / "Key4_victim/u", connectionKeyless);
+    //    {
+    //        TimingData<false> combinedData{400, 2048 * 100};
+    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key4_victim/t/Raw", combinedData);
+    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key4_victim/u/Raw", combinedData);
+    //        SaveLoad::saveMetricsFromTimingData(saveFolderPath / "Key4_victim/Combined",
+    //        combinedData);
+    //    }
+    Experimental::correlate(saveFolderPath / "Key2_victim_Key4_doppel",
+                            saveFolderPath / "Key2_victim/u/Raw",
+                            saveFolderPath / "Key4_victim/u/Raw");
+
+    //    Experimental::correlate(saveFolderPath / "Key5_victim/Correlate",
+    //                            saveFolderPath / "Key5_victim");
+    //
+    //    Experimental::correlate(saveFolderPath / "Key6_victim/Correlate",
+    //                            saveFolderPath / "Key6_victim");
+
+    //    Experimental::studyRun(saveFolderPath / "Key1_response/t", connectionKey);
+    //    Experimental::studyRun(saveFolderPath / "Key1_response/u", connectionKey);
     //    {
     //        TimingData<false> combinedData{400, 2048 * 100};
     //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key1_response/t/Raw", combinedData);
