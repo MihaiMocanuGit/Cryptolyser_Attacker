@@ -3,8 +3,8 @@
 #include <array>
 
 template <typename Real_t>
-void SampleGroup<Real_t>::m_updateGlobalMetrics(SampleMetrics<Real_t> oldLocalMetrics,
-                                                SampleMetrics<Real_t> newLocalMetrics)
+void Old::SampleGroup<Real_t>::m_updateGlobalMetrics(SampleMetrics<Real_t> oldLocalMetrics,
+                                                     SampleMetrics<Real_t> newLocalMetrics)
 {
     // Original global metrics
     size_t n{m_globalMetrics.size};
@@ -63,44 +63,44 @@ void SampleGroup<Real_t>::m_updateGlobalMetrics(SampleMetrics<Real_t> oldLocalMe
 }
 
 template <typename Real_t>
-SampleGroup<Real_t>::SampleGroup(size_t size) : m_samples{size}
+Old::SampleGroup<Real_t>::SampleGroup(size_t size) : m_samples{size}
 {
 }
 
 template <typename Real_t>
-SampleGroup<Real_t>::SampleGroup(size_t size, size_t reserveSize) : SampleGroup{size}
+Old::SampleGroup<Real_t>::SampleGroup(size_t size, size_t reserveSize) : SampleGroup{size}
 {
     this->reserveForAll(reserveSize);
 }
 
 template <typename Real_t>
-void SampleGroup<Real_t>::reserveForAll(size_t size)
+void Old::SampleGroup<Real_t>::reserveForAll(size_t size)
 {
     for (auto &sample : m_samples)
         sample.reserve(size);
 }
 
 template <typename Real_t>
-void SampleGroup<Real_t>::insert(size_t index, Real_t data)
+void Old::SampleGroup<Real_t>::insert(size_t index, Real_t data)
 {
     std::array<Real_t, 1> tmpArr{{data}};
     this->insert(index, std::begin(tmpArr), std::end(tmpArr));
 }
 
 template <typename Real_t>
-const SampleMetrics<Real_t> &SampleGroup<Real_t>::globalMetric() const noexcept
+const SampleMetrics<Real_t> &Old::SampleGroup<Real_t>::globalMetric() const noexcept
 {
     return m_globalMetrics;
 }
 
 template <typename Real_t>
-const SampleMetrics<Real_t> &SampleGroup<Real_t>::localMetrics(size_t index) const
+const SampleMetrics<Real_t> &Old::SampleGroup<Real_t>::localMetrics(size_t index) const
 {
     return m_samples[index].metrics();
 }
 
 template <typename Real_t>
-SampleMetrics<Real_t> SampleGroup<Real_t>::standardizeLocalMetrics(size_t index) const
+SampleMetrics<Real_t> Old::SampleGroup<Real_t>::standardizeLocalMetrics(size_t index) const
 {
     SampleMetrics<Real_t> standardized{this->localMetrics(index)};
     standardized.mean = (standardized.mean - m_globalMetrics.mean) /
@@ -112,45 +112,45 @@ SampleMetrics<Real_t> SampleGroup<Real_t>::standardizeLocalMetrics(size_t index)
 }
 
 template <typename Real_t>
-const Old::SampleData<Real_t> &SampleGroup<Real_t>::sampleAt(size_t index) const
+const Old::SampleData<Real_t> &Old::SampleGroup<Real_t>::sampleAt(size_t index) const
 {
     return m_samples[index];
 }
 
 template <typename Real_t>
-const Old::SampleData<Real_t> &SampleGroup<Real_t>::operator[](size_t index) const
+const Old::SampleData<Real_t> &Old::SampleGroup<Real_t>::operator[](size_t index) const
 {
     return m_samples[index];
 }
 
 template <typename Real_t>
-size_t SampleGroup<Real_t>::size() const noexcept
+size_t Old::SampleGroup<Real_t>::size() const noexcept
 {
     return m_samples.size();
 }
 
 template <typename Real_t>
-void SampleGroup<Real_t>::resize(size_t size)
+void Old::SampleGroup<Real_t>::resize(size_t size)
 {
     m_samples.resize(size);
 }
 
 template <typename Real_t>
 typename std::vector<Old::SampleData<Real_t>>::const_iterator
-    SampleGroup<Real_t>::begin() const noexcept
+    Old::SampleGroup<Real_t>::begin() const noexcept
 {
     return m_samples.begin();
 }
 
 template <typename Real_t>
 typename std::vector<Old::SampleData<Real_t>>::const_iterator
-    SampleGroup<Real_t>::end() const noexcept
+    Old::SampleGroup<Real_t>::end() const noexcept
 {
     return m_samples.end();
 }
 
-template class SampleGroup<int>;
-template class SampleGroup<uint64_t>;
-template class SampleGroup<float>;
-template class SampleGroup<double>;
-template class SampleGroup<long double>;
+template class Old::SampleGroup<int>;
+template class Old::SampleGroup<uint64_t>;
+template class Old::SampleGroup<float>;
+template class Old::SampleGroup<double>;
+template class Old::SampleGroup<long double>;

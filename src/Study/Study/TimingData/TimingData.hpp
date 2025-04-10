@@ -19,7 +19,7 @@ class TimingData
                                              empty_t> m_key;
 
   public:
-    std::vector<SampleGroup<double>> blockTimings{};
+    std::vector<Old::SampleGroup<double>> blockTimings{};
 
     /**
      * @brief Constructor active only when KnownKey == true.
@@ -65,7 +65,8 @@ template <bool KnownKey>
 template <bool T>
 TimingData<KnownKey>::TimingData(size_t dataSize, size_t reserveSize,
                                  std::enable_if<T, TimingData::empty_t>::type)
-    : m_dataSize{dataSize}, blockTimings{AES_BLOCK_BYTE_SIZE, SampleGroup<double>(256, reserveSize)}
+    : m_dataSize{dataSize},
+      blockTimings{AES_BLOCK_BYTE_SIZE, Old::SampleGroup<double>(256, reserveSize)}
 {
 }
 
@@ -75,7 +76,7 @@ TimingData<KnownKey>::TimingData(
     size_t dataSize, size_t reserveSize,
     std::enable_if<T, std::array<std::byte, PACKET_KEY_BYTE_SIZE>>::type key)
     : m_dataSize{dataSize}, m_key{key},
-      blockTimings{AES_BLOCK_BYTE_SIZE, SampleGroup<double>(256, reserveSize)}
+      blockTimings{AES_BLOCK_BYTE_SIZE, Old::SampleGroup<double>(256, reserveSize)}
 {
 }
 

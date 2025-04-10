@@ -18,7 +18,7 @@ void saveDistributionByteBlock(const std::filesystem::path &filename,
 
 // METRICS SAMPLE GROUP
 void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
-                                const SampleGroup<double> &sampleGroup);
+                                const Old::SampleGroup<double> &sampleGroup);
 
 // METRICS TIMING DATA
 template <bool KnownKey>
@@ -30,14 +30,15 @@ template <typename Real_t>
 void saveRawFromSampleData(const std::filesystem::path &samplePath,
                            const Old::SampleData<Real_t> &sampleData);
 
-void loadRawFromSampleData(const std::filesystem::path &filename, SampleGroup<double> &sampleData);
+void loadRawFromSampleData(const std::filesystem::path &filename,
+                           Old::SampleGroup<double> &sampleData);
 
 // RAW SAMPLE GROUP
 void saveRawFromSampleGroup(const std::filesystem::path &directory,
-                            const SampleGroup<double> &sampleGroup);
+                            const Old::SampleGroup<double> &sampleGroup);
 
 void loadRawFromSampleGroup(const std::filesystem::path &directory,
-                            SampleGroup<double> &sampleGroup);
+                            Old::SampleGroup<double> &sampleGroup);
 
 // RAW TIMING DATA
 template <bool KnownKey>

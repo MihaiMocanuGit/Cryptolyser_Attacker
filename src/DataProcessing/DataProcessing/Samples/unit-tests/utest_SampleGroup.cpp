@@ -13,7 +13,7 @@ TEST_CASE("SampleGroup creation", "[SampleGroup]")
 {
     SECTION("Default constructor")
     {
-        SampleGroup<double> group;
+        Old::SampleGroup<double> group;
 
         REQUIRE(group.size() == 0);
         REQUIRE(group.begin() == group.end());
@@ -35,7 +35,7 @@ TEST_CASE("SampleGroup creation", "[SampleGroup]")
 
     SECTION("Size constructor")
     {
-        SampleGroup<double> group{256};
+        Old::SampleGroup<double> group{256};
 
         REQUIRE(group.size() == 256);
         REQUIRE(group.begin() + 256 == group.end());
@@ -50,7 +50,7 @@ TEST_CASE("Metric Computation", "[SampleGroup]")
     {
         SECTION("Homogenous data")
         {
-            SampleGroup<double> group{256};
+            Old::SampleGroup<double> group{256};
             constexpr size_t sampleSize{100};
             constexpr size_t firstValue{std::numeric_limits<uint16_t>::max()};
             // start with one set of constant values
@@ -88,7 +88,7 @@ TEST_CASE("Metric Computation", "[SampleGroup]")
 
         SECTION("2-Valued set")
         {
-            SampleGroup<double> group{100};
+            Old::SampleGroup<double> group{100};
             constexpr size_t sampleSize{100};
             constexpr double firstValue{static_cast<double>(std::numeric_limits<uint16_t>::max())};
             // populate the first half with a set of constant values

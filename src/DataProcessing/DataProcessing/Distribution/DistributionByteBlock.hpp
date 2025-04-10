@@ -12,13 +12,13 @@ class DistributionByteBlock
 
   public:
     template <typename Real_t>
-    explicit DistributionByteBlock(const SampleGroup<Real_t> &sampleGroup);
+    explicit DistributionByteBlock(const Old::SampleGroup<Real_t> &sampleGroup);
 
     [[nodiscard]] const std::vector<DistributionByteValue> &distributions() const;
 };
 
 template <typename Real_t>
-DistributionByteBlock::DistributionByteBlock(const SampleGroup<Real_t> &sampleGroup)
+DistributionByteBlock::DistributionByteBlock(const Old::SampleGroup<Real_t> &sampleGroup)
     : m_valueDistributions{sampleGroup.begin(), sampleGroup.end()}
 {
 }

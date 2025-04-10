@@ -48,7 +48,7 @@ void saveDistributionByteValue(const std::filesystem::path &filename,
 }
 
 void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
-                                const SampleGroup<double> &sampleGroup)
+                                const Old::SampleGroup<double> &sampleGroup)
 {
     std::filesystem::path directory = filename;
     directory.remove_filename();
@@ -214,7 +214,7 @@ void loadRawFromSampleData(const std::filesystem::path &filename,
 }
 
 void saveRawFromSampleGroup(const std::filesystem::path &directory,
-                            const SampleGroup<double> &sampleGroup)
+                            const Old::SampleGroup<double> &sampleGroup)
 {
     std::filesystem::create_directories(directory);
     constexpr unsigned NO_THREADS = 4;
@@ -249,7 +249,7 @@ void saveRawFromSampleGroup(const std::filesystem::path &directory,
 }
 
 void loadRawFromSampleGroup(const std::filesystem::path &directory,
-                            SampleGroup<double> &sampleGroup)
+                            Old::SampleGroup<double> &sampleGroup)
 {
     constexpr unsigned NO_THREADS = 4;
     std::vector<std::thread> threads;
