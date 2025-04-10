@@ -124,9 +124,8 @@ TEST_CASE("Metric Computation", "[SampleGroup]")
             SampleMetrics<double> targetGlobalMetrics =
                 SampleMetrics<double>::compute(dataList.begin(), dataList.end());
 
-            REQUIRE_THAT(group.globalMetrics().mean,
-                         WithinRel(targetGlobalMetrics.mean, tolerance));
-            REQUIRE_THAT(group.globalMetrics().variance,
+            REQUIRE_THAT(group.globalMetric().mean, WithinRel(targetGlobalMetrics.mean, tolerance));
+            REQUIRE_THAT(group.globalMetric().variance,
                          WithinRel(targetGlobalMetrics.variance, tolerance));
         }
     }

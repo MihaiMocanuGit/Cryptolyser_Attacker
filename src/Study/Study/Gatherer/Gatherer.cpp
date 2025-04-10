@@ -89,7 +89,7 @@ const TimingData<KnownKey> &Gatherer<KnownKey>::timingData() const
 template <bool KnownKey>
 size_t Gatherer<KnownKey>::validValuesCount() const
 {
-    return m_timingData.blockTimings[0].globalMetrics().size;
+    return m_timingData.blockTimings[0].globalMetric().size;
 }
 
 template <bool KnownKey>

@@ -29,7 +29,7 @@ class SampleGroup
         m_updateGlobalMetrics(oldMetrics, newMetrics);
     }
 
-    const SampleMetrics<Real_t> &globalMetrics() const noexcept;
+    const SampleMetrics<Real_t> &globalMetric() const noexcept;
     const SampleMetrics<Real_t> &localMetrics(size_t index) const;
     [[nodiscard]] SampleMetrics<Real_t> standardizeLocalMetrics(size_t index) const;
 

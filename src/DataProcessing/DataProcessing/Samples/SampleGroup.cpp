@@ -88,7 +88,7 @@ void SampleGroup<Real_t>::insert(size_t index, Real_t data)
 }
 
 template <typename Real_t>
-const SampleMetrics<Real_t> &SampleGroup<Real_t>::globalMetrics() const noexcept
+const SampleMetrics<Real_t> &SampleGroup<Real_t>::globalMetric() const noexcept
 {
     return m_globalMetrics;
 }

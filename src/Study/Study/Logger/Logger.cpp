@@ -40,12 +40,12 @@ void Logger<KnownKey>::printStats()
 
     const auto &blockTimings = m_gatherer.timingData().blockTimings;
     const size_t avgSampleSize{m_totalValidCount() / 256};
-    double min = blockTimings[0].globalMetrics().min;
-    double max = blockTimings[0].globalMetrics().max;
+    double min = blockTimings[0].globalMetric().min;
+    double max = blockTimings[0].globalMetric().max;
     for (const auto &sampleGroup : blockTimings)
     {
-        min = std::min(min, sampleGroup.globalMetrics().min);
-        max = std::max(max, sampleGroup.globalMetrics().max);
+        min = std::min(min, sampleGroup.globalMetric().min);
+        max = std::max(max, sampleGroup.globalMetric().max);
     }
 
     std::cout << "Sample Group:" << '\n'; //
@@ -54,8 +54,8 @@ void Logger<KnownKey>::printStats()
     else
     {
         std::cout << std::fixed << std::setprecision(3)                     //
-                  << "\tMean: " << blockTimings[0].globalMetrics().mean     //
-                  << "\tStdDev: " << blockTimings[0].globalMetrics().stdDev //
+                  << "\tMean: " << blockTimings[0].globalMetric().mean     //
+                  << "\tStdDev: " << blockTimings[0].globalMetric().stdDev //
                   << "\tAverage Sample Size: " << avgSampleSize             //
                   << "\tMin: " << min                                       //
                   << "\tMax: " << max                                       //
