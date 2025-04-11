@@ -3,7 +3,7 @@
 #include "DataProcessing/Distribution/DistributionByteBlock.hpp"
 #include "DataProcessing/Distribution/DistributionByteValue.hpp"
 #include "DataProcessing/Samples/SampleGroup.hpp"
-#include "Study/TimingData/TimingData.hpp"
+#include "Study/OldTimingData/TimingData.hpp"
 
 #include <filesystem>
 
@@ -23,7 +23,7 @@ void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
 // METRICS TIMING DATA
 template <bool KnownKey>
 void saveMetricsFromTimingData(const std::filesystem::path &directory,
-                               const TimingData<KnownKey> &timingData);
+                               const Old::TimingData<KnownKey> &timingData);
 
 // RAW SAMPLE DATA
 template <typename Real_t>
@@ -43,10 +43,10 @@ void loadRawFromSampleGroup(const std::filesystem::path &directory,
 // RAW TIMING DATA
 template <bool KnownKey>
 void saveRawFromTimingData(const std::filesystem::path &directory,
-                           const TimingData<KnownKey> &timingData);
+                           const Old::TimingData<KnownKey> &timingData);
 template <bool KnownKey>
 void loadRawFromTimingData(const std::filesystem::path &directory,
-                           TimingData<KnownKey> &timingData);
+                           Old::TimingData<KnownKey> &timingData);
 
 } // namespace SaveLoad
 

@@ -108,7 +108,7 @@ void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
 
 template <bool KnownKey>
 void saveMetricsFromTimingData(const std::filesystem::path &directory,
-                               const TimingData<KnownKey> &timingData)
+                               const Old::TimingData<KnownKey> &timingData)
 {
     std::filesystem::create_directories(directory);
     constexpr unsigned NO_THREADS = 4;
@@ -284,7 +284,7 @@ void loadRawFromSampleGroup(const std::filesystem::path &directory,
 
 template <bool KnownKey>
 void saveRawFromTimingData(const std::filesystem::path &directory,
-                           const TimingData<KnownKey> &timingData)
+                           const Old::TimingData<KnownKey> &timingData)
 {
     std::filesystem::create_directories(directory);
     constexpr unsigned NO_THREADS = 4;
@@ -326,7 +326,8 @@ void saveRawFromTimingData(const std::filesystem::path &directory,
 }
 
 template <bool KnownKey>
-void loadRawFromTimingData(const std::filesystem::path &directory, TimingData<KnownKey> &timingData)
+void loadRawFromTimingData(const std::filesystem::path &directory,
+                           Old::TimingData<KnownKey> &timingData)
 {
     constexpr unsigned NO_THREADS = 4;
     std::vector<std::thread> threads;
@@ -362,18 +363,18 @@ template void saveRawFromSampleData<size_t>(const std::filesystem::path &sampleP
                                             const Old::SampleData<size_t> &sampleData);
 
 template void saveMetricsFromTimingData<true>(const std::filesystem::path &filename,
-                                              const TimingData<true> &timingData);
+                                              const Old::TimingData<true> &timingData);
 template void saveMetricsFromTimingData<false>(const std::filesystem::path &filename,
-                                               const TimingData<false> &timingData);
+                                               const Old::TimingData<false> &timingData);
 
 template void saveRawFromTimingData<true>(const std::filesystem::path &filename,
-                                          const TimingData<true> &timingData);
+                                          const Old::TimingData<true> &timingData);
 template void saveRawFromTimingData<false>(const std::filesystem::path &filename,
-                                           const TimingData<false> &timingData);
+                                           const Old::TimingData<false> &timingData);
 
 template void loadRawFromTimingData<true>(const std::filesystem::path &filename,
-                                          TimingData<true> &timingData);
+                                          Old::TimingData<true> &timingData);
 template void loadRawFromTimingData<false>(const std::filesystem::path &filename,
-                                           TimingData<false> &timingData);
+                                           Old::TimingData<false> &timingData);
 
 } // namespace SaveLoad

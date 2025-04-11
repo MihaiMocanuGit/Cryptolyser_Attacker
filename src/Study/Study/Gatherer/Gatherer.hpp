@@ -3,7 +3,7 @@
 
 #include "DataProcessing/Samples/SampleData.hpp"
 #include "ServerConnection/ServerConnection.hpp"
-#include "Study/TimingData/TimingData.hpp"
+#include "Study/OldTimingData/TimingData.hpp"
 
 #include <type_traits>
 
@@ -13,7 +13,7 @@ class Gatherer
   private:
     ServerConnection<KnownKey> m_connection{};
 
-    TimingData<KnownKey> m_timingData{};
+    Old::TimingData<KnownKey> m_timingData{};
 
     double m_lb{};
     Old::SampleData<double> m_sampleLB{};
@@ -24,13 +24,13 @@ class Gatherer
     struct BorrowedData
     {
         ServerConnection<KnownKey> &&connection;
-        TimingData<KnownKey> &&timingData;
+        Old::TimingData<KnownKey> &&timingData;
     };
 
     std::vector<std::byte> m_constructRandomVector();
 
   public:
-    Gatherer(ServerConnection<KnownKey> &&connection, TimingData<KnownKey> &&timingData);
+    Gatherer(ServerConnection<KnownKey> &&connection, Old::TimingData<KnownKey> &&timingData);
 
     Gatherer(Gatherer &&gatherer) noexcept = default;
     Gatherer &operator=(Gatherer &&rhs) noexcept = default;
@@ -59,7 +59,7 @@ class Gatherer
     size_t lostPackages() const;
     size_t validValuesCount() const;
 
-    const TimingData<KnownKey> &timingData() const;
+    const Old::TimingData<KnownKey> &timingData() const;
 
     ServerConnection<KnownKey> &connection();
 

@@ -81,7 +81,7 @@ ServerConnection<KnownKey> &Gatherer<KnownKey>::connection()
 }
 
 template <bool KnownKey>
-const TimingData<KnownKey> &Gatherer<KnownKey>::timingData() const
+const Old::TimingData<KnownKey> &Gatherer<KnownKey>::timingData() const
 {
     return m_timingData;
 }
@@ -124,7 +124,7 @@ double Gatherer<KnownKey>::lb() const
 
 template <bool KnownKey>
 Gatherer<KnownKey>::Gatherer(ServerConnection<KnownKey> &&connection,
-                             TimingData<KnownKey> &&timingData)
+                             Old::TimingData<KnownKey> &&timingData)
     : m_connection{std::move(connection)}, m_timingData{std::move(timingData)}
 {
 }

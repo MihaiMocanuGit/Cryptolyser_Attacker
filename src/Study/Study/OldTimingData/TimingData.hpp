@@ -1,11 +1,12 @@
-#ifndef CRYPTOLYSER_ATTACKER_TIMINGDATA_HPP
-#define CRYPTOLYSER_ATTACKER_TIMINGDATA_HPP
+#ifndef CRYPTOLYSER_ATTACKER_OLD_TIMINGDATA_HPP
+#define CRYPTOLYSER_ATTACKER_OLD_TIMINGDATA_HPP
 
 #include "Cryptolyser_Common/connection_data_types.h"
 #include "DataProcessing/Samples/SampleGroup.hpp"
 
 #include <array>
-
+namespace Old
+{
 template <bool KnownKey>
 class TimingData
 {
@@ -79,5 +80,5 @@ TimingData<KnownKey>::TimingData(
       blockTimings{AES_BLOCK_BYTE_SIZE, Old::SampleGroup<double>(256, reserveSize)}
 {
 }
-
-#endif // CRYPTOLYSER_ATTACKER_TIMINGDATA_HPP
+} // namespace Old
+#endif // CRYPTOLYSER_ATTACKER_OLD_TIMINGDATA_HPP
