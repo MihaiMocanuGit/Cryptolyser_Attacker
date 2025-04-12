@@ -112,13 +112,13 @@ SampleMetrics<Real_t> SampleGroup<Real_t>::standardizeLocalMetrics(size_t index)
 }
 
 template <typename Real_t>
-const SampleData<Real_t> &SampleGroup<Real_t>::sampleAt(size_t index) const
+const Old::SampleData<Real_t> &SampleGroup<Real_t>::sampleAt(size_t index) const
 {
     return m_samples[index];
 }
 
 template <typename Real_t>
-const SampleData<Real_t> &SampleGroup<Real_t>::operator[](size_t index) const
+const Old::SampleData<Real_t> &SampleGroup<Real_t>::operator[](size_t index) const
 {
     return m_samples[index];
 }
@@ -136,13 +136,15 @@ void SampleGroup<Real_t>::resize(size_t size)
 }
 
 template <typename Real_t>
-typename std::vector<SampleData<Real_t>>::const_iterator SampleGroup<Real_t>::begin() const noexcept
+typename std::vector<Old::SampleData<Real_t>>::const_iterator
+    SampleGroup<Real_t>::begin() const noexcept
 {
     return m_samples.begin();
 }
 
 template <typename Real_t>
-typename std::vector<SampleData<Real_t>>::const_iterator SampleGroup<Real_t>::end() const noexcept
+typename std::vector<Old::SampleData<Real_t>>::const_iterator
+    SampleGroup<Real_t>::end() const noexcept
 {
     return m_samples.end();
 }

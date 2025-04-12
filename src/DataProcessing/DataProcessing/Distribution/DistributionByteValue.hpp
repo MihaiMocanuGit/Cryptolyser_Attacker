@@ -11,16 +11,16 @@ class DistributionByteValue
     size_t m_start{};
     size_t m_stop{};
     size_t m_sum{};
-    SampleData<size_t> m_frequency{};
+    Old::SampleData<size_t> m_frequency{};
     size_t m_peakIndex{};
 
     template <typename Real_t>
-    static SampleData<size_t> initFreq(size_t start, size_t stop,
-                                       const SampleData<Real_t> &timings);
+    static Old::SampleData<size_t> initFreq(size_t start, size_t stop,
+                                            const Old::SampleData<Real_t> &timings);
 
   public:
     template <typename Real_t>
-    explicit DistributionByteValue(const SampleData<Real_t> &sampleData);
+    explicit DistributionByteValue(const Old::SampleData<Real_t> &sampleData);
 
     struct Bounds
     {
@@ -29,12 +29,12 @@ class DistributionByteValue
     [[nodiscard]] Bounds bounds(double confidenceLB, double confidenceUB);
     [[nodiscard]] size_t start() const;
     [[nodiscard]] size_t stop() const;
-    [[nodiscard]] const SampleData<size_t> &frequency() const;
+    [[nodiscard]] const Old::SampleData<size_t> &frequency() const;
     [[nodiscard]] size_t peakValue() const;
 };
 
 template <typename Real_t>
-DistributionByteValue::DistributionByteValue(const SampleData<Real_t> &sampleData)
+DistributionByteValue::DistributionByteValue(const Old::SampleData<Real_t> &sampleData)
     : m_start{static_cast<size_t>(sampleData.metrics().min)},
       m_stop{static_cast<size_t>(sampleData.metrics().max)},
       m_sum{sampleData.data().size()}, m_frequency{initFreq(m_start, m_stop, sampleData)}
@@ -45,8 +45,8 @@ DistributionByteValue::DistributionByteValue(const SampleData<Real_t> &sampleDat
 }
 
 template <typename Real_t>
-SampleData<size_t> DistributionByteValue::initFreq(size_t start, size_t stop,
-                                                   const SampleData<Real_t> &timings)
+Old::SampleData<size_t> DistributionByteValue::initFreq(size_t start, size_t stop,
+                                                        const Old::SampleData<Real_t> &timings)
 {
     std::vector<size_t> frequency(stop + 1 - start, 0);
     for (double data : timings)
@@ -54,7 +54,7 @@ SampleData<size_t> DistributionByteValue::initFreq(size_t start, size_t stop,
         size_t index{static_cast<size_t>(data) - start};
         frequency[index]++;
     }
-    return SampleData{std::move(frequency)};
+    return Old::SampleData{std::move(frequency)};
 }
 
 #endif // CRYPTOLYSER_ATTACKER_DISTRIBUTIONBYTEVALUE_HPP

@@ -139,7 +139,7 @@ void saveMetricsFromTimingData(const std::filesystem::path &directory,
 
 template <typename Real_t>
 void saveRawFromSampleData(const std::filesystem::path &filename,
-                           const SampleData<Real_t> &sampleData)
+                           const Old::SampleData<Real_t> &sampleData)
 {
     std::filesystem::path directory = filename;
     directory.remove_filename();
@@ -165,12 +165,13 @@ void saveRawFromSampleData(const std::filesystem::path &filename,
         out << i << ',' << std::format("{}", sampleData[i]) << '\n';
 }
 
-void loadRawFromSampleData(const std::filesystem::path &filename, SampleData<double> &sampleData)
+void loadRawFromSampleData(const std::filesystem::path &filename,
+                           Old::SampleData<double> &sampleData)
 {
     std::ifstream in;
     in.open(filename);
     if (!in)
-        throw std::runtime_error("Loading from SampleData ERROR | Could not open file: " +
+        throw std::runtime_error("Loading from Old::SampleData ERROR | Could not open file: " +
                                  filename.string());
     // Example file:
     // Value, Mean, StdDev, Size, Min, Max
@@ -263,7 +264,7 @@ void loadRawFromSampleGroup(const std::filesystem::path &directory,
             const unsigned byteValue = file + threadNo * filesNo;
             const std::filesystem::path filename =
                 directory / ("Value_" + std::to_string(byteValue) + ".csv");
-            SampleData<double> result{};
+            Old::SampleData<double> result{};
             loadRawFromSampleData(filename, result);
             // A lock is necessary as inserting a sample into the sampleGroup modifies the global
             // metrics and the local sample metrics
@@ -355,10 +356,10 @@ void loadRawFromTimingData(const std::filesystem::path &directory, TimingData<Kn
 
 // EXPLICIT TEMPLATE INSTANTIATION:
 template void saveRawFromSampleData<double>(const std::filesystem::path &samplePath,
-                                            const SampleData<double> &sampleData);
+                                            const Old::SampleData<double> &sampleData);
 
 template void saveRawFromSampleData<size_t>(const std::filesystem::path &samplePath,
-                                            const SampleData<size_t> &sampleData);
+                                            const Old::SampleData<size_t> &sampleData);
 
 template void saveMetricsFromTimingData<true>(const std::filesystem::path &filename,
                                               const TimingData<true> &timingData);

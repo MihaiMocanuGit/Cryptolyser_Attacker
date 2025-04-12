@@ -28,7 +28,7 @@ void saveMetricsFromTimingData(const std::filesystem::path &directory,
 // RAW SAMPLE DATA
 template <typename Real_t>
 void saveRawFromSampleData(const std::filesystem::path &samplePath,
-                           const SampleData<Real_t> &sampleData);
+                           const Old::SampleData<Real_t> &sampleData);
 
 void loadRawFromSampleData(const std::filesystem::path &filename, SampleGroup<double> &sampleData);
 

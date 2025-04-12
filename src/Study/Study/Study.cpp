@@ -23,7 +23,7 @@ DistributionByteValue::Bounds Study<KnownKey>::calibrateBounds(size_t transmissi
 {
     if (m_gatherer.connection().connect())
     {
-        SampleData<double> sample;
+        Old::SampleData<double> sample;
         sample.reserve(transmissionsCount);
         for (size_t currentCount{0}; currentCount < transmissionsCount && m_continueRunningFlag;
              ++currentCount)

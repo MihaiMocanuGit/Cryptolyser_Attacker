@@ -4,6 +4,8 @@
 #include <cmath>
 #include <cstdint>
 
+namespace Old
+{
 template <typename Real_t>
 void SampleData<Real_t>::m_updateMetrics(const Real_t &dataValue)
 {
@@ -78,3 +80,4 @@ template class SampleData<uint64_t>;
 template class SampleData<float>;
 template class SampleData<double>;
 template class SampleData<long double>;
+} // namespace Old

@@ -99,7 +99,7 @@ size_t Gatherer<KnownKey>::lostPackages() const
 }
 
 template <bool KnownKey>
-const SampleData<double> &Gatherer<KnownKey>::sampleUB() const
+const Old::SampleData<double> &Gatherer<KnownKey>::sampleUB() const
 {
     return m_sampleUB;
 }
@@ -111,7 +111,7 @@ double Gatherer<KnownKey>::ub() const
 }
 
 template <bool KnownKey>
-const SampleData<double> &Gatherer<KnownKey>::sampleLB() const
+const Old::SampleData<double> &Gatherer<KnownKey>::sampleLB() const
 {
     return m_sampleLB;
 }

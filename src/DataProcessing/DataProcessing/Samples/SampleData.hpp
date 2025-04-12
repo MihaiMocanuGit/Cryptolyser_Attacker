@@ -4,7 +4,8 @@
 #include "SampleMetrics.hpp"
 
 #include <vector>
-
+namespace Old
+{
 template <typename Real_t>
 class SampleData
 {
@@ -57,4 +58,5 @@ class SampleData
 
     const Real_t &operator[](size_t index) const;
 };
+} // namespace Old
 #endif // CRYPTOLYSER_ATTACKER_SAMPLEDATA_HPP

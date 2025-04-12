@@ -16,9 +16,9 @@ class Gatherer
     TimingData<KnownKey> m_timingData{};
 
     double m_lb{};
-    SampleData<double> m_sampleLB{};
+    Old::SampleData<double> m_sampleLB{};
     double m_ub{};
-    SampleData<double> m_sampleUB{};
+    Old::SampleData<double> m_sampleUB{};
     size_t m_lostPackages{};
 
     struct BorrowedData
@@ -51,10 +51,10 @@ class Gatherer
     ObtainStatus obtain(uint32_t id);
 
     double lb() const;
-    const SampleData<double> &sampleLB() const;
+    const Old::SampleData<double> &sampleLB() const;
 
     double ub() const;
-    const SampleData<double> &sampleUB() const;
+    const Old::SampleData<double> &sampleUB() const;
 
     size_t lostPackages() const;
     size_t validValuesCount() const;
