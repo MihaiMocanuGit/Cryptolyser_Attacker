@@ -5,3 +5,5 @@ add_library(DistributionData STATIC
 )
 
 target_link_options(DistributionData PUBLIC -ltbb) # Note, delete this after removing the old classes
+
+target_link_libraries(DistributionData PUBLIC Serializer)

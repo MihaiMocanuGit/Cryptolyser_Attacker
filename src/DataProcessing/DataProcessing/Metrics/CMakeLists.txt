@@ -6,3 +6,5 @@ add_library(Metrics STATIC
         SampleGroup.cpp SampleGroup.hpp
         MetricsSerializer.cpp MetricsSerializer.hpp
 )
+
+target_link_libraries(Metrics PUBLIC Serializer)
