@@ -1,7 +1,7 @@
 add_subdirectory(DataProcessing/Samples)
 add_subdirectory(DataProcessing/SampleData)
 add_subdirectory(DataProcessing/MetricsData)
-add_subdirectory(DataProcessing/MetricsVector)
+add_subdirectory(DataProcessing/DataVector)
 add_subdirectory(DataProcessing/Timings)
 add_subdirectory(DataProcessing/Distribution)
 
@@ -10,7 +10,7 @@ target_link_libraries(DataProcessing INTERFACE
         Samples
         SampleData
         MetricsData
-        MetricsVector
+        DataVector
         Timings
         Distribution
 )

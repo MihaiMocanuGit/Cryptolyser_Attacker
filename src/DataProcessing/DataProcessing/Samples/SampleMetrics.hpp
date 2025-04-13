@@ -2,8 +2,12 @@
 #define CRYPTOLYSER_ATTACKER_SAMPLEMETRICS_HPP
 
 #include <cmath>
+#include <concepts>
 #include <cstdint>
 #include <numeric>
+
+template <typename T>
+concept Real = std::floating_point<T> || std::integral<T>;
 
 template <typename Real_t>
 struct SampleMetrics
@@ -22,8 +26,15 @@ struct SampleMetrics
         : sum{sum}, size{size}, mean{mean}, variance{variance}, stdDev{stdDev}, min{min}, max{max}
     {
     }
+
+    /**
+     * Structural function used to satisfy the HasMetric concept.
+     */
+    const SampleMetrics<Real_t> &globalMetric() const noexcept;
+
     static SampleMetrics combineMetrics(const SampleMetrics &metric1,
                                         const SampleMetrics &metric2) noexcept;
+
     template <typename InputIterator>
     static SampleMetrics compute(InputIterator begin, InputIterator end)
     {
@@ -54,6 +65,11 @@ struct SampleMetrics
         Real_t aStdDev{static_cast<Real_t>(std::sqrtl(aVariance))};
         return {aSum, aSize, aMean, aVariance, aStdDev, aMin, aMax};
     }
+};
+
+template <typename T>
+concept HasMetric = requires(T a) {
+    { a.globalMetric() } -> std::convertible_to<SampleMetrics<double>>;
 };
 
 #endif // CRYPTOLYSER_ATTACKER_SAMPLEMETRICS_HPP

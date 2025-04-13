@@ -32,6 +32,12 @@ SampleMetrics<Real_t> SampleMetrics<Real_t>::combineMetrics(const SampleMetrics 
     return {sum, size, mean, variance, stdDev, min, max};
 }
 
+template <typename Real_t>
+const SampleMetrics<Real_t> &SampleMetrics<Real_t>::globalMetric() const noexcept
+{
+    return *this;
+}
+
 template struct SampleMetrics<int>;
 template struct SampleMetrics<uint64_t>;
 template struct SampleMetrics<float>;
