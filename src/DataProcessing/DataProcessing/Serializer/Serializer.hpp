@@ -3,6 +3,7 @@
 
 #include "../DataVector/DataVector.hpp"
 #include "../DataVector/DataVectorSerializer.hpp"
+#include "../DistributionData/DistributionData.hpp"
 #include "../Metrics/Metrics.hpp"
 #include "../Metrics/MetricsSerializer.hpp"
 #include "../MetricsData/MetricsData.hpp"
@@ -33,6 +34,13 @@ extern void saveToCsv(const std::filesystem::path &path, const New::SampleData<T
 
 template <Real T>
 extern void loadFromCsv(const std::filesystem::path &path, New::SampleData<T> &sampleData);
+
+template <Real T>
+extern void saveToCsv(const std::filesystem::path &path,
+                      const DistributionData<T> &distributionData);
+
+template <Real T>
+extern void loadFromCsv(const std::filesystem::path &path, DistributionData<T> &distributionData);
 
 template <HasMetric T>
 extern void saveToCsv(const std::filesystem::path &path, const DataVector<T> &metricsVector);

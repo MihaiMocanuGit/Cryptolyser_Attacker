@@ -1,7 +1,7 @@
 #ifndef CRYPTOLYSER_ATTACKER_SAVELOAD_HPP
 #define CRYPTOLYSER_ATTACKER_SAVELOAD_HPP
-#include "DataProcessing/Distribution/DistributionByteBlock.hpp"
-#include "DataProcessing/Distribution/DistributionByteValue.hpp"
+#include "DataProcessing/DistributionData/DistributionByteBlock.hpp"
+#include "DataProcessing/DistributionData/DistributionByteValue.hpp"
 #include "DataProcessing/Metrics/SampleGroup.hpp"
 #include "Study/OldTimingData/TimingData.hpp"
 

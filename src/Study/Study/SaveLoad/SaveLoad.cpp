@@ -1,6 +1,6 @@
 #include "SaveLoad.hpp"
 
-#include "DataProcessing/Distribution/DistributionByteBlock.hpp"
+#include "DataProcessing/DistributionData/DistributionByteBlock.hpp"
 
 #include <format>
 #include <fstream>
