@@ -90,8 +90,8 @@ void saveMetricsFromSampleGroup(const std::filesystem::path &filename,
         peakValue /= weight;
         peakValue += distributions.distributions()[byteValue].start();
 
-        SampleMetrics metrics = sampleGroup.localMetrics(byteValue);
-        SampleMetrics standardizedMetrics = sampleGroup.standardizeLocalMetrics(byteValue);
+        Metrics metrics = sampleGroup.localMetrics(byteValue);
+        Metrics standardizedMetrics = sampleGroup.standardizeLocalMetrics(byteValue);
         out << static_cast<int>(static_cast<uint8_t>(byteValue)) << ", " // Value
             << std::setprecision(8) << std::fixed                        //
             << metrics.mean << ", "                                      // Mean

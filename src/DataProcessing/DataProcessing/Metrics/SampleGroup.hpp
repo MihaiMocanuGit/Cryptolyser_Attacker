@@ -9,9 +9,8 @@ class SampleGroup
 {
   private:
     std::vector<SampleData<Real_t>> m_samples{};
-    SampleMetrics<Real_t> m_globalMetrics;
-    void m_updateGlobalMetrics(SampleMetrics<Real_t> oldLocalMetrics,
-                               SampleMetrics<Real_t> newLocalMetrics);
+    Metrics<Real_t> m_globalMetrics;
+    void m_updateGlobalMetrics(Metrics<Real_t> oldLocalMetrics, Metrics<Real_t> newLocalMetrics);
 
   public:
     SampleGroup() = default;
@@ -25,15 +24,15 @@ class SampleGroup
     template <typename InputIterator>
     void insert(size_t index, InputIterator begin, InputIterator end)
     {
-        SampleMetrics<Real_t> oldMetrics = m_samples[index].metrics();
+        Metrics<Real_t> oldMetrics = m_samples[index].metrics();
         m_samples[index].insert(begin, end);
-        SampleMetrics<Real_t> newMetrics = m_samples[index].metrics();
+        Metrics<Real_t> newMetrics = m_samples[index].metrics();
         m_updateGlobalMetrics(oldMetrics, newMetrics);
     }
 
-    const SampleMetrics<Real_t> &globalMetric() const noexcept;
-    const SampleMetrics<Real_t> &localMetrics(size_t index) const;
-    [[nodiscard]] SampleMetrics<Real_t> standardizeLocalMetrics(size_t index) const;
+    const Metrics<Real_t> &globalMetric() const noexcept;
+    const Metrics<Real_t> &localMetrics(size_t index) const;
+    [[nodiscard]] Metrics<Real_t> standardizeLocalMetrics(size_t index) const;
 
     const SampleData<Real_t> &sampleAt(size_t index) const;
     const SampleData<Real_t> &operator[](size_t index) const;

@@ -2,7 +2,7 @@
 #define CRYPTOLYSER_ATTACKER_OLD_TIMINGDATA_HPP
 
 #include "Cryptolyser_Common/connection_data_types.h"
-#include "DataProcessing/Samples/SampleGroup.hpp"
+#include "DataProcessing/Metrics/SampleGroup.hpp"
 
 #include <array>
 namespace Old

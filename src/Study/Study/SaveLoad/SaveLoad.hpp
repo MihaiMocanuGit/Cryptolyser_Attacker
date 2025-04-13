@@ -2,7 +2,7 @@
 #define CRYPTOLYSER_ATTACKER_SAVELOAD_HPP
 #include "DataProcessing/Distribution/DistributionByteBlock.hpp"
 #include "DataProcessing/Distribution/DistributionByteValue.hpp"
-#include "DataProcessing/Samples/SampleGroup.hpp"
+#include "DataProcessing/Metrics/SampleGroup.hpp"
 #include "Study/OldTimingData/TimingData.hpp"
 
 #include <filesystem>

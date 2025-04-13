@@ -60,7 +60,7 @@ TEST_CASE("Metric Computation", "[SampleGroup]")
                 std::ranges::fill(data, firstValue);
                 group.insert(i, data.begin(), data.end());
 
-                const SampleMetrics<double> &localMetrics = group.localMetrics(i);
+                const Metrics<double> &localMetrics = group.localMetrics(i);
                 REQUIRE(localMetrics.mean == firstValue);
                 REQUIRE(localMetrics.size == sampleSize);
                 REQUIRE(localMetrics.variance == 0.0);
@@ -73,7 +73,7 @@ TEST_CASE("Metric Computation", "[SampleGroup]")
                 std::ranges::fill(data, secondValue);
                 group.insert(i, data.begin(), data.end());
 
-                const SampleMetrics<double> &localMetrics = group.localMetrics(i);
+                const Metrics<double> &localMetrics = group.localMetrics(i);
                 REQUIRE_THAT(
                     localMetrics.mean,
                     WithinRel(static_cast<double>(firstValue + secondValue) / 2.0, tolerance));
@@ -98,7 +98,7 @@ TEST_CASE("Metric Computation", "[SampleGroup]")
                 std::ranges::fill(data, firstValue);
                 group.insert(i, data.begin(), data.end());
 
-                const SampleMetrics<double> &localMetrics = group.localMetrics(i);
+                const Metrics<double> &localMetrics = group.localMetrics(i);
                 REQUIRE(localMetrics.mean == firstValue);
                 REQUIRE(localMetrics.size == sampleSize);
                 REQUIRE(localMetrics.variance == 0.0);
@@ -111,7 +111,7 @@ TEST_CASE("Metric Computation", "[SampleGroup]")
                 std::ranges::fill(data, secondValue);
                 group.insert(i, data.begin(), data.end());
 
-                const SampleMetrics<double> &localMetrics = group.localMetrics(i);
+                const Metrics<double> &localMetrics = group.localMetrics(i);
                 REQUIRE(localMetrics.mean == secondValue);
                 REQUIRE(localMetrics.size == sampleSize);
                 REQUIRE(localMetrics.variance == 0.0);
@@ -121,8 +121,8 @@ TEST_CASE("Metric Computation", "[SampleGroup]")
             for (const auto &sample : group)
                 for (const auto &data : sample)
                     dataList.push_back(data);
-            SampleMetrics<double> targetGlobalMetrics =
-                SampleMetrics<double>::compute(dataList.begin(), dataList.end());
+            Metrics<double> targetGlobalMetrics =
+                Metrics<double>::compute(dataList.begin(), dataList.end());
 
             REQUIRE_THAT(group.globalMetric().mean, WithinRel(targetGlobalMetrics.mean, tolerance));
             REQUIRE_THAT(group.globalMetric().variance,

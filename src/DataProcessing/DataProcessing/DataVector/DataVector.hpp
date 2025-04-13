@@ -1,7 +1,7 @@
 #ifndef CRYPTOLYSER_ATTACKER_DATAVECTOR_HPP
 #define CRYPTOLYSER_ATTACKER_DATAVECTOR_HPP
 
-#include "../Samples/SampleMetrics.hpp"
+#include "../Metrics/Metrics.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -14,19 +14,17 @@ class DataVector
   private:
     std::vector<T> m_data{};
 
-    SampleMetrics<double> m_globalMetric{};
+    Metrics<double> m_globalMetric{};
 
-    [[nodiscard]] SampleMetrics<double> m_computeAfterAdd(const SampleMetrics<double> &globalBefore,
-                                                          const SampleMetrics<double> &localAfter);
+    [[nodiscard]] Metrics<double> m_computeAfterAdd(const Metrics<double> &globalBefore,
+                                                    const Metrics<double> &localAfter);
 
-    [[nodiscard]] SampleMetrics<double>
-        m_computeAfterRemove(const SampleMetrics<double> &globalBefore,
-                             const SampleMetrics<double> &localBefore);
+    [[nodiscard]] Metrics<double> m_computeAfterRemove(const Metrics<double> &globalBefore,
+                                                       const Metrics<double> &localBefore);
 
-    [[nodiscard]] SampleMetrics<double>
-        m_computeAfterUpdate(const SampleMetrics<double> &globalBefore,
-                             const SampleMetrics<double> &localBefore,
-                             const SampleMetrics<double> &localAfter);
+    [[nodiscard]] Metrics<double> m_computeAfterUpdate(const Metrics<double> &globalBefore,
+                                                       const Metrics<double> &localBefore,
+                                                       const Metrics<double> &localAfter);
 
   public:
     DataVector() = default;
@@ -46,7 +44,7 @@ class DataVector
 
     typename std::vector<T>::const_iterator end() const noexcept;
 
-    [[nodiscard]] const SampleMetrics<double> &globalMetric() const noexcept;
+    [[nodiscard]] const Metrics<double> &globalMetric() const noexcept;
 
     [[nodiscard]] Metrics<double> standardizeMetric(size_t index) const;
 
@@ -161,8 +159,8 @@ DataVector<T>::DataVector(std::vector<T> data) : m_data{std::move(data)}
     std::for_each(m_data.begin(), m_data.end(),
                   [this](const auto &elem)
                   {
-                      const SampleMetrics<double> &globalBefore{globalMetric()};
-                      const SampleMetrics<double> &localAfter{elem.globalMetric()};
+                      const Metrics<double> &globalBefore{globalMetric()};
+                      const Metrics<double> &localAfter{elem.globalMetric()};
                       m_globalMetric = m_computeAfterAdd(globalBefore, localAfter);
                   });
 }
@@ -178,13 +176,13 @@ template <HasMetric T>
 void DataVector<T>::update(size_t index, std::function<void(T &)> modifyRule)
 {
     assert(index < m_data.size());
-    SampleMetrics<double> globalBefore{globalMetric()};
-    SampleMetrics<double> localBefore{m_data[index].globalMetric()};
+    Metrics<double> globalBefore{globalMetric()};
+    Metrics<double> localBefore{m_data[index].globalMetric()};
 
     T &chosen{m_data[index]};
     modifyRule(chosen);
 
-    SampleMetrics<double> localAfter{chosen.globalMetric()};
+    Metrics<double> localAfter{chosen.globalMetric()};
     m_globalMetric = m_computeAfterUpdate(globalBefore, localBefore, localAfter);
 }
 
@@ -196,13 +194,13 @@ void DataVector<T>::update_foreach(std::function<void(size_t index, T &elem)> mo
     //  way there's no need for code duplication
     for (size_t i{0}; i < size(); ++i)
     {
-        SampleMetrics<double> globalBefore{globalMetric()};
-        SampleMetrics<double> localBefore{m_data[i].globalMetric()};
+        Metrics<double> globalBefore{globalMetric()};
+        Metrics<double> localBefore{m_data[i].globalMetric()};
 
         T &chosen{m_data[i]};
         modifyRule(i, chosen);
 
-        SampleMetrics<double> localAfter{chosen.globalMetric()};
+        Metrics<double> localAfter{chosen.globalMetric()};
         m_globalMetric = m_computeAfterUpdate(globalBefore, localBefore, localAfter);
     }
 }
@@ -211,8 +209,8 @@ template <HasMetric T>
 void DataVector<T>::remove(size_t index)
 {
     assert(index < m_data.size());
-    SampleMetrics<double> globalBefore{globalMetric()};
-    SampleMetrics<double> localBefore{m_data[index].globalMetric()};
+    Metrics<double> globalBefore{globalMetric()};
+    Metrics<double> localBefore{m_data[index].globalMetric()};
 
     m_data.erase(m_data.begin() + index);
     m_globalMetric = m_computeAfterRemove(globalBefore, localBefore);
@@ -221,17 +219,17 @@ void DataVector<T>::remove(size_t index)
 template <HasMetric T>
 void DataVector<T>::add(T element)
 {
-    SampleMetrics<double> globalBefore{globalMetric()};
-    SampleMetrics<double> localAfter{element.globalMetric()};
+    Metrics<double> globalBefore{globalMetric()};
+    Metrics<double> localAfter{element.globalMetric()};
 
     m_data.push_back(std::move(element));
     m_globalMetric = m_computeAfterAdd(globalBefore, localAfter);
 }
 
 template <HasMetric T>
-SampleMetrics<double> DataVector<T>::m_computeAfterUpdate(const SampleMetrics<double> &globalBefore,
-                                                          const SampleMetrics<double> &localBefore,
-                                                          const SampleMetrics<double> &localAfter)
+Metrics<double> DataVector<T>::m_computeAfterUpdate(const Metrics<double> &globalBefore,
+                                                    const Metrics<double> &localBefore,
+                                                    const Metrics<double> &localAfter)
 {
     // Original global metrics
     size_t n{globalBefore.size};
@@ -326,21 +324,21 @@ SampleMetrics<double> DataVector<T>::m_computeAfterUpdate(const SampleMetrics<do
 }
 
 template <HasMetric T>
-SampleMetrics<double> DataVector<T>::m_computeAfterRemove(const SampleMetrics<double> &globalBefore,
-                                                          const SampleMetrics<double> &localBefore)
+Metrics<double> DataVector<T>::m_computeAfterRemove(const Metrics<double> &globalBefore,
+                                                    const Metrics<double> &localBefore)
 {
     return m_computeAfterUpdate(globalBefore, localBefore, {});
 }
 
 template <HasMetric T>
-SampleMetrics<double> DataVector<T>::m_computeAfterAdd(const SampleMetrics<double> &globalBefore,
-                                                       const SampleMetrics<double> &localAfter)
+Metrics<double> DataVector<T>::m_computeAfterAdd(const Metrics<double> &globalBefore,
+                                                 const Metrics<double> &localAfter)
 {
     return m_computeAfterUpdate(globalBefore, {}, localAfter);
 }
 
 template <HasMetric T>
-const SampleMetrics<double> &DataVector<T>::globalMetric() const noexcept
+const Metrics<double> &DataVector<T>::globalMetric() const noexcept
 {
     return m_globalMetric;
 }

@@ -1,7 +1,7 @@
 #ifndef CRYPTOLYSER_ATTACKER_DISTRIBUTIONBYTEBLOCK_HPP
 #define CRYPTOLYSER_ATTACKER_DISTRIBUTIONBYTEBLOCK_HPP
 
-#include "../Samples/SampleGroup.hpp"
+#include "../Metrics/SampleGroup.hpp"
 #include "DistributionByteValue.hpp"
 
 #include <vector>

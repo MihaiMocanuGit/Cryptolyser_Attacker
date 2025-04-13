@@ -1,8 +1,8 @@
 #ifndef CRYPTOLYSER_ATTACKER_NEW_SAMPLEDATA_HPP
 #define CRYPTOLYSER_ATTACKER_NEW_SAMPLEDATA_HPP
 
+#include "../Metrics/Metrics.hpp"
 #include "../MetricsData/MetricsData.hpp"
-#include "../Samples/SampleMetrics.hpp"
 
 #include <cassert>
 #include <vector>
@@ -41,7 +41,7 @@ class SampleData
 
     typename std::vector<T>::const_iterator end() const noexcept;
 
-    [[nodiscard]] const SampleMetrics<double> &globalMetric() const noexcept;
+    [[nodiscard]] const Metrics<double> &globalMetric() const noexcept;
 
     const std::vector<T> &data() const noexcept;
 
@@ -70,7 +70,7 @@ const std::vector<T> &SampleData<T>::data() const noexcept
 }
 
 template <Real T>
-const SampleMetrics<double> &SampleData<T>::globalMetric() const noexcept
+const Metrics<double> &SampleData<T>::globalMetric() const noexcept
 {
     return m_metricsData.globalMetric();
 }

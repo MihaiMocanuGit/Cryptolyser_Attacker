@@ -1,7 +1,7 @@
 #ifndef CRYPTOLYSER_ATTACKER_DISTRIBUTIONBYTEVALUE_HPP
 #define CRYPTOLYSER_ATTACKER_DISTRIBUTIONBYTEVALUE_HPP
 
-#include "../Samples/SampleData.hpp"
+#include "../Metrics/SampleData.hpp"
 
 #include <algorithm>
 #include <execution>

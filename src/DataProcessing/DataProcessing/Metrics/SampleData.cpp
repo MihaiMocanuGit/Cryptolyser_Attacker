@@ -21,14 +21,14 @@ void SampleData<Real_t>::reserve(std::size_t newCapacity)
 
 template <typename Real_t>
 SampleData<Real_t>::SampleData(const std::vector<Real_t> &data)
-    : m_data{data}, m_currentMetrics{SampleMetrics<Real_t>::compute(m_data.begin(), m_data.end())}
+    : m_data{data}, m_currentMetrics{Metrics<Real_t>::compute(m_data.begin(), m_data.end())}
 {
 }
 
 template <typename Real_t>
 SampleData<Real_t>::SampleData(std::vector<Real_t> &&data)
     : m_data{std::move(data)},
-      m_currentMetrics{SampleMetrics<Real_t>::compute(m_data.begin(), m_data.end())}
+      m_currentMetrics{Metrics<Real_t>::compute(m_data.begin(), m_data.end())}
 {
 }
 
@@ -52,7 +52,7 @@ typename std::vector<Real_t>::const_iterator SampleData<Real_t>::end() const noe
 }
 
 template <typename Real_t>
-const SampleMetrics<Real_t> &SampleData<Real_t>::metrics() const noexcept
+const Metrics<Real_t> &SampleData<Real_t>::metrics() const noexcept
 {
     return m_currentMetrics;
 }

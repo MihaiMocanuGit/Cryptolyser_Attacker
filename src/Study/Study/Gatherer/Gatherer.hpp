@@ -1,7 +1,7 @@
 #ifndef CRYPTOLYSER_ATTACKER_GATHERER_HPP
 #define CRYPTOLYSER_ATTACKER_GATHERER_HPP
 
-#include "DataProcessing/Samples/SampleData.hpp"
+#include "DataProcessing/Metrics/SampleData.hpp"
 #include "ServerConnection/ServerConnection.hpp"
 #include "Study/OldTimingData/TimingData.hpp"
 

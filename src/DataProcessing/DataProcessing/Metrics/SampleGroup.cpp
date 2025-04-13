@@ -3,8 +3,8 @@
 #include <array>
 
 template <typename Real_t>
-void Old::SampleGroup<Real_t>::m_updateGlobalMetrics(SampleMetrics<Real_t> oldLocalMetrics,
-                                                     SampleMetrics<Real_t> newLocalMetrics)
+void Old::SampleGroup<Real_t>::m_updateGlobalMetrics(Metrics<Real_t> oldLocalMetrics,
+                                                     Metrics<Real_t> newLocalMetrics)
 {
     // Original global metrics
     size_t n{m_globalMetrics.size};
@@ -59,7 +59,7 @@ void Old::SampleGroup<Real_t>::m_updateGlobalMetrics(SampleMetrics<Real_t> oldLo
     Real_t max_prime{std::max(max, max_prime_m)};
 
     m_globalMetrics =
-        SampleMetrics<Real_t>{sum_prime, n_prime, u_prime, v_prime, s_prime, min_prime, max_prime};
+        Metrics<Real_t>{sum_prime, n_prime, u_prime, v_prime, s_prime, min_prime, max_prime};
 }
 
 template <typename Real_t>
@@ -88,21 +88,21 @@ void Old::SampleGroup<Real_t>::insert(size_t index, Real_t data)
 }
 
 template <typename Real_t>
-const SampleMetrics<Real_t> &Old::SampleGroup<Real_t>::globalMetric() const noexcept
+const Metrics<Real_t> &Old::SampleGroup<Real_t>::globalMetric() const noexcept
 {
     return m_globalMetrics;
 }
 
 template <typename Real_t>
-const SampleMetrics<Real_t> &Old::SampleGroup<Real_t>::localMetrics(size_t index) const
+const Metrics<Real_t> &Old::SampleGroup<Real_t>::localMetrics(size_t index) const
 {
     return m_samples[index].metrics();
 }
 
 template <typename Real_t>
-SampleMetrics<Real_t> Old::SampleGroup<Real_t>::standardizeLocalMetrics(size_t index) const
+Metrics<Real_t> Old::SampleGroup<Real_t>::standardizeLocalMetrics(size_t index) const
 {
-    SampleMetrics<Real_t> standardized{this->localMetrics(index)};
+    Metrics<Real_t> standardized{this->localMetrics(index)};
     standardized.mean = (standardized.mean - m_globalMetrics.mean) /
                         (m_globalMetrics.stdDev / std::sqrtl(m_globalMetrics.size));
     standardized.variance =
