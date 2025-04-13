@@ -1,6 +1,7 @@
 #ifndef CRYPTOLYSER_ATTACKER_METRICSDATASERIALIZER_HPP
 #define CRYPTOLYSER_ATTACKER_METRICSDATASERIALIZER_HPP
 
+#include "../Serializer/Serializer.hpp"
 #include "MetricsData.hpp"
 
 #include <filesystem>

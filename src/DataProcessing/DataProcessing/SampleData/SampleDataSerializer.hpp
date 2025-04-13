@@ -1,6 +1,7 @@
 #ifndef CRYPTOLYSER_ATTACKER_SAMPLEDATASERIALIZER_HPP
 #define CRYPTOLYSER_ATTACKER_SAMPLEDATASERIALIZER_HPP
 
+#include "../Serializer/Serializer.hpp"
 #include "SampleData.hpp"
 
 #include <filesystem>
