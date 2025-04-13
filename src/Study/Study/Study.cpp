@@ -1,5 +1,7 @@
 #include "Study.hpp"
 
+#include "Study/SerializerManager/SerializerManager.hpp"
+
 #include <random>
 
 namespace
@@ -98,17 +100,17 @@ void Study<KnownKey>::run(size_t desiredCount, size_t logFreq, size_t saveMetric
             if (isTimeTo(saveMetricsFreq))
             {
                 std::cout << "Saving Metrics: " << m_gatherer.validValuesCount() << std::endl;
-                SaveLoad::saveMetricsFromTimingData(
-                    m_saveDirPath / std::to_string(m_gatherer.validValuesCount()),
-                    m_gatherer.timingData());
+                SerializerManager::saveMetrics(m_saveDirPath /
+                                                   std::to_string(m_gatherer.validValuesCount()),
+                                               m_gatherer.timingData());
             }
         }
         packageId++;
     }
 
-    SaveLoad::saveRawFromSampleData(m_saveDirPath / "Raw" / "LB.csv", m_gatherer.sampleLB());
-    SaveLoad::saveRawFromSampleData(m_saveDirPath / "Raw" / "UB.csv", m_gatherer.sampleUB());
-    SaveLoad::saveRawFromTimingData(m_saveDirPath / "Raw", m_gatherer.timingData());
+    SerializerManager::saveRaw(m_saveDirPath / "Raw" / "LB.csv", m_gatherer.sampleLB());
+    SerializerManager::saveRaw(m_saveDirPath / "Raw" / "UB.csv", m_gatherer.sampleUB());
+    SerializerManager::saveRaw(m_saveDirPath / "Raw", m_gatherer.timingData());
 }
 
 template <bool KnownKey>

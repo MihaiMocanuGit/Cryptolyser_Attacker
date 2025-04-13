@@ -286,43 +286,43 @@ template <bool KnownKey>
 void saveRawFromTimingData(const std::filesystem::path &directory,
                            const Old::TimingData<KnownKey> &timingData)
 {
-    std::filesystem::create_directories(directory);
-    constexpr unsigned NO_THREADS = 4;
-    std::vector<std::thread> threads;
-    threads.reserve(NO_THREADS);
-    const unsigned DIRS_PER_THREAD = timingData.blockTimings.size() / NO_THREADS;
-    const unsigned REMAINING_DIRS = timingData.blockTimings.size() % NO_THREADS;
-
-    auto threadBlock = [&](unsigned threadNo, unsigned dirsNo)
-    {
-        for (unsigned dir{0}; dir < dirsNo; ++dir)
-        {
-            const unsigned byteValue = dir + threadNo * dirsNo;
-            const std::filesystem::path directoryPath =
-                directory / ("Byte_" + std::to_string(byteValue));
-            saveRawFromSampleGroup(directoryPath, timingData.blockTimings[byteValue]);
-        }
-    };
-
-    for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
-        threads.emplace_back(threadBlock, thread, DIRS_PER_THREAD);
-    // The last thread will also be responsible for the remaining number of directories.
-    threadBlock(NO_THREADS - 1, DIRS_PER_THREAD + REMAINING_DIRS);
-
-    // Storing additional information about the timing data.
-    // This file will be ignored when loadRawFromTimingData is called().
-    std::ofstream out;
-    out.open(directory / "info.txt");
-    out << "Data Size: " << timingData.dataSize() << '\n';
-    if constexpr (KnownKey)
-    {
-        out << "Key: ";
-        for (std::byte byte : timingData.key())
-            out << std::hex << std::uppercase << static_cast<unsigned>(byte) << ' ';
-        out << '\n';
-    }
-    for (unsigned thread{0}; thread < NO_THREADS - 1; ++thread)
-        threads[thread].join();
+    //    std::filesystem::create_directories(directory);
+    //    constexpr unsigned NO_THREADS = 4;
+    //    std::vector<std::thread> threads;
+    //    threads.reserve(NO_THREADS);
+    //    const unsigned DIRS_PER_THREAD = timingData.blockTimings.size() / NO_THREADS;
+    //    const unsigned REMAINING_DIRS = timingData.blockTimings.size() % NO_THREADS;
+    //
+    //    auto threadBlock = [&](unsigned threadNo, unsigned dirsNo)
+    //    {
+    //        for (unsigned dir{0}; dir < dirsNo; ++dir)
+    //        {
+    //            const unsigned byteValue = dir + threadNo * dirsNo;
+    //            const std::filesystem::path directoryPath =
+    //                directory / ("Byte_" + std::to_string(byteValue));
+    //            saveRawFromSampleGroup(directoryPath, timingData.blockTimings[byteValue]);
+    //        }
+    //    };
+    //
+    //    for (unsigned thread{0}; thread < NO_THREADS - 1; thread++)
+    //        threads.emplace_back(threadBlock, thread, DIRS_PER_THREAD);
+    //    // The last thread will also be responsible for the remaining number of directories.
+    //    threadBlock(NO_THREADS - 1, DIRS_PER_THREAD + REMAINING_DIRS);
+    //
+    //    // Storing additional information about the timing data.
+    //    // This file will be ignored when loadRawFromTimingData is called().
+    //    std::ofstream out;
+    //    out.open(directory / "info.txt");
+    //    out << "Data Size: " << timingData.dataSize() << '\n';
+    //    if constexpr (KnownKey)
+    //    {
+    //        out << "Key: ";
+    //        for (std::byte byte : timingData.key())
+    //            out << std::hex << std::uppercase << static_cast<unsigned>(byte) << ' ';
+    //        out << '\n';
+    //    }
+    //    for (unsigned thread{0}; thread < NO_THREADS - 1; ++thread)
+    //        threads[thread].join();
 }
 
 template <bool KnownKey>
