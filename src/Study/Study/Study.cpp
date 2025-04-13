@@ -17,13 +17,13 @@ std::vector<std::byte> constructRandomVector(size_t dataSize)
 } // namespace
 
 template <bool KnownKey>
-DistributionByteValue::Bounds Study<KnownKey>::calibrateBounds(size_t transmissionsCount,
-                                                               double confidenceLB,
-                                                               double confidenceUB)
+DistributionData<double>::Bounds Study<KnownKey>::calibrateBounds(size_t transmissionsCount,
+                                                                  double confidenceLB,
+                                                                  double confidenceUB)
 {
     if (m_gatherer.connection().connect())
     {
-        Old::SampleData<double> sample;
+        New::SampleData<double> sample;
         sample.reserve(transmissionsCount);
         for (size_t currentCount{0}; currentCount < transmissionsCount && m_continueRunningFlag;
              ++currentCount)
@@ -51,15 +51,15 @@ DistributionByteValue::Bounds Study<KnownKey>::calibrateBounds(size_t transmissi
                 result->inbound_t1, result->inbound_t2, result->outbound_t1, result->outbound_t2)};
             sample.insert(timing);
         }
-        DistributionByteValue distribution{sample};
-        SaveLoad::saveRawFromSampleData(m_saveDirPath / "Calibrate" / "values.csv", sample);
-        SaveLoad::saveDistributionByteValue(m_saveDirPath / "Calibrate" / "distribution.csv",
+        DistributionData distribution{sample};
+        SerializerManager::saveRaw(m_saveDirPath / "Calibrate" / "values.csv", sample);
+        SerializerManager::saveDistribution(m_saveDirPath / "Calibrate" / "distribution.csv",
                                             distribution);
 
         return distribution.bounds(confidenceLB, confidenceUB);
     }
 
-    return {0, std::numeric_limits<size_t>::max()};
+    return {0, std::numeric_limits<double>::max()};
 }
 
 template <bool KnownKey>

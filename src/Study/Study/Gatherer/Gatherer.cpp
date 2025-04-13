@@ -1,6 +1,7 @@
 #include "Gatherer.hpp"
 
 #include "DataProcessing/Timings/TimingProcessing.hpp"
+#include "Study/TimingData/TimingData.hpp"
 
 #include <random>
 
@@ -50,7 +51,9 @@ Gatherer<KnownKey>::ObtainStatus Gatherer<KnownKey>::obtain(uint32_t id)
     for (unsigned byte{0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
     {
         size_t byteValue{static_cast<size_t>(studyData[byte])};
-        m_timingData.blockTimings[byte].insert(byteValue, timing);
+        m_timingData.timing().update(
+            byte, [timing, byteValue](auto &byte)
+            { byte.update(byteValue, [timing](auto &byteValue) { byteValue.insert(timing); }); });
     }
     return ObtainStatus::success;
 }
@@ -81,7 +84,7 @@ ServerConnection<KnownKey> &Gatherer<KnownKey>::connection()
 }
 
 template <bool KnownKey>
-const Old::TimingData<KnownKey> &Gatherer<KnownKey>::timingData() const
+const New::TimingData<KnownKey> &Gatherer<KnownKey>::timingData() const
 {
     return m_timingData;
 }
@@ -89,7 +92,7 @@ const Old::TimingData<KnownKey> &Gatherer<KnownKey>::timingData() const
 template <bool KnownKey>
 size_t Gatherer<KnownKey>::validValuesCount() const
 {
-    return m_timingData.blockTimings[0].globalMetric().size;
+    return m_timingData[0].globalMetric().size;
 }
 
 template <bool KnownKey>
@@ -99,7 +102,7 @@ size_t Gatherer<KnownKey>::lostPackages() const
 }
 
 template <bool KnownKey>
-const Old::SampleData<double> &Gatherer<KnownKey>::sampleUB() const
+const New::SampleData<double> &Gatherer<KnownKey>::sampleUB() const
 {
     return m_sampleUB;
 }
@@ -111,7 +114,7 @@ double Gatherer<KnownKey>::ub() const
 }
 
 template <bool KnownKey>
-const Old::SampleData<double> &Gatherer<KnownKey>::sampleLB() const
+const New::SampleData<double> &Gatherer<KnownKey>::sampleLB() const
 {
     return m_sampleLB;
 }
@@ -124,7 +127,7 @@ double Gatherer<KnownKey>::lb() const
 
 template <bool KnownKey>
 Gatherer<KnownKey>::Gatherer(ServerConnection<KnownKey> &&connection,
-                             Old::TimingData<KnownKey> &&timingData)
+                             New::TimingData<KnownKey> &&timingData)
     : m_connection{std::move(connection)}, m_timingData{std::move(timingData)}
 {
 }

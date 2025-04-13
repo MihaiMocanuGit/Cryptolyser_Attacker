@@ -38,7 +38,7 @@ void Logger<KnownKey>::printStats()
               << " (" << invalidPercent << "%)"                                     //
               << '\n';                                                              //
 
-    const auto &blockTimings = m_gatherer.timingData().blockTimings;
+    const auto &blockTimings = m_gatherer.timingData().timing();
     const size_t avgSampleSize{m_totalValidCount() / 256};
     double min = blockTimings[0].globalMetric().min;
     double max = blockTimings[0].globalMetric().max;
@@ -53,30 +53,31 @@ void Logger<KnownKey>::printStats()
         std::cout << "\tEmpty.\n";
     else
     {
-        std::cout << std::fixed << std::setprecision(3)                     //
+        std::cout << std::fixed << std::setprecision(3)                    //
                   << "\tMean: " << blockTimings[0].globalMetric().mean     //
                   << "\tStdDev: " << blockTimings[0].globalMetric().stdDev //
-                  << "\tAverage Sample Size: " << avgSampleSize             //
-                  << "\tMin: " << min                                       //
-                  << "\tMax: " << max                                       //
-                  << '\n';                                                  //
+                  << "\tAverage Sample Size: " << avgSampleSize            //
+                  << "\tMin: " << min                                      //
+                  << "\tMax: " << max                                      //
+                  << '\n';                                                 //
     }
 
-    auto printIgnoredBound = [this](double bound, const Old::SampleData<double> &sample)
+    auto printIgnoredBound = [this](double bound, const New::SampleData<double> &sample)
     {
-        float ratio = static_cast<float>(sample.metrics().size) / m_totalReceivedCount() * 100.0;
+        float ratio =
+            static_cast<float>(sample.globalMetric().size) / m_totalReceivedCount() * 100.0;
         std::cout << "Values for bound: " << bound << '\n';
-        if (sample.metrics().size == 0)
+        if (sample.globalMetric().size == 0)
             std::cout << "\tEmpty.\n";
         else
         {
-            std::cout << std::fixed << std::setprecision(3)                           //
-                      << "\tMean: " << sample.metrics().mean                          //
-                      << "\tStdDev: " << sample.metrics().stdDev                      //
-                      << "\tSize: " << sample.metrics().size << " (" << ratio << "%)" //
-                      << "\tMin: " << sample.metrics().min                            //
-                      << "\tMax: " << sample.metrics().max                            //
-                      << '\n';                                                        //
+            std::cout << std::fixed << std::setprecision(3)                                //
+                      << "\tMean: " << sample.globalMetric().mean                          //
+                      << "\tStdDev: " << sample.globalMetric().stdDev                      //
+                      << "\tSize: " << sample.globalMetric().size << " (" << ratio << "%)" //
+                      << "\tMin: " << sample.globalMetric().min                            //
+                      << "\tMax: " << sample.globalMetric().max                            //
+                      << '\n';                                                             //
         }
     };
 

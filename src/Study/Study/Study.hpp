@@ -2,6 +2,7 @@
 #define CRYPTOLYSER_ATTACKER_STUDY_HPP
 
 #include "Gatherer/Gatherer.hpp"
+#include "DataProcessing/DistributionData/DistributionData.hpp"
 #include "Logger/Logger.hpp"
 #include "SaveLoad/SaveLoad.hpp"
 
@@ -23,9 +24,9 @@ class Study
     void run(size_t desiredCount, size_t logFreq, size_t saveMetricsFreq, double lb = 0,
              double ub = std::numeric_limits<double>::max());
 
-    DistributionByteValue::Bounds calibrateBounds(size_t transmissionsCount = 500'000,
-                                                  double confidenceLB = 0.0000125,
-                                              double confidenceUB = 0.0005);
+    DistributionData<double>::Bounds calibrateBounds(size_t transmissionsCount = 500'000,
+                                                     double confidenceLB = 0.0000125,
+                                                     double confidenceUB = 0.0005);
 
     Gatherer<KnownKey> release();
 };
