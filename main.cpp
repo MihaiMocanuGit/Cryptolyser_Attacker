@@ -1,7 +1,12 @@
-#include "DataProcessing/Samples/SampleGroup.hpp"
+#include "Correlate/Correlate.hpp"
+#include "DataProcessing/DataVector/DataVectorSerializer.hpp"
+#include "DataProcessing/Metrics/SampleGroup.hpp"
+#include "DataProcessing/SampleData/SampleData.hpp"
+#include "DataProcessing/SampleData/SampleDataSerializer.hpp"
 #include "DataProcessing/Timings/TimingProcessing.hpp"
 #include "ServerConnection/ServerConnection.hpp"
 #include "Study/Gatherer/Gatherer.hpp"
+#include "Study/OldTimingData/TimingData.hpp"
 #include "Study/Study.hpp"
 #include "Study/TimingData/TimingData.hpp"
 
@@ -34,23 +39,27 @@ void exitHandler(int signal)
 
 namespace Experimental
 {
+constexpr size_t DESIRED_COUNT{2 * 32 * 1024 * 1024};
+constexpr size_t LOG_FREQ{2 * 128 * 1024};
+constexpr size_t SAVE_FREQ{2 * 3 * 1024 * 1024};
+constexpr size_t CALIBRATE_COUNT{100'000};
+constexpr double LB_CONFIDENCE{0.0};
+constexpr double UB_CONFIDENCE{0.005};
+constexpr size_t DATA_SIZE = 800;
+constexpr size_t RESERVE = 1.1 * DESIRED_COUNT / (AES_BLOCK_BYTE_SIZE * 256);
 
-void studyRun(const std::filesystem::path &saveFolderPath,
-              ServerConnection<false> &connectionKeyless)
+New::TimingData<false> studyRun(const std::filesystem::path &saveFolderPath,
+                                ServerConnection<false> &connectionKeyless)
 {
-    constexpr size_t DESIRED_COUNT = 32 * 1024 * 1024;
-    constexpr size_t LOG_FREQ = 128 * 1024;
-    constexpr size_t SAVE_FREQ = 3 * 1024 * 1024;
 
-    constexpr size_t DATA_SIZE = AES_BLOCK_BYTE_SIZE;
-    constexpr size_t RESERVE = DESIRED_COUNT;
+    New::TimingData<false> dataKeyless{DATA_SIZE};
+    dataKeyless.reserveForEach(RESERVE);
 
-    TimingData<false> dataKeyless{DATA_SIZE, RESERVE};
     Gatherer<false> gathererKeyless{std::move(connectionKeyless), std::move(dataKeyless)};
     Study<false> studyKeyless{std::move(gathererKeyless), g_continueRunning, saveFolderPath};
 
     std::cout << "Started calibration..." << std::endl;
-    auto [lb, ub] = studyKeyless.calibrateBounds(1'000'000, 0, 0.05);
+    auto [lb, ub] = studyKeyless.calibrateBounds(CALIBRATE_COUNT, LB_CONFIDENCE, UB_CONFIDENCE);
     std::cout << "Computed bounds: [" << lb << " " << ub << "]" << std::endl;
 
     std::cout << "Started run..." << std::endl;
@@ -59,101 +68,31 @@ void studyRun(const std::filesystem::path &saveFolderPath,
 
     gathererKeyless = studyKeyless.release();
     connectionKeyless = std::move(gathererKeyless.release().connection);
+    return dataKeyless;
 }
 
-void studyRun(const std::filesystem::path &saveFolderPath, ServerConnection<true> &connectionKey,
-              const std::array<std::byte, 16> &key)
-
+New::TimingData<true> studyRun(const std::filesystem::path &saveFolderPath,
+                               ServerConnection<true> &connectionKey,
+                               const std::array<std::byte, 16> &key)
 {
-    constexpr size_t DESIRED_COUNT = 32 * 1024 * 1024;
-    constexpr size_t LOG_FREQ = 128 * 1024;
-    constexpr size_t SAVE_FREQ = 3 * 1024 * 1024;
 
-    constexpr size_t DATA_SIZE = AES_BLOCK_BYTE_SIZE;
-    constexpr size_t RESERVE = DESIRED_COUNT;
+    New::TimingData<true> dataKey{DATA_SIZE, key};
+    dataKey.reserveForEach(RESERVE);
 
-    TimingData<true> dataKey{DATA_SIZE, RESERVE, key};
     Gatherer<true> gathererKey{std::move(connectionKey), std::move(dataKey)};
     Study<true> studyKey{std::move(gathererKey), g_continueRunning, saveFolderPath};
 
     std::cout << "Started calibration..." << std::endl;
-    auto [lb, ub] = studyKey.calibrateBounds(1'000'000, 0, 0.0015);
+    auto [lb, ub] = studyKey.calibrateBounds(CALIBRATE_COUNT, LB_CONFIDENCE, UB_CONFIDENCE);
     std::cout << "Computed bounds: [" << lb << " " << ub << "]" << std::endl;
-
     std::cout << "Started run..." << std::endl;
-    studyKey.run(DESIRED_COUNT, LOG_FREQ, SAVE_FREQ, lb, ub);
+    studyKey.run(DESIRED_COUNT, LOG_FREQ, SAVE_FREQ, 0, ub);
     std::cout << "Finished." << std::endl;
 
-    gathererKey = std::move(studyKey.release());
+    gathererKey = studyKey.release();
     connectionKey = std::move(gathererKey.release().connection);
-}
 
-void convert(const std::filesystem::path &saveResultPath, const std::filesystem::path &studyPath1,
-             const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &key1,
-             const std::filesystem::path &studyPath2,
-             const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &key2)
-{
-    TimingData<true> original1(400, 2048 * 2048, key1);
-    SaveLoad::loadRawFromTimingData(studyPath1 / "Raw", original1);
-
-    TimingData<true> original2(400, 2048 * 2048, key2);
-    SaveLoad::loadRawFromTimingData(studyPath2 / "Raw", original2);
-
-    for (unsigned byte{0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
-    {
-        if (key1[byte] != key2[byte])
-        {
-            auto convertXor = [byte](const std::filesystem::path &saveResultPath,
-                                     const TimingData<true> &original,
-                                     const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &key)
-            {
-                SampleGroup<double> group(256);
-                for (unsigned byteValue{0}; byteValue < 256; ++byteValue)
-                {
-                    std::byte newIndex{static_cast<std::byte>(byteValue) ^ key[byte]};
-                    double timingValue{
-                        original.blockTimings[byte].standardizeLocalMetrics(byteValue).mean};
-                    group.insert(static_cast<size_t>(newIndex), timingValue);
-                }
-                SaveLoad::saveMetricsFromSampleGroup(saveResultPath, group);
-            };
-            convertXor(saveResultPath / std::to_string(byte) / "Key1.csv", original1, key1);
-            convertXor(saveResultPath / std::to_string(byte) / "Key2.csv", original2, key2);
-        }
-    }
-};
-
-void correlate(const std::filesystem::path &saveResultPath,
-               const std::filesystem::path &studyVictimPath,
-               const std::filesystem::path &studyDoppelPath)
-{
-    TimingData<false> t{16, 2048 * 2048};
-    SaveLoad::loadRawFromTimingData(studyDoppelPath, t);
-
-    TimingData<false> u{16, 2048 * 2048};
-    SaveLoad::loadRawFromTimingData(studyVictimPath, u);
-
-    TimingData<false> result(400, 4);
-
-    for (unsigned byte{0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
-    {
-        for (unsigned i{0}; i < 256; ++i)
-        {
-            long double correlation_i{0.0};
-            for (unsigned j{0}; j < 256; ++j)
-            {
-                long double t_j{t.blockTimings[byte][j].metrics().mean};
-                t_j -= t.blockTimings[byte].globalMetrics().mean;
-                long double u_i_j{u.blockTimings[byte][i ^ j].metrics().mean};
-                u_i_j -= u.blockTimings[byte].globalMetrics().mean;
-                long double value{t_j * u_i_j};
-
-                correlation_i += value;
-            }
-            result.blockTimings[byte].insert(i, correlation_i);
-        }
-    }
-    SaveLoad::saveMetricsFromTimingData(saveResultPath, result);
+    return dataKey;
 }
 
 } // namespace Experimental
@@ -184,9 +123,21 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
     }
-
-    // ServerConnection<true> connectionKey(ip, port);
-    // ServerConnection<false> connectionKeyless(ip, port);
+    // As the app does not have any implicit way of scheduling its jobs during this development
+    // phase, the main.cpp file is actively used to experiment with different activities. Thus, this
+    // file might be left in a disorganized state between the seldom commits.
+    //
+    // At this moment, the app can do the following jobs:
+    // 1. Study Session: Using the Study class, connect to either Cryptolyser_Victim or
+    // Cryptolyser_Doppelganger and request a study set.
+    // 2. Save The obtained data to file. You can save the whole data, or save just the metrics
+    // (size, mean, variance, min, max) value
+    // 3. Load data that was previously stored in files.
+    // 4. Correlate data - encrypted with a secret key - with another set with a known key.
+    // 5. Generate the distribution of values from a data set.
+    //
+    // To be added:
+    // i. Post-process the data through filtering.
 
     auto key1 = std::bit_cast<std::array<std::byte, 16>>(
         std::to_array<uint8_t>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}));
@@ -197,101 +148,24 @@ int main(int argc, char **argv)
     auto key4 = std::bit_cast<std::array<std::byte, 16>>(
         std::to_array<uint8_t>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}));
     auto key5 = std::bit_cast<std::array<std::byte, 16>>(
-        std::to_array<uint8_t>({0, 0, 0, 0, 0, 0, 0, 0, 15, 15, 15, 15, 15, 15, 15, 15}));
+        std::to_array<uint8_t>({0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
+                                0xF0, 0xF0, 0xF0, 0xF0, 0xF0}));
     auto key6 = std::bit_cast<std::array<std::byte, 16>>(
-        std::to_array<uint8_t>({15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15}));
+        std::to_array<uint8_t>({0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F,
+                                0x0F, 0x0F, 0x0F, 0x0F, 0x0F}));
+    auto key7 = std::bit_cast<std::array<std::byte, 16>>(
+        std::to_array<uint8_t>({0x13, 0x67, 0x73, 0x1f, 0x26, 0x7f, 0x64, 0xfc, 0x42, 0x0f, 0x59,
+                                0x62, 0x76, 0x6c, 0xf8, 0x68}));
+    auto key8 = std::bit_cast<std::array<std::byte, 16>>(
+        std::to_array<uint8_t>({0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                0xff, 0xff, 0xff, 0xff, 0xff}));
+    auto key9 = std::bit_cast<std::array<std::byte, 16>>(
+        std::to_array<uint8_t>({0x26, 0x26, 0x26, 0x26, 0x26, 0x26, 0x26, 0x26, 0x26, 0x26, 0x26,
+                                0x26, 0x26, 0x26, 0x26, 0x26}));
 
-    //    Experimental::studyRun(saveFolderPath / "Key4_victim/t", connectionKeyless);
-    //    Experimental::studyRun(saveFolderPath / "Key4_victim/u", connectionKeyless);
-    //    {
-    //        TimingData<false> combinedData{400, 2048 * 100};
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key4_victim/t/Raw", combinedData);
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key4_victim/u/Raw", combinedData);
-    //        SaveLoad::saveMetricsFromTimingData(saveFolderPath / "Key4_victim/Combined",
-    //        combinedData);
-    //    }
-    Experimental::correlate(saveFolderPath / "Key2_victim_Key4_doppel",
-                            saveFolderPath / "Key2_victim/u/Raw",
-                            saveFolderPath / "Key4_victim/u/Raw");
+    // ServerConnection<true> connectionKey(ip, port);
+    // ServerConnection<false> connectionKeyless(ip, port);
 
-    //    Experimental::correlate(saveFolderPath / "Key5_victim/Correlate",
-    //                            saveFolderPath / "Key5_victim");
-    //
-    //    Experimental::correlate(saveFolderPath / "Key6_victim/Correlate",
-    //                            saveFolderPath / "Key6_victim");
-
-    //    Experimental::studyRun(saveFolderPath / "Key1_response/t", connectionKey);
-    //    Experimental::studyRun(saveFolderPath / "Key1_response/u", connectionKey);
-    //    {
-    //        TimingData<false> combinedData{400, 2048 * 100};
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key1_response/t/Raw", combinedData);
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key1_response/u/Raw", combinedData);
-    //        SaveLoad::saveMetricsFromTimingData(saveFolderPath / "Key1_response/Combined",
-    //        combinedData);
-    //    }
-    //    Experimental::correlate(saveFolderPath / "Key1_response/Correlate",
-    //                            saveFolderPath / "Key1_response");
-
-    //    Experimental::studyRun(saveFolderPath / "Key2_response/t", connectionKey, key2);
-    //    Experimental::studyRun(saveFolderPath / "Key2_response/u", connectionKey, key2);
-    //    {
-    //        TimingData<true> combinedData{400, 2048 * 100, key2};
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key2_response/t/Raw", combinedData);
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key2_response/u/Raw", combinedData);
-    //        SaveLoad::saveMetricsFromTimingData(saveFolderPath / "Key2_response/Combined",
-    //                                            combinedData);
-    //    }
-    //    Experimental::correlate(saveFolderPath / "Key2_response/Correlate",
-    //                            saveFolderPath / "Key2_response");
-
-    //    Experimental::studyRun(saveFolderPath / "Key3_response/t", connectionKey, key3);
-    //    Experimental::studyRun(saveFolderPath / "Key3_response/u", connectionKey, key3);
-    //    {
-    //        TimingData<true> combinedData{400, 2048 * 100, key3};
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key3_response/t/Raw", combinedData);
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key3_response/u/Raw", combinedData);
-    //        SaveLoad::saveMetricsFromTimingData(saveFolderPath / "Key3_response/Combined",
-    //                                            combinedData);
-    //    }
-    //    Experimental::correlate(saveFolderPath / "Key3_response/Correlate",
-    //                            saveFolderPath / "Key3_response");
-
-    //    Experimental::studyRun(saveFolderPath / "Key4_response/t", connectionKey, key4);
-    //    Experimental::studyRun(saveFolderPath / "Key4_response/u", connectionKey, key4);
-    //    {
-    //        TimingData<true> combinedData{400, 2048 * 100, key4};
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key4_response/t/Raw", combinedData);
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key4_response/u/Raw", combinedData);
-    //        SaveLoad::saveMetricsFromTimingData(saveFolderPath / "Key4_response/Combined",
-    //                                            combinedData);
-    //    }
-    //    Experimental::correlate(saveFolderPath / "Key4_response/Correlate",
-    //                            saveFolderPath / "Key4_response");
-
-    //    Experimental::studyRun(saveFolderPath / "Key5_response/t", connectionKey, key5);
-    //    Experimental::studyRun(saveFolderPath / "Key5_response/u", connectionKey, key5);
-    //    {
-    //        TimingData<true> combinedData{400, 2048 * 100, key5};
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key5_response/t/Raw", combinedData);
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key5_response/u/Raw", combinedData);
-    //        SaveLoad::saveMetricsFromTimingData(saveFolderPath / "Key5_response/Combined",
-    //                                            combinedData);
-    //    }
-    //    Experimental::correlate(saveFolderPath / "Key5_response/Correlate",
-    //                            saveFolderPath / "Key5_response");
-
-    //    Experimental::studyRun(saveFolderPath / "Key6_response/t", connectionKey, key6);
-    //    Experimental::studyRun(saveFolderPath / "Key6_response/u", connectionKey, key6);
-    //    {
-    //        TimingData<true> combinedData{400, 2048 * 100, key6};
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key6_response/t/Raw", combinedData);
-    //        SaveLoad::loadRawFromTimingData(saveFolderPath / "Key6_response/u/Raw", combinedData);
-    //        SaveLoad::saveMetricsFromTimingData(saveFolderPath / "Key6_response/Combined",
-    //                                            combinedData);
-    //    }
-    //    Experimental::correlate(saveFolderPath / "Key6_response/Correlate",
-    //                            saveFolderPath / "Key6_response");
-    //
     std::cout << "Exiting..." << std::endl;
     return 0;
 }
