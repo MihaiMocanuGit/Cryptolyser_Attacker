@@ -34,6 +34,8 @@
 # IDE specific
 .idea
 cmake-build-*
+.cache
+compile_commands.json
 
 # Program specific
 build*
