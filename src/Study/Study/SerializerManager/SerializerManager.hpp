@@ -14,13 +14,13 @@ class SerializerManager
     static void saveDistribution(const std::filesystem::path &path,
                                  const DistributionData<double> &distributionData);
 
-    template <bool KnownKey, HasMetric DataType = New::SampleData<double>>
+    template <bool KnownKey, HasMetric DataType = SampleData<double>>
     static void saveRaw(const std::filesystem::path &path,
-                        const New::TimingData<KnownKey, DataType> &timingData);
+                        const TimingData<KnownKey, DataType> &timingData);
 
-    template <bool KnownKey, HasMetric DataType = New::SampleData<double>>
+    template <bool KnownKey, HasMetric DataType = SampleData<double>>
     static void saveMetrics(const std::filesystem::path &path,
-                            const New::TimingData<KnownKey, DataType> &data);
+                            const TimingData<KnownKey, DataType> &data);
 
     template <HasMetric DataType>
     static void saveRaw(const std::filesystem::path &path, const DataType &timingData);
@@ -28,14 +28,14 @@ class SerializerManager
 
 template <bool KnownKey, HasMetric DataType>
 void SerializerManager::saveRaw(const std::filesystem::path &path,
-                                const New::TimingData<KnownKey, DataType> &timingData)
+                                const TimingData<KnownKey, DataType> &timingData)
 {
     Serializer::saveToCsv(path, timingData.timing());
 }
 
 template <bool KnownKey, HasMetric DataType>
 void SerializerManager::saveMetrics(const std::filesystem::path &path,
-                                    const New::TimingData<KnownKey, DataType> &timingData)
+                                    const TimingData<KnownKey, DataType> &timingData)
 {
     std::filesystem::create_directories(path);
     for (unsigned byte{0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)

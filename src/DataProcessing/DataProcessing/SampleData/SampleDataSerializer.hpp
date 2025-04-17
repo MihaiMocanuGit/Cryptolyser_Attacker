@@ -12,7 +12,7 @@
 namespace Serializer
 {
 template <Real T>
-void saveToCsv(const std::filesystem::path &path, const New::SampleData<T> &sampleData)
+void saveToCsv(const std::filesystem::path &path, const SampleData<T> &sampleData)
 {
     std::filesystem::path directory = path;
     directory.remove_filename();
@@ -44,7 +44,7 @@ void saveToCsv(const std::filesystem::path &path, const New::SampleData<T> &samp
 }
 
 template <Real T>
-void loadFromCsv(const std::filesystem::path &path, New::SampleData<T> &sampleData)
+void loadFromCsv(const std::filesystem::path &path, SampleData<T> &sampleData)
 {
     std::filesystem::path formattedPath{path};
     if (not path.has_extension())

@@ -1,4 +1,4 @@
-#include "../SampleData.hpp"
+#include "../../SampleData/SampleData.hpp"
 #include "catch2/catch_test_macros.hpp"
 #include "catch2/matchers/catch_matchers.hpp"
 #include "catch2/matchers/catch_matchers_floating_point.hpp"
@@ -13,13 +13,13 @@ TEST_CASE("SampleData creation", "[SampleData]")
 {
     SECTION("Default constructor")
     {
-        Old::SampleData<double> sampleData = {};
+        SampleData<double> sampleData = {};
         REQUIRE(sampleData.data().empty());
         REQUIRE(sampleData.begin() == sampleData.end());
 
         SECTION("Metrics for empty sample")
         {
-            const auto &metrics{sampleData.metrics()};
+            const auto &metrics{sampleData.globalMetric()};
             REQUIRE(metrics.size == 0);
             REQUIRE(metrics.sum == 0);
             REQUIRE(metrics.mean == 0);
@@ -34,7 +34,7 @@ TEST_CASE("SampleData creation", "[SampleData]")
             REQUIRE(sampleData[0] == value);
             REQUIRE(++sampleData.begin() == sampleData.end());
 
-            const auto &metrics{sampleData.metrics()};
+            const auto &metrics{sampleData.globalMetric()};
             REQUIRE(metrics.size == 1);
             REQUIRE(metrics.sum == value);
             REQUIRE(metrics.mean == value);
@@ -47,13 +47,13 @@ TEST_CASE("SampleData creation", "[SampleData]")
         SECTION("Lvalue Vector")
         {
             std::vector<double> data = {1, 2, 3, 4, 5};
-            Old::SampleData<double> sampleData{data};
+            SampleData<double> sampleData{data};
             REQUIRE(sampleData.size() == data.size());
             REQUIRE(sampleData.begin() + data.size() == sampleData.end());
 
             SECTION("Metrics for sample")
             {
-                const auto &metrics{sampleData.metrics()};
+                const auto &metrics{sampleData.globalMetric()};
                 REQUIRE(metrics.size == data.size());
                 REQUIRE(metrics.sum == 1 + 2 + 3 + 4 + 5);
                 REQUIRE(metrics.mean == metrics.sum / metrics.size);
@@ -65,13 +65,13 @@ TEST_CASE("SampleData creation", "[SampleData]")
         {
             std::vector<double> data = {1, 2, 3, 4, 5};
             constexpr size_t size = 5;
-            Old::SampleData<double> sampleData{std::move(data)};
+            SampleData<double> sampleData{std::move(data)};
             REQUIRE(sampleData.size() == size);
             REQUIRE(sampleData.begin() + size == sampleData.end());
 
             SECTION("Metrics for sample")
             {
-                const auto &metrics{sampleData.metrics()};
+                const auto &metrics{sampleData.globalMetric()};
                 REQUIRE(metrics.size == size);
                 REQUIRE(metrics.sum == 1 + 2 + 3 + 4 + 5);
                 REQUIRE(metrics.mean == metrics.sum / metrics.size);
@@ -83,13 +83,13 @@ TEST_CASE("SampleData creation", "[SampleData]")
     SECTION("Iterator Range constructor")
     {
         std::vector<double> data = {1, 2, 3, 4, 5};
-        Old::SampleData<double> sampleData{data.begin(), data.end()};
+        SampleData<double> sampleData{data.begin(), data.end()};
         REQUIRE(sampleData.size() == data.size());
         REQUIRE(sampleData.begin() + data.size() == sampleData.end());
 
         SECTION("Metrics for sample")
         {
-            const auto &metrics{sampleData.metrics()};
+            const auto &metrics{sampleData.globalMetric()};
             REQUIRE(metrics.size == data.size());
             REQUIRE(metrics.sum == 1 + 2 + 3 + 4 + 5);
             REQUIRE(metrics.mean == metrics.sum / metrics.size);
@@ -105,9 +105,9 @@ TEST_CASE("Metric Computation from SampleData", "[SampleData]")
     {
         std::vector<double> data(100);
         std::ranges::fill(data, std::numeric_limits<uint16_t>::max());
-        Old::SampleData<double> sample{data};
+        SampleData<double> sample{data};
 
-        const auto &metrics{sample.metrics()};
+        const auto &metrics{sample.globalMetric()};
         for (size_t count = 1; count <= 100; ++count)
         {
             REQUIRE(metrics.size == count * data.size());
@@ -123,7 +123,7 @@ TEST_CASE("Metric Computation from SampleData", "[SampleData]")
     }
     SECTION("PSEUDO-RANDOM VALUES")
     {
-        Old::SampleData<double> totalSample;
+        SampleData<double> totalSample;
         for (size_t count = 1; count <= 5; ++count)
         {
             std::vector<double> data(100);
@@ -145,10 +145,10 @@ TEST_CASE("Metric Computation from SampleData", "[SampleData]")
                                      1.0 / static_cast<double>(fractionalPart);
                           });
             // The metrics for the current generated data.
-            Old::SampleData<double> currentSample{data};
+            SampleData<double> currentSample{data};
             REQUIRE(currentSample.size() == data.size());
             REQUIRE(currentSample.begin() + data.size() == currentSample.end());
-            const auto &currentMetrics{currentSample.metrics()};
+            const auto &currentMetrics{currentSample.globalMetric()};
             REQUIRE(currentMetrics.size == data.size());
             const double currentTargetSum =
                 std::accumulate(currentSample.begin(), currentSample.end(), 0.0);
@@ -167,7 +167,7 @@ TEST_CASE("Metric Computation from SampleData", "[SampleData]")
             totalSample.insert(data.begin(), data.end());
             REQUIRE(totalSample.size() == count * data.size());
             REQUIRE(totalSample.begin() + count * data.size() == totalSample.end());
-            const auto &totalMetrics{totalSample.metrics()};
+            const auto &totalMetrics{totalSample.globalMetric()};
             REQUIRE(totalMetrics.size == count * data.size());
             const double targetSum = std::accumulate(totalSample.begin(), totalSample.end(), 0.0);
             REQUIRE_THAT(totalMetrics.sum, WithinRel(targetSum, tolerance));

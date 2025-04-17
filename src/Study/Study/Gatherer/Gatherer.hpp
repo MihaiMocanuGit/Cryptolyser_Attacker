@@ -1,9 +1,7 @@
 #ifndef CRYPTOLYSER_ATTACKER_GATHERER_HPP
 #define CRYPTOLYSER_ATTACKER_GATHERER_HPP
 
-#include "DataProcessing/Metrics/SampleData.hpp"
 #include "ServerConnection/ServerConnection.hpp"
-#include "Study/OldTimingData/TimingData.hpp"
 #include "Study/TimingData/TimingData.hpp"
 
 #include <type_traits>
@@ -14,24 +12,24 @@ class Gatherer
   private:
     ServerConnection<KnownKey> m_connection{};
 
-    New::TimingData<KnownKey> m_timingData{};
+    TimingData<KnownKey> m_timingData{};
 
     double m_lb{};
-    New::SampleData<double> m_sampleLB{};
+    SampleData<double> m_sampleLB{};
     double m_ub{};
-    New::SampleData<double> m_sampleUB{};
+    SampleData<double> m_sampleUB{};
     size_t m_lostPackages{};
 
     struct BorrowedData
     {
         ServerConnection<KnownKey> &&connection;
-        New::TimingData<KnownKey> &&timingData;
+        TimingData<KnownKey> &&timingData;
     };
 
     std::vector<std::byte> m_constructRandomVector();
 
   public:
-    Gatherer(ServerConnection<KnownKey> &&connection, New::TimingData<KnownKey> &&timingData);
+    Gatherer(ServerConnection<KnownKey> &&connection, TimingData<KnownKey> &&timingData);
 
     Gatherer(Gatherer &&gatherer) noexcept = default;
     Gatherer &operator=(Gatherer &&rhs) noexcept = default;
@@ -52,15 +50,15 @@ class Gatherer
     ObtainStatus obtain(uint32_t id);
 
     double lb() const;
-    const New::SampleData<double> &sampleLB() const;
+    const SampleData<double> &sampleLB() const;
 
     double ub() const;
-    const New::SampleData<double> &sampleUB() const;
+    const SampleData<double> &sampleUB() const;
 
     size_t lostPackages() const;
     size_t validValuesCount() const;
 
-    const New::TimingData<KnownKey> &timingData() const;
+    const TimingData<KnownKey> &timingData() const;
 
     ServerConnection<KnownKey> &connection();
 

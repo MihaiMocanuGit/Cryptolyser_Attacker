@@ -84,7 +84,7 @@ ServerConnection<KnownKey> &Gatherer<KnownKey>::connection()
 }
 
 template <bool KnownKey>
-const New::TimingData<KnownKey> &Gatherer<KnownKey>::timingData() const
+const TimingData<KnownKey> &Gatherer<KnownKey>::timingData() const
 {
     return m_timingData;
 }
@@ -102,7 +102,7 @@ size_t Gatherer<KnownKey>::lostPackages() const
 }
 
 template <bool KnownKey>
-const New::SampleData<double> &Gatherer<KnownKey>::sampleUB() const
+const SampleData<double> &Gatherer<KnownKey>::sampleUB() const
 {
     return m_sampleUB;
 }
@@ -114,7 +114,7 @@ double Gatherer<KnownKey>::ub() const
 }
 
 template <bool KnownKey>
-const New::SampleData<double> &Gatherer<KnownKey>::sampleLB() const
+const SampleData<double> &Gatherer<KnownKey>::sampleLB() const
 {
     return m_sampleLB;
 }
@@ -127,7 +127,7 @@ double Gatherer<KnownKey>::lb() const
 
 template <bool KnownKey>
 Gatherer<KnownKey>::Gatherer(ServerConnection<KnownKey> &&connection,
-                             New::TimingData<KnownKey> &&timingData)
+                             TimingData<KnownKey> &&timingData)
     : m_connection{std::move(connection)}, m_timingData{std::move(timingData)}
 {
 }

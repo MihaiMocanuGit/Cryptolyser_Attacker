@@ -62,7 +62,7 @@ void Logger<KnownKey>::printStats()
                   << '\n';                                                 //
     }
 
-    auto printIgnoredBound = [this](double bound, const New::SampleData<double> &sample)
+    auto printIgnoredBound = [this](double bound, const SampleData<double> &sample)
     {
         float ratio =
             static_cast<float>(sample.globalMetric().size) / m_totalReceivedCount() * 100.0;

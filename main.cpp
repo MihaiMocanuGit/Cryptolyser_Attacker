@@ -1,12 +1,10 @@
 #include "Correlate/Correlate.hpp"
 #include "DataProcessing/DataVector/DataVectorSerializer.hpp"
-#include "DataProcessing/Metrics/SampleGroup.hpp"
 #include "DataProcessing/SampleData/SampleData.hpp"
 #include "DataProcessing/SampleData/SampleDataSerializer.hpp"
 #include "DataProcessing/Timings/TimingProcessing.hpp"
 #include "ServerConnection/ServerConnection.hpp"
 #include "Study/Gatherer/Gatherer.hpp"
-#include "Study/OldTimingData/TimingData.hpp"
 #include "Study/Study.hpp"
 #include "Study/TimingData/TimingData.hpp"
 
@@ -48,11 +46,11 @@ constexpr double UB_CONFIDENCE{0.005};
 constexpr size_t DATA_SIZE = 800;
 constexpr size_t RESERVE = 1.1 * DESIRED_COUNT / (AES_BLOCK_BYTE_SIZE * 256);
 
-New::TimingData<false> studyRun(const std::filesystem::path &saveFolderPath,
-                                ServerConnection<false> &connectionKeyless)
+TimingData<false> studyRun(const std::filesystem::path &saveFolderPath,
+                           ServerConnection<false> &connectionKeyless)
 {
 
-    New::TimingData<false> dataKeyless{DATA_SIZE};
+    TimingData<false> dataKeyless{DATA_SIZE};
     dataKeyless.reserveForEach(RESERVE);
 
     Gatherer<false> gathererKeyless{std::move(connectionKeyless), std::move(dataKeyless)};
@@ -71,12 +69,12 @@ New::TimingData<false> studyRun(const std::filesystem::path &saveFolderPath,
     return dataKeyless;
 }
 
-New::TimingData<true> studyRun(const std::filesystem::path &saveFolderPath,
-                               ServerConnection<true> &connectionKey,
-                               const std::array<std::byte, 16> &key)
+TimingData<true> studyRun(const std::filesystem::path &saveFolderPath,
+                          ServerConnection<true> &connectionKey,
+                          const std::array<std::byte, 16> &key)
 {
 
-    New::TimingData<true> dataKey{DATA_SIZE, key};
+    TimingData<true> dataKey{DATA_SIZE, key};
     dataKey.reserveForEach(RESERVE);
 
     Gatherer<true> gathererKey{std::move(connectionKey), std::move(dataKey)};

@@ -25,7 +25,7 @@ DistributionData<double>::Bounds Study<KnownKey>::calibrateBounds(size_t transmi
 {
     if (m_gatherer.connection().connect())
     {
-        New::SampleData<double> sample;
+        SampleData<double> sample;
         sample.reserve(transmissionsCount);
         for (size_t currentCount{0}; currentCount < transmissionsCount && m_continueRunningFlag;
              ++currentCount)

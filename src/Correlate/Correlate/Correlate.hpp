@@ -15,8 +15,8 @@ class Correlate
 
   public:
     Correlate() = default;
-    Correlate(const New::TimingData<false, DataTypeVictim> &victimData,
-              const New::TimingData<true, DataTypeDoppel> &doppelgangerData);
+    Correlate(const TimingData<false, DataTypeVictim> &victimData,
+              const TimingData<true, DataTypeDoppel> &doppelgangerData);
 
     [[nodiscard]] const std::vector<std::array<double, 256>> &data() const;
     [[nodiscard]] std::vector<std::array<std::pair<double, std::byte>, 256>> order() const;
@@ -77,11 +77,11 @@ const std::vector<std::array<double, 256>> &Correlate<DataTypeVictim, DataTypeDo
 
 template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
 Correlate<DataTypeVictim, DataTypeDoppel>::Correlate(
-    const New::TimingData<false, DataTypeVictim> &victimData,
-    const New::TimingData<true, DataTypeDoppel> &doppelgangerData)
+    const TimingData<false, DataTypeVictim> &victimData,
+    const TimingData<true, DataTypeDoppel> &doppelgangerData)
 {
-    const New::TimingData<true, DataTypeVictim> &t{doppelgangerData};
-    const New::TimingData<false, DataTypeDoppel> &u{victimData};
+    const TimingData<true, DataTypeVictim> &t{doppelgangerData};
+    const TimingData<false, DataTypeDoppel> &u{victimData};
 
     for (unsigned byte{0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
     {

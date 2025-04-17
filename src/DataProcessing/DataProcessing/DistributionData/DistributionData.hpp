@@ -21,7 +21,7 @@ class DistributionData
     template <typename InputIterator>
     DistributionData(InputIterator begin, InputIterator end, R start, R stop, R columnWidth = 1);
 
-    explicit DistributionData(const New::SampleData<R> &sampleData, R columnWidth = 1);
+    explicit DistributionData(const SampleData<R> &sampleData, R columnWidth = 1);
 
     size_t computeLocalIndex(ssize_t globalIndex) const;
 
@@ -179,7 +179,7 @@ typename std::vector<size_t>::const_iterator DistributionData<R>::begin() const 
 }
 
 template <Real R>
-DistributionData<R>::DistributionData(const New::SampleData<R> &sampleData, R columnWidth)
+DistributionData<R>::DistributionData(const SampleData<R> &sampleData, R columnWidth)
     : DistributionData{sampleData.begin(), sampleData.end(), sampleData.globalMetric().min,
                        sampleData.globalMetric().max, columnWidth}
 {

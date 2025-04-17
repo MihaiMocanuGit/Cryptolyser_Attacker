@@ -7,8 +7,6 @@
 #include <cassert>
 #include <vector>
 
-namespace New
-{
 template <Real T>
 class SampleData
 {
@@ -138,5 +136,4 @@ template <Real T>
 SampleData<T>::SampleData(std::vector<T> data) : m_data{std::move(data)}, m_metricsData{m_data}
 {
 }
-} // namespace New
 #endif // CRYPTOLYSER_ATTACKER_NEW_SAMPLEDATA_HPP

@@ -6,8 +6,7 @@
 #include "DataProcessing/SampleData/SampleData.hpp"
 
 #include <array>
-namespace New
-{
+
 template <bool KnownKey, HasMetric DataType = SampleData<double>>
 class TimingData
 {
@@ -120,5 +119,4 @@ size_t TimingData<KnownKey, DataType>::dataSize() const noexcept
 {
     return m_dataSize;
 }
-} // namespace New
 #endif // CRYPTOLYSER_ATTACKER_TIMINGDATA_HPP
