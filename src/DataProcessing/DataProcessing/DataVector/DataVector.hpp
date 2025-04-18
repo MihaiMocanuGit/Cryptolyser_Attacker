@@ -27,6 +27,8 @@ class DataVector
                                                        const Metrics<double> &localAfter);
 
   public:
+    using InnerType = T;
+
     DataVector() = default;
 
     explicit DataVector(std::vector<T> data);
@@ -75,19 +77,22 @@ Metrics<double> DataVector<T>::standardizeMetric(size_t index) const
 }
 
 template <typename T>
-struct IsDataVector : std::false_type
+struct IsDataVectorChain : std::false_type
 {
 };
 
 template <typename T>
-struct IsDataVector<DataVector<T>> : std::true_type
+struct IsDataVectorChain<DataVector<T>> : std::true_type
 {
 };
+
+template <typename T>
+concept DataVectorChain = IsDataVectorChain<T>::value;
 
 template <HasMetric T>
 void joinDataVectors(T &destination, const T &source)
 {
-    if constexpr (IsDataVector<T>::value)
+    if constexpr (IsDataVectorChain<T>::value)
     {
         /// TODO: Define concepts to enforce the existence of .size(), .update_foreach(), .insert()
         while (destination.size() < source.size())
