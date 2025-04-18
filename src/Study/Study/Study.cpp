@@ -12,7 +12,7 @@ std::vector<std::byte> constructRandomVector(size_t dataSize)
     static std::uniform_int_distribution<uint8_t> uniform_dist(0, 255);
     std::vector<std::byte> randomized;
     randomized.reserve(dataSize);
-    for (size_t i{0}; i < dataSize; ++i)
+    for (size_t i {0}; i < dataSize; ++i)
         randomized.push_back(static_cast<std::byte>(uniform_dist(gen)));
     return randomized;
 }
@@ -27,10 +27,10 @@ DistributionData<double>::Bounds Study<KnownKey>::calibrateBounds(size_t transmi
     {
         SampleData<double> sample;
         sample.reserve(transmissionsCount);
-        for (size_t currentCount{0}; currentCount < transmissionsCount && m_continueRunningFlag;
+        for (size_t currentCount {0}; currentCount < transmissionsCount && m_continueRunningFlag;
              ++currentCount)
         {
-            std::vector<std::byte> studyPlaintext{
+            std::vector<std::byte> studyPlaintext {
                 constructRandomVector(m_gatherer.timingData().dataSize())};
 
             std::optional<connection_response_t> result;
@@ -49,11 +49,11 @@ DistributionData<double>::Bounds Study<KnownKey>::calibrateBounds(size_t transmi
                 currentCount--;
                 continue;
             }
-            const double timing{TimingProcessing::computeDT<double>(
+            const double timing {TimingProcessing::computeDT<double>(
                 result->inbound_t1, result->inbound_t2, result->outbound_t1, result->outbound_t2)};
             sample.insert(timing);
         }
-        DistributionData distribution{sample};
+        DistributionData distribution {sample};
         SerializerManager::saveRaw(m_saveDirPath / "Calibrate" / "values.csv", sample);
         SerializerManager::saveDistribution(m_saveDirPath / "Calibrate" / "distribution.csv",
                                             distribution);
@@ -68,8 +68,8 @@ template <bool KnownKey>
 Study<KnownKey>::Study(Gatherer<KnownKey> &&gatherer,
                        const volatile sig_atomic_t &continueRunningFlag,
                        const std::filesystem::path &saveDirPath)
-    : m_gatherer{std::move(gatherer)}, m_logger{m_gatherer},
-      m_continueRunningFlag{continueRunningFlag}, m_saveDirPath{saveDirPath}
+    : m_gatherer {std::move(gatherer)}, m_logger {m_gatherer},
+      m_continueRunningFlag {continueRunningFlag}, m_saveDirPath {saveDirPath}
 {
 }
 
@@ -80,14 +80,14 @@ void Study<KnownKey>::run(size_t desiredCount, size_t logFreq, size_t saveMetric
     m_gatherer.init(lb, ub);
     m_logger.init(desiredCount);
     std::filesystem::create_directories(m_saveDirPath);
-    uint32_t packageId{0};
+    uint32_t packageId {0};
     while (m_gatherer.validValuesCount() < desiredCount && m_continueRunningFlag)
     {
-        auto status{m_gatherer.obtain(packageId)};
+        auto status {m_gatherer.obtain(packageId)};
 
         auto isTimeTo = [this, &gatherer = m_gatherer, desiredCount](size_t freq)
         {
-            size_t packageCount{gatherer.validValuesCount()};
+            size_t packageCount {gatherer.validValuesCount()};
             return (packageCount % freq == 0 and packageCount > 0) or
                    packageCount + 1 == desiredCount or not m_continueRunningFlag;
         };

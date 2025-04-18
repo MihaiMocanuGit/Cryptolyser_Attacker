@@ -10,15 +10,15 @@ template <bool KnownKey>
 class Gatherer
 {
   private:
-    ServerConnection<KnownKey> m_connection{};
+    ServerConnection<KnownKey> m_connection {};
 
-    TimingData<KnownKey> m_timingData{};
+    TimingData<KnownKey> m_timingData {};
 
-    double m_lb{};
-    SampleData<double> m_sampleLB{};
-    double m_ub{};
-    SampleData<double> m_sampleUB{};
-    size_t m_lostPackages{};
+    double m_lb {};
+    SampleData<double> m_sampleLB {};
+    double m_ub {};
+    SampleData<double> m_sampleUB {};
+    size_t m_lostPackages {};
 
     struct BorrowedData
     {

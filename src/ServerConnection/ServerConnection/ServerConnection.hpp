@@ -18,10 +18,10 @@ class ServerConnection
   private:
     std::string_view m_ip;
     uint16_t m_port;
-    int m_sock{-1};
-    sockaddr_in m_receiverAddr{};
-    bool m_isConnectionActive{false};
-    static constexpr timeval M_RECV_TIMEOUT{/*.tv_sec*/ 1, /*.tv_usec*/ 0};
+    int m_sock {-1};
+    sockaddr_in m_receiverAddr {};
+    bool m_isConnectionActive {false};
+    static constexpr timeval M_RECV_TIMEOUT {/*.tv_sec*/ 1, /*.tv_usec*/ 0};
 
     void m_closeSocket();
     static void m_swap(ServerConnection &server1, ServerConnection &server2);
@@ -64,7 +64,7 @@ typename std::enable_if<T, std::optional<connection_response_t>>::type
         m_closeSocket();
         return {};
     }
-    connection_key_packet_t packet{};
+    connection_key_packet_t packet {};
     packet.packet_id = htobe32(packet_id);
     packet.data_length = htobe32(bytes.size());
     std::memcpy(packet.key, key.data(), AES_BLOCK_BYTE_SIZE);
@@ -78,8 +78,8 @@ typename std::enable_if<T, std::optional<connection_response_t>>::type
         return {};
     }
 
-    connection_response_t responseTimingData{};
-    socklen_t len{sizeof(struct sockaddr_in)};
+    connection_response_t responseTimingData {};
+    socklen_t len {sizeof(struct sockaddr_in)};
     if (recvfrom(m_sock, &responseTimingData, sizeof(responseTimingData), 0,
                  reinterpret_cast<struct sockaddr *>(&m_receiverAddr), &len) < 0)
     {
@@ -112,7 +112,7 @@ typename std::enable_if<T, std::optional<connection_response_t>>::type
         m_closeSocket();
         return {};
     }
-    connection_packet_t packet{};
+    connection_packet_t packet {};
     packet.packet_id = htobe32(packet_id);
     packet.data_length = htobe32(bytes.size());
     if (not bytes.empty())
@@ -125,8 +125,8 @@ typename std::enable_if<T, std::optional<connection_response_t>>::type
         return {};
     }
 
-    connection_response_t responseTimingData{};
-    socklen_t len{sizeof(struct sockaddr_in)};
+    connection_response_t responseTimingData {};
+    socklen_t len {sizeof(struct sockaddr_in)};
     if (recvfrom(m_sock, &responseTimingData, sizeof(responseTimingData), 0,
                  reinterpret_cast<struct sockaddr *>(&m_receiverAddr), &len) < 0)
     {

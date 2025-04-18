@@ -20,9 +20,9 @@ void saveToCsv(const std::filesystem::path &path, const MetricsData<T> &metricsD
 template <Real T>
 void loadFromCsv(const std::filesystem::path &path, MetricsData<T> &metricsData)
 {
-    Metrics<T> metrics{};
+    Metrics<T> metrics {};
     loadFromCsv(path, metrics);
-    metricsData = MetricsData<T>{metrics};
+    metricsData = MetricsData<T> {metrics};
 }
 
 } // namespace Serializer

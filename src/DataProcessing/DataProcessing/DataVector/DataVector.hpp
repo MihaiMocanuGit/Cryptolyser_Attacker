@@ -12,9 +12,9 @@ template <HasMetric T>
 class DataVector
 {
   private:
-    std::vector<T> m_data{};
+    std::vector<T> m_data {};
 
-    Metrics<double> m_globalMetric{};
+    Metrics<double> m_globalMetric {};
 
     [[nodiscard]] Metrics<double> m_computeAfterAdd(const Metrics<double> &globalBefore,
                                                     const Metrics<double> &localAfter);
@@ -66,7 +66,7 @@ class DataVector
 template <HasMetric T>
 Metrics<double> DataVector<T>::standardizeMetric(size_t index) const
 {
-    Metrics<double> standardized{m_data[index].globalMetric()};
+    Metrics<double> standardized {m_data[index].globalMetric()};
     standardized.mean = (standardized.mean - m_globalMetric.mean) /
                         (m_globalMetric.stdDev / std::sqrtl(m_globalMetric.size));
     standardized.variance /= m_globalMetric.variance;
@@ -154,13 +154,13 @@ DataVector<T>::DataVector(size_t count, const T &value) : DataVector(std::vector
 }
 
 template <HasMetric T>
-DataVector<T>::DataVector(std::vector<T> data) : m_data{std::move(data)}
+DataVector<T>::DataVector(std::vector<T> data) : m_data {std::move(data)}
 {
     std::for_each(m_data.begin(), m_data.end(),
                   [this](const auto &elem)
                   {
-                      const Metrics<double> &globalBefore{globalMetric()};
-                      const Metrics<double> &localAfter{elem.globalMetric()};
+                      const Metrics<double> &globalBefore {globalMetric()};
+                      const Metrics<double> &localAfter {elem.globalMetric()};
                       m_globalMetric = m_computeAfterAdd(globalBefore, localAfter);
                   });
 }
@@ -176,13 +176,13 @@ template <HasMetric T>
 void DataVector<T>::update(size_t index, std::function<void(T &)> modifyRule)
 {
     assert(index < m_data.size());
-    Metrics<double> globalBefore{globalMetric()};
-    Metrics<double> localBefore{m_data[index].globalMetric()};
+    Metrics<double> globalBefore {globalMetric()};
+    Metrics<double> localBefore {m_data[index].globalMetric()};
 
-    T &chosen{m_data[index]};
+    T &chosen {m_data[index]};
     modifyRule(chosen);
 
-    Metrics<double> localAfter{chosen.globalMetric()};
+    Metrics<double> localAfter {chosen.globalMetric()};
     m_globalMetric = m_computeAfterUpdate(globalBefore, localBefore, localAfter);
 }
 
@@ -192,15 +192,15 @@ void DataVector<T>::update_foreach(std::function<void(size_t index, T &elem)> mo
     // as the index is frequently a useful piece of information, a simple for loop is used.
     // TODO: Modify the signature of update(index, (void)(T&)) to accept the used modifyRule. This
     //  way there's no need for code duplication
-    for (size_t i{0}; i < size(); ++i)
+    for (size_t i {0}; i < size(); ++i)
     {
-        Metrics<double> globalBefore{globalMetric()};
-        Metrics<double> localBefore{m_data[i].globalMetric()};
+        Metrics<double> globalBefore {globalMetric()};
+        Metrics<double> localBefore {m_data[i].globalMetric()};
 
-        T &chosen{m_data[i]};
+        T &chosen {m_data[i]};
         modifyRule(i, chosen);
 
-        Metrics<double> localAfter{chosen.globalMetric()};
+        Metrics<double> localAfter {chosen.globalMetric()};
         m_globalMetric = m_computeAfterUpdate(globalBefore, localBefore, localAfter);
     }
 }
@@ -209,8 +209,8 @@ template <HasMetric T>
 void DataVector<T>::remove(size_t index)
 {
     assert(index < m_data.size());
-    Metrics<double> globalBefore{globalMetric()};
-    Metrics<double> localBefore{m_data[index].globalMetric()};
+    Metrics<double> globalBefore {globalMetric()};
+    Metrics<double> localBefore {m_data[index].globalMetric()};
 
     m_data.erase(m_data.begin() + index);
     m_globalMetric = m_computeAfterRemove(globalBefore, localBefore);
@@ -219,8 +219,8 @@ void DataVector<T>::remove(size_t index)
 template <HasMetric T>
 void DataVector<T>::add(T element)
 {
-    Metrics<double> globalBefore{globalMetric()};
-    Metrics<double> localAfter{element.globalMetric()};
+    Metrics<double> globalBefore {globalMetric()};
+    Metrics<double> localAfter {element.globalMetric()};
 
     m_data.push_back(std::move(element));
     m_globalMetric = m_computeAfterAdd(globalBefore, localAfter);
@@ -232,63 +232,63 @@ Metrics<double> DataVector<T>::m_computeAfterUpdate(const Metrics<double> &globa
                                                     const Metrics<double> &localAfter)
 {
     // Original global metrics
-    size_t n{globalBefore.size};
-    double sum{globalBefore.sum};
-    double u{globalBefore.mean};
-    double v{globalBefore.variance};
-    double min{globalBefore.min};
-    double max{globalBefore.max};
+    size_t n {globalBefore.size};
+    double sum {globalBefore.sum};
+    double u {globalBefore.mean};
+    double v {globalBefore.variance};
+    double min {globalBefore.min};
+    double max {globalBefore.max};
 
     // Old local metrics.
-    size_t pi_m{localBefore.size};
-    double sum_m{localBefore.sum};
-    double u_m{localBefore.mean};
-    double v_m{localBefore.variance};
+    size_t pi_m {localBefore.size};
+    double sum_m {localBefore.sum};
+    double u_m {localBefore.mean};
+    double v_m {localBefore.variance};
     // As the logic becomes quite ugly, localBefore.min/max are used instead as it's easier to
     // understand.
-    [[maybe_unused]] double min_m{localBefore.min};
-    [[maybe_unused]] double max_m{localBefore.max};
+    [[maybe_unused]] double min_m {localBefore.min};
+    [[maybe_unused]] double max_m {localBefore.max};
 
     // New local metrics.
-    size_t pi_prime_m{localAfter.size};
-    double sum_prime_m{localAfter.sum};
-    double u_prime_m{localAfter.mean};
-    double v_prime_m{localAfter.variance};
+    size_t pi_prime_m {localAfter.size};
+    double sum_prime_m {localAfter.sum};
+    double u_prime_m {localAfter.mean};
+    double v_prime_m {localAfter.variance};
     // As the logic becomes quite ugly, localAfter.min/max are used instead as it's easier to
     // understand.
-    [[maybe_unused]] double min_prime_m{localAfter.min};
-    [[maybe_unused]] double max_prime_m{localAfter.max};
+    [[maybe_unused]] double min_prime_m {localAfter.min};
+    [[maybe_unused]] double max_prime_m {localAfter.max};
 
     // TODO: Note the temporary downgrade from Real_t T to double. At the end of the current
     //  architectural restructure, the code will go back to the template type T.
     // Note: Famous last words
 
     // Updated global metrics.
-    size_t n_prime{n - pi_m + pi_prime_m};
+    size_t n_prime {n - pi_m + pi_prime_m};
     // Helper conversions to double.
-    double n_prime_d{static_cast<double>(n_prime)};
-    double n_d{static_cast<double>(n)};
-    double pi_prime_m_d{static_cast<double>(pi_prime_m)};
-    double pi_m_d{static_cast<double>(pi_m)};
+    double n_prime_d {static_cast<double>(n_prime)};
+    double n_d {static_cast<double>(n)};
+    double pi_prime_m_d {static_cast<double>(pi_prime_m)};
+    double pi_m_d {static_cast<double>(pi_m)};
     // Back to updated global metrics
-    double sum_prime{sum - sum_m + sum_prime_m};
-    double u_prime{0.0};
+    double sum_prime {sum - sum_m + sum_prime_m};
+    double u_prime {0.0};
     if (n_prime)
     {
         u_prime = (n_d * u + pi_prime_m_d * u_prime_m - pi_m_d * u_m) / n_prime_d;
     }
-    double SS_m{v_m * (pi_m_d - 1) + pi_m_d * (u_m - u) * (u_m - u)};
-    double SS_prime_m{v_prime_m * (pi_prime_m_d - 1) +
-                      pi_prime_m_d * (u_prime_m - u_prime) * (u_prime_m - u_prime)};
-    double v_prime{0.0};
+    double SS_m {v_m * (pi_m_d - 1) + pi_m_d * (u_m - u) * (u_m - u)};
+    double SS_prime_m {v_prime_m * (pi_prime_m_d - 1) +
+                       pi_prime_m_d * (u_prime_m - u_prime) * (u_prime_m - u_prime)};
+    double v_prime {0.0};
     if (n_prime > 1)
     {
         v_prime = ((n_d - 1) * v + SS_prime_m - SS_m +
                    (u - u_prime) * (2 * n_d * u - pi_m_d * u_m - (u + u_prime) * (n_d - pi_m_d))) /
                   (n_prime_d - 1);
     }
-    double s_prime{static_cast<double>(std::sqrtl(v_prime))};
-    double min_prime{min};
+    double s_prime {static_cast<double>(std::sqrtl(v_prime))};
+    double min_prime {min};
     assert(globalBefore.min <= localBefore.min);
     if (localAfter.min < globalBefore.min)
         min_prime = localAfter.min;
@@ -305,7 +305,7 @@ Metrics<double> DataVector<T>::m_computeAfterUpdate(const Metrics<double> &globa
                     .min;
     }
 
-    double max_prime{max};
+    double max_prime {max};
     if (localAfter.max > globalBefore.max)
         max_prime = localAfter.max;
     if (globalBefore.max == localBefore.max and localBefore.max != localAfter.max)

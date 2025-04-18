@@ -19,7 +19,7 @@ class TimingData
     [[no_unique_address]] std::conditional_t<KnownKey, std::array<std::byte, PACKET_KEY_BYTE_SIZE>,
                                              empty_t> m_key;
 
-    DataVector<DataVector<DataType>> m_timings{};
+    DataVector<DataVector<DataType>> m_timings {};
 
   public:
     /**
@@ -102,7 +102,7 @@ const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &
 template <bool KnownKey, HasMetric DataType>
 TimingData<KnownKey, DataType>::TimingData(size_t dataSize)
     requires(not KnownKey)
-    : m_dataSize{dataSize}, m_timings{AES_BLOCK_BYTE_SIZE, DataVector<DataType>(256)}
+    : m_dataSize {dataSize}, m_timings {AES_BLOCK_BYTE_SIZE, DataVector<DataType>(256)}
 {
 }
 
@@ -110,7 +110,7 @@ template <bool KnownKey, HasMetric DataType>
 TimingData<KnownKey, DataType>::TimingData(size_t dataSize,
                                            const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &key)
     requires(KnownKey)
-    : m_dataSize{dataSize}, m_key{key}, m_timings{AES_BLOCK_BYTE_SIZE, DataVector<DataType>(256)}
+    : m_dataSize {dataSize}, m_key {key}, m_timings {AES_BLOCK_BYTE_SIZE, DataVector<DataType>(256)}
 {
 }
 

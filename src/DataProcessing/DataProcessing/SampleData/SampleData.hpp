@@ -11,8 +11,8 @@ template <Real T>
 class SampleData
 {
   private:
-    std::vector<T> m_data{};
-    MetricsData<T> m_metricsData{};
+    std::vector<T> m_data {};
+    MetricsData<T> m_metricsData {};
 
   public:
     SampleData() = default;
@@ -128,12 +128,12 @@ void SampleData<T>::reserve(std::size_t newCapacity)
 template <Real T>
 template <typename InputIterator>
 SampleData<T>::SampleData(InputIterator begin, InputIterator end)
-    : m_data{begin, end}, m_metricsData{begin, end}
+    : m_data {begin, end}, m_metricsData {begin, end}
 {
 }
 
 template <Real T>
-SampleData<T>::SampleData(std::vector<T> data) : m_data{std::move(data)}, m_metricsData{m_data}
+SampleData<T>::SampleData(std::vector<T> data) : m_data {std::move(data)}, m_metricsData {m_data}
 {
 }
 #endif // CRYPTOLYSER_ATTACKER_NEW_SAMPLEDATA_HPP

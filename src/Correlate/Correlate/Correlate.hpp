@@ -9,7 +9,7 @@ template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
 class Correlate
 {
   private:
-    std::vector<std::array<double, 256>> m_normalCorrelation{PACKET_KEY_BYTE_SIZE, {0.0}};
+    std::vector<std::array<double, 256>> m_normalCorrelation {PACKET_KEY_BYTE_SIZE, {0.0}};
 
     static void m_normalize(std::array<double, 256> &correlation);
 
@@ -33,7 +33,7 @@ template <HasMetric DataTypeVictim2, HasMetric DataTypeDoppel2>
 Correlate<DataTypeVictim, DataTypeDoppel>
     Correlate<DataTypeVictim, DataTypeDoppel>::operator+(const Correlate &rhs) const
 {
-    Correlate result{*this};
+    Correlate result {*this};
     return result += rhs;
 }
 
@@ -42,9 +42,9 @@ template <HasMetric DataTypeVictim2, HasMetric DataTypeDoppel2>
 Correlate<DataTypeVictim, DataTypeDoppel> &
     Correlate<DataTypeVictim, DataTypeDoppel>::operator+=(const Correlate &rhs)
 {
-    for (unsigned byte{0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
+    for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
     {
-        for (unsigned value{0}; value < 256; ++value)
+        for (unsigned value {0}; value < 256; ++value)
             m_normalCorrelation[byte][value] += rhs.data()[byte][value];
     }
     return *this;
@@ -54,11 +54,11 @@ template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
 std::vector<std::array<std::pair<double, std::byte>, 256>>
     Correlate<DataTypeVictim, DataTypeDoppel>::order() const
 {
-    std::vector<std::array<std::pair<double, std::byte>, 256>> result{PACKET_KEY_BYTE_SIZE};
+    std::vector<std::array<std::pair<double, std::byte>, 256>> result {PACKET_KEY_BYTE_SIZE};
 
-    for (unsigned byte{0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
+    for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
     {
-        for (unsigned value{0}; value < 256; ++value)
+        for (unsigned value {0}; value < 256; ++value)
             result[byte][value] =
                 std::make_pair(m_normalCorrelation[byte][value], static_cast<std::byte>(value));
 
@@ -80,24 +80,24 @@ Correlate<DataTypeVictim, DataTypeDoppel>::Correlate(
     const TimingData<false, DataTypeVictim> &victimData,
     const TimingData<true, DataTypeDoppel> &doppelgangerData)
 {
-    const TimingData<true, DataTypeVictim> &t{doppelgangerData};
-    const TimingData<false, DataTypeDoppel> &u{victimData};
+    const TimingData<true, DataTypeVictim> &t {doppelgangerData};
+    const TimingData<false, DataTypeDoppel> &u {victimData};
 
-    for (unsigned byte{0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
+    for (unsigned byte {0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
     {
-        for (unsigned i{0}; i < 256; ++i)
+        for (unsigned i {0}; i < 256; ++i)
         {
-            long double correlation_i{0.0};
-            for (unsigned j{0}; j < 256; ++j)
+            long double correlation_i {0.0};
+            for (unsigned j {0}; j < 256; ++j)
             {
-                long double t_j{t[byte][j].globalMetric().mean};
+                long double t_j {t[byte][j].globalMetric().mean};
                 t_j -= t[byte].globalMetric().mean;
 
-                unsigned u_index{(i ^ j) ^ static_cast<unsigned>(t.key()[byte])};
-                long double u_i_j{u[byte][u_index].globalMetric().mean};
+                unsigned u_index {(i ^ j) ^ static_cast<unsigned>(t.key()[byte])};
+                long double u_i_j {u[byte][u_index].globalMetric().mean};
                 u_i_j -= u[byte].globalMetric().mean;
 
-                long double value{t_j * u_i_j};
+                long double value {t_j * u_i_j};
                 correlation_i += value;
             }
             m_normalCorrelation[byte][i] = static_cast<double>(correlation_i);
@@ -109,14 +109,14 @@ Correlate<DataTypeVictim, DataTypeDoppel>::Correlate(
 template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
 void Correlate<DataTypeVictim, DataTypeDoppel>::m_normalize(std::array<double, 256> &correlation)
 {
-    double max{*std::max_element(correlation.begin(), correlation.end())};
-    double min{*std::min_element(correlation.begin(), correlation.end())};
-    double mid{(max + min) / 2.0};
-    double halfLength{(max - min) / 2.0};
+    double max {*std::max_element(correlation.begin(), correlation.end())};
+    double min {*std::min_element(correlation.begin(), correlation.end())};
+    double mid {(max + min) / 2.0};
+    double halfLength {(max - min) / 2.0};
     if (halfLength == 0)
         halfLength = 1;
 
-    for (unsigned value{0}; value < 256; ++value)
+    for (unsigned value {0}; value < 256; ++value)
         correlation[value] = (correlation[value] - mid) / halfLength;
 }
 

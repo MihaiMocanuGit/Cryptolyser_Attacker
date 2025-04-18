@@ -12,7 +12,7 @@ std::vector<std::byte> Gatherer<KnownKey>::m_constructRandomVector()
     static std::uniform_int_distribution<uint8_t> uniform_dist(0, 255);
     std::vector<std::byte> randomized;
     randomized.reserve(m_timingData.dataSize());
-    for (size_t i{0}; i < m_timingData.dataSize(); ++i)
+    for (size_t i {0}; i < m_timingData.dataSize(); ++i)
         randomized.push_back(static_cast<std::byte>(uniform_dist(gen)));
     return randomized;
 }
@@ -20,7 +20,7 @@ std::vector<std::byte> Gatherer<KnownKey>::m_constructRandomVector()
 template <bool KnownKey>
 Gatherer<KnownKey>::ObtainStatus Gatherer<KnownKey>::obtain(uint32_t id)
 {
-    std::vector<std::byte> studyData{m_constructRandomVector()};
+    std::vector<std::byte> studyData {m_constructRandomVector()};
     std::optional<connection_response_t> result;
     if constexpr (KnownKey)
         result = m_connection.transmit(id, m_timingData.key(), studyData);
@@ -35,7 +35,7 @@ Gatherer<KnownKey>::ObtainStatus Gatherer<KnownKey>::obtain(uint32_t id)
         m_connection.connect();
         return ObtainStatus::lost;
     }
-    const double timing{TimingProcessing::computeDT<double>(
+    const double timing {TimingProcessing::computeDT<double>(
         result->inbound_t1, result->inbound_t2, result->outbound_t1, result->outbound_t2)};
     if (timing < m_lb)
     {
@@ -48,9 +48,9 @@ Gatherer<KnownKey>::ObtainStatus Gatherer<KnownKey>::obtain(uint32_t id)
         return ObtainStatus::ignoredUB;
     }
 
-    for (unsigned byte{0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
+    for (unsigned byte {0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
     {
-        size_t byteValue{static_cast<size_t>(studyData[byte])};
+        size_t byteValue {static_cast<size_t>(studyData[byte])};
         m_timingData.timing().update(
             byte, [timing, byteValue](auto &byte)
             { byte.update(byteValue, [timing](auto &byteValue) { byteValue.insert(timing); }); });
@@ -74,7 +74,7 @@ template <bool KnownKey>
 Gatherer<KnownKey>::BorrowedData Gatherer<KnownKey>::release()
 {
     m_connection.closeConnection();
-    return {.connection{std::move(m_connection)}, .timingData{std::move(m_timingData)}};
+    return {.connection {std::move(m_connection)}, .timingData {std::move(m_timingData)}};
 }
 
 template <bool KnownKey>
@@ -128,7 +128,7 @@ double Gatherer<KnownKey>::lb() const
 template <bool KnownKey>
 Gatherer<KnownKey>::Gatherer(ServerConnection<KnownKey> &&connection,
                              TimingData<KnownKey> &&timingData)
-    : m_connection{std::move(connection)}, m_timingData{std::move(timingData)}
+    : m_connection {std::move(connection)}, m_timingData {std::move(timingData)}
 {
 }
 

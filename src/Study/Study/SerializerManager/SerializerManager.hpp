@@ -38,17 +38,17 @@ void SerializerManager::saveMetrics(const std::filesystem::path &path,
                                     const TimingData<KnownKey, DataType> &timingData)
 {
     std::filesystem::create_directories(path);
-    for (unsigned byte{0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
+    for (unsigned byte {0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
     {
-        constexpr std::string_view header{"Value,Size,Mean,StdDev,MeanStd,StdDevStd,Min,Max\n"};
-        const std::filesystem::path filePath{path / ("Byte_" + std::to_string(byte) + ".csv")};
+        constexpr std::string_view header {"Value,Size,Mean,StdDev,MeanStd,StdDevStd,Min,Max\n"};
+        const std::filesystem::path filePath {path / ("Byte_" + std::to_string(byte) + ".csv")};
         std::ofstream out;
         out.open(filePath);
         if (!out)
             throw std::runtime_error("Saving Metrics | Could not create file: " +
                                      filePath.string());
         out << header;
-        for (unsigned byteValue{0}; byteValue < 256; ++byteValue)
+        for (unsigned byteValue {0}; byteValue < 256; ++byteValue)
         {
             const auto &metric = timingData[byte][byteValue].globalMetric();
             const auto &stdMetric = timingData[byte].standardizeMetric(byteValue);

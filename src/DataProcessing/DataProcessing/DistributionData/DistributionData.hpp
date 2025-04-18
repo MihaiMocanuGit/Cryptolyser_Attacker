@@ -10,11 +10,11 @@ template <Real R>
 class DistributionData
 {
   private:
-    R m_globalStart{}; // inclusive lower bound
-    R m_globalStop{};  // inclusive upper bound
-    R m_columnWidth{1};
-    std::vector<size_t> m_frequency{};
-    size_t m_noElements{};
+    R m_globalStart {}; // inclusive lower bound
+    R m_globalStop {};  // inclusive upper bound
+    R m_columnWidth {1};
+    std::vector<size_t> m_frequency {};
+    size_t m_noElements {};
     // Note that, as the globalMetric is recomputed each time from scratch, the elements inside this
     // vector can be modified from without needing as much rigor
   public:
@@ -68,10 +68,10 @@ template <Real R>
 DistributionData<R>::Bounds DistributionData<R>::bounds(double confidenceLB,
                                                         double confidenceUB) const noexcept
 {
-    double lb{m_globalStart};
-    double ub{m_globalStop};
-    size_t partialCount{0};
-    for (size_t localIndex{0}; localIndex < m_frequency.size(); localIndex++)
+    double lb {m_globalStart};
+    double ub {m_globalStop};
+    size_t partialCount {0};
+    for (size_t localIndex {0}; localIndex < m_frequency.size(); localIndex++)
     {
         partialCount += m_frequency[localIndex];
         double ratio = static_cast<double>(partialCount) / static_cast<double>(m_noElements);
@@ -81,7 +81,7 @@ DistributionData<R>::Bounds DistributionData<R>::bounds(double confidenceLB,
         if (1.0 - ratio <= confidenceUB)
             break;
     }
-    return Bounds{.lb = lb, .ub = ub};
+    return Bounds {.lb = lb, .ub = ub};
 }
 
 template <Real R>
@@ -180,8 +180,8 @@ typename std::vector<size_t>::const_iterator DistributionData<R>::begin() const 
 
 template <Real R>
 DistributionData<R>::DistributionData(const SampleData<R> &sampleData, R columnWidth)
-    : DistributionData{sampleData.begin(), sampleData.end(), sampleData.globalMetric().min,
-                       sampleData.globalMetric().max, columnWidth}
+    : DistributionData {sampleData.begin(), sampleData.end(), sampleData.globalMetric().min,
+                        sampleData.globalMetric().max, columnWidth}
 {
 }
 
@@ -189,13 +189,13 @@ template <Real R>
 template <typename InputIterator>
 DistributionData<R>::DistributionData(InputIterator begin, InputIterator end, R start, R stop,
                                       R columnWidth)
-    : m_globalStart{start}, m_globalStop{stop}, m_columnWidth{columnWidth},
+    : m_globalStart {start}, m_globalStop {stop}, m_columnWidth {columnWidth},
       // Note that computeLocalIndex uses m_globalStart/Stop and m_columnWidth
-      m_frequency{std::vector<size_t>(computeLocalIndex(stop) - computeLocalIndex(start) + 1, 0)}
+      m_frequency {std::vector<size_t>(computeLocalIndex(stop) - computeLocalIndex(start) + 1, 0)}
 {
     assert(std::distance(begin, end) > 0);
     m_noElements = std::distance(begin, end);
-    for (auto it{begin}; it != end; ++it)
+    for (auto it {begin}; it != end; ++it)
         m_frequency[computeLocalIndex(*it)]++;
 }
 

@@ -12,11 +12,11 @@ namespace Serializer
 template <Real T>
 void saveToCsv(const std::filesystem::path &path, const Metrics<T> &metrics)
 {
-    constexpr std::string_view header{"Sum,Size,Mean,Variance,StdDev,Min,Max\n"};
+    constexpr std::string_view header {"Sum,Size,Mean,Variance,StdDev,Min,Max\n"};
     std::filesystem::path directory = path;
     directory.remove_filename();
     std::filesystem::create_directories(directory);
-    std::filesystem::path formattedPath{path};
+    std::filesystem::path formattedPath {path};
     if (not path.has_extension())
         formattedPath.replace_extension("csv");
     std::ofstream out;
@@ -40,7 +40,7 @@ void saveToCsv(const std::filesystem::path &path, const Metrics<T> &metrics)
 template <Real T>
 void loadFromCsv(const std::filesystem::path &path, Metrics<T> &metrics)
 {
-    std::filesystem::path formattedPath{path};
+    std::filesystem::path formattedPath {path};
     if (not path.has_extension())
         formattedPath.replace_extension("csv");
     std::ifstream in;

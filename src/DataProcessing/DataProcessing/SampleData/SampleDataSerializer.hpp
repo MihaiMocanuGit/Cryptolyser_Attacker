@@ -19,7 +19,7 @@ void saveToCsv(const std::filesystem::path &path, const SampleData<T> &sampleDat
     std::filesystem::create_directories(directory);
     // Using this format in order to have the ability to call loadFromCsv(path, MetricsData) on this
     // file.
-    std::filesystem::path formattedPath{path};
+    std::filesystem::path formattedPath {path};
     if (not path.has_extension())
         formattedPath.replace_extension("csv");
     std::ofstream out;
@@ -27,7 +27,7 @@ void saveToCsv(const std::filesystem::path &path, const SampleData<T> &sampleDat
     if (!out)
         throw std::runtime_error("Saving Sample Data | Could not create file: " +
                                  formattedPath.string());
-    constexpr std::string_view headerMetrics{"Sum,Size,Mean,Variance,StdDev,Min,Max\n"};
+    constexpr std::string_view headerMetrics {"Sum,Size,Mean,Variance,StdDev,Min,Max\n"};
     out << headerMetrics;
     out << std::format("{},", sampleData.globalMetric().sum)      // Sum
         << std::format("{},", sampleData.globalMetric().size)     // Size
@@ -37,16 +37,16 @@ void saveToCsv(const std::filesystem::path &path, const SampleData<T> &sampleDat
         << std::format("{},", sampleData.globalMetric().min)      // Min
         << std::format("{}", sampleData.globalMetric().max);      // Max
     out << '\n';
-    constexpr std::string_view headerValues{"Index,Values\n"};
+    constexpr std::string_view headerValues {"Index,Values\n"};
     out << headerValues;
-    for (size_t i{0}; i < sampleData.size(); ++i)
+    for (size_t i {0}; i < sampleData.size(); ++i)
         out << i << ',' << std::format("{}", sampleData[i]) << '\n';
 }
 
 template <Real T>
 void loadFromCsv(const std::filesystem::path &path, SampleData<T> &sampleData)
 {
-    std::filesystem::path formattedPath{path};
+    std::filesystem::path formattedPath {path};
     if (not path.has_extension())
         formattedPath.replace_extension("csv");
     std::ifstream in;
@@ -70,9 +70,9 @@ void loadFromCsv(const std::filesystem::path &path, SampleData<T> &sampleData)
     // Removing the second header: Index, Value
     std::getline(in, header);
     sampleData.reserve(sampleData.size() + size);
-    std::vector<T> sample{};
+    std::vector<T> sample {};
     sample.reserve(size);
-    for (size_t i{0}; i < size; ++i)
+    for (size_t i {0}; i < size; ++i)
     {
         in >> index >> comma >> value;
         sample.push_back(value);

@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 template <bool KnownKey>
-constexpr uint32_t ServerConnection<KnownKey>::DATA_MAX_SIZE{CONNECTION_DATA_MAX_SIZE};
+constexpr uint32_t ServerConnection<KnownKey>::DATA_MAX_SIZE {CONNECTION_DATA_MAX_SIZE};
 
 template <bool KnownKey>
 void ServerConnection<KnownKey>::m_swap(ServerConnection &server1, ServerConnection &server2)
@@ -29,7 +29,7 @@ void ServerConnection<KnownKey>::m_closeSocket()
 
 template <bool KnownKey>
 ServerConnection<KnownKey>::ServerConnection(std::string_view ip, uint16_t port)
-    : m_ip{ip}, m_port{port}
+    : m_ip {ip}, m_port {port}
 {
 }
 
@@ -43,7 +43,7 @@ bool ServerConnection<KnownKey>::connect()
         return false;
     }
 
-    int broadcast{1};
+    int broadcast {1};
     // Set the broadcast option on the socket
     if (setsockopt(m_sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0)
     {
@@ -77,9 +77,9 @@ void ServerConnection<KnownKey>::closeConnection()
 
 template <bool KnownKey>
 ServerConnection<KnownKey>::ServerConnection(ServerConnection &&serverConnection) noexcept
-    : m_ip{serverConnection.m_ip}, m_port{serverConnection.m_port}, m_sock{serverConnection.m_port},
-      m_receiverAddr{serverConnection.m_receiverAddr},
-      m_isConnectionActive{serverConnection.m_isConnectionActive}
+    : m_ip {serverConnection.m_ip}, m_port {serverConnection.m_port},
+      m_sock {serverConnection.m_port}, m_receiverAddr {serverConnection.m_receiverAddr},
+      m_isConnectionActive {serverConnection.m_isConnectionActive}
 {
 }
 

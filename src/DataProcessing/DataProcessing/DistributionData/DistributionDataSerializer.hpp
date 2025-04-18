@@ -15,7 +15,7 @@ void saveToCsv(const std::filesystem::path &path, const DistributionData<T> &dis
     std::filesystem::create_directories(directory);
     // Using this format in order to have the ability to call loadFromCsv(path, MetricsData) on this
     // file.
-    std::filesystem::path formattedPath{path};
+    std::filesystem::path formattedPath {path};
     if (not path.has_extension())
         formattedPath.replace_extension("csv");
     std::ofstream out;
@@ -23,8 +23,8 @@ void saveToCsv(const std::filesystem::path &path, const DistributionData<T> &dis
     if (!out)
         throw std::runtime_error("Saving Sample Data | Could not create file: " +
                                  formattedPath.string());
-    const auto metric{distributionData.globalMetric()};
-    constexpr std::string_view headerMetrics{"Sum,Size,Mean,Variance,StdDev,Min,Max\n"};
+    const auto metric {distributionData.globalMetric()};
+    constexpr std::string_view headerMetrics {"Sum,Size,Mean,Variance,StdDev,Min,Max\n"};
     out << headerMetrics;
     out << std::format("{},", metric.sum)      // Sum
         << std::format("{},", metric.size)     // Size
@@ -34,9 +34,9 @@ void saveToCsv(const std::filesystem::path &path, const DistributionData<T> &dis
         << std::format("{},", metric.min)      // Min
         << std::format("{}", metric.max);      // Max
     out << '\n';
-    constexpr std::string_view headerValues{"Index,Values\n"};
+    constexpr std::string_view headerValues {"Index,Values\n"};
     out << headerValues;
-    for (size_t pos{0}; pos < distributionData.size(); ++pos)
+    for (size_t pos {0}; pos < distributionData.size(); ++pos)
         out << distributionData.computeGlobalIndex(pos) << ','
             << std::format("{}", distributionData[pos]) << '\n';
 }
@@ -44,7 +44,7 @@ void saveToCsv(const std::filesystem::path &path, const DistributionData<T> &dis
 template <Real T>
 void loadFromCsv(const std::filesystem::path &path, DistributionData<T> &distributionData)
 {
-    std::filesystem::path formattedPath{path};
+    std::filesystem::path formattedPath {path};
     if (not path.has_extension())
         formattedPath.replace_extension("csv");
     std::ifstream in;
@@ -67,7 +67,7 @@ void loadFromCsv(const std::filesystem::path &path, DistributionData<T> &distrib
     in >> std::ws;
     // Removing the second header: Index, Value
     std::getline(in, header);
-    for (size_t i{0}; i < size; ++i)
+    for (size_t i {0}; i < size; ++i)
     {
         in >> globalIndex >> comma >> frequency;
         distributionData.update(distributionData.computeLocalIndex(globalIndex), frequency);

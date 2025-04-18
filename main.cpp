@@ -20,7 +20,7 @@
 
 namespace
 {
-volatile sig_atomic_t g_continueRunning{true};
+volatile sig_atomic_t g_continueRunning {true};
 void exitHandler(int signal)
 {
     static int count = 0;
@@ -37,24 +37,24 @@ void exitHandler(int signal)
 
 namespace Experimental
 {
-constexpr size_t DESIRED_COUNT{2 * 32 * 1024 * 1024};
-constexpr size_t LOG_FREQ{2 * 128 * 1024};
-constexpr size_t SAVE_FREQ{2 * 3 * 1024 * 1024};
-constexpr size_t CALIBRATE_COUNT{100'000};
-constexpr double LB_CONFIDENCE{0.0};
-constexpr double UB_CONFIDENCE{0.005};
-constexpr size_t DATA_SIZE = 800;
+constexpr size_t DESIRED_COUNT {2 * 32 * 1024 * 1024};
+constexpr size_t LOG_FREQ {2 * 128 * 1024};
+constexpr size_t SAVE_FREQ {2 * 3 * 1024 * 1024};
+constexpr size_t CALIBRATE_COUNT {100'000};
+constexpr double LB_CONFIDENCE {0.0};
+constexpr double UB_CONFIDENCE {0.005};
+constexpr size_t DATA_SIZE {800};
 constexpr size_t RESERVE = 1.1 * DESIRED_COUNT / (AES_BLOCK_BYTE_SIZE * 256);
 
 TimingData<false> studyRun(const std::filesystem::path &saveFolderPath,
                            ServerConnection<false> &connectionKeyless)
 {
 
-    TimingData<false> dataKeyless{DATA_SIZE};
+    TimingData<false> dataKeyless {DATA_SIZE};
     dataKeyless.reserveForEach(RESERVE);
 
-    Gatherer<false> gathererKeyless{std::move(connectionKeyless), std::move(dataKeyless)};
-    Study<false> studyKeyless{std::move(gathererKeyless), g_continueRunning, saveFolderPath};
+    Gatherer<false> gathererKeyless {std::move(connectionKeyless), std::move(dataKeyless)};
+    Study<false> studyKeyless {std::move(gathererKeyless), g_continueRunning, saveFolderPath};
 
     std::cout << "Started calibration..." << std::endl;
     auto [lb, ub] = studyKeyless.calibrateBounds(CALIBRATE_COUNT, LB_CONFIDENCE, UB_CONFIDENCE);
@@ -74,11 +74,11 @@ TimingData<true> studyRun(const std::filesystem::path &saveFolderPath,
                           const std::array<std::byte, 16> &key)
 {
 
-    TimingData<true> dataKey{DATA_SIZE, key};
+    TimingData<true> dataKey {DATA_SIZE, key};
     dataKey.reserveForEach(RESERVE);
 
-    Gatherer<true> gathererKey{std::move(connectionKey), std::move(dataKey)};
-    Study<true> studyKey{std::move(gathererKey), g_continueRunning, saveFolderPath};
+    Gatherer<true> gathererKey {std::move(connectionKey), std::move(dataKey)};
+    Study<true> studyKey {std::move(gathererKey), g_continueRunning, saveFolderPath};
 
     std::cout << "Started calibration..." << std::endl;
     auto [lb, ub] = studyKey.calibrateBounds(CALIBRATE_COUNT, LB_CONFIDENCE, UB_CONFIDENCE);
@@ -104,12 +104,12 @@ int main(int argc, char **argv)
     }
 
     std::cout << "Starting..." << std::endl;
-    const std::filesystem::path saveFolderPath{argv[3]};
+    const std::filesystem::path saveFolderPath {argv[3]};
 
-    const std::string_view ip{argv[1]};
-    const uint16_t port{static_cast<uint16_t>(std::stoi(argv[2]))};
+    const std::string_view ip {argv[1]};
+    const uint16_t port {static_cast<uint16_t>(std::stoi(argv[2]))};
 
-    struct sigaction sigactionExit{};
+    struct sigaction sigactionExit {};
     sigactionExit.sa_handler = exitHandler;
     sigemptyset(&sigactionExit.sa_mask);
     sigactionExit.sa_flags = SA_RESTART;

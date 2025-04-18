@@ -10,7 +10,7 @@ template <Real T>
 class MetricsData
 {
   private:
-    Metrics<T> m_globalMetrics{};
+    Metrics<T> m_globalMetrics {};
 
     template <typename InputIterator>
     void m_updateMetrics(InputIterator begin, InputIterator end);
@@ -96,7 +96,7 @@ MetricsData<T>::MetricsData(InputIterator begin, InputIterator end)
 }
 
 template <Real T>
-MetricsData<T>::MetricsData(const Metrics<T> &metric) noexcept : m_globalMetrics{metric}
+MetricsData<T>::MetricsData(const Metrics<T> &metric) noexcept : m_globalMetrics {metric}
 {
 }
 

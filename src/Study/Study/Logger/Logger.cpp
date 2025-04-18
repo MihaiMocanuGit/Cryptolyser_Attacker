@@ -5,14 +5,14 @@
 template <bool KnownKey>
 void Logger<KnownKey>::printStats()
 {
-    const double completionPercent{static_cast<double>(m_totalValidCount()) /
-                                   static_cast<double>(m_finalValidCount) * 100.0};
-    const double invalidPercent{100.0 - static_cast<double>(m_totalValidCount()) /
-                                            static_cast<double>(m_totalSentCount()) * 100.0};
+    const double completionPercent {static_cast<double>(m_totalValidCount()) /
+                                    static_cast<double>(m_finalValidCount) * 100.0};
+    const double invalidPercent {100.0 - static_cast<double>(m_totalValidCount()) /
+                                             static_cast<double>(m_totalSentCount()) * 100.0};
 
-    timespec currentTime{};
+    timespec currentTime {};
     clock_gettime(CLOCK_MONOTONIC, &currentTime);
-    double totalElapsedTime{
+    double totalElapsedTime {
         TimingProcessing::computeDT<double>(m_startStudyTime.tv_sec, m_startStudyTime.tv_nsec,
                                             currentTime.tv_sec, currentTime.tv_nsec)};
     totalElapsedTime *= 1.0e-9; // nanosec to sec
@@ -20,11 +20,11 @@ void Logger<KnownKey>::printStats()
     const double ETA = (100.0 - completionPercent) * static_cast<double>(totalElapsedTime) /
                        (completionPercent * 60.0);
 
-    double passTime{TimingProcessing::computeDT<double>(
+    double passTime {TimingProcessing::computeDT<double>(
         m_prevPassTime.tv_sec, m_prevPassTime.tv_nsec, currentTime.tv_sec, currentTime.tv_nsec)};
     passTime *= 1.0e-9; // nanosec to sec
-    const double rate{static_cast<double>(m_gatherer.validValuesCount() - m_prevPassPacketCount) /
-                      passTime};
+    const double rate {static_cast<double>(m_gatherer.validValuesCount() - m_prevPassPacketCount) /
+                       passTime};
 
     m_prevPassTime = currentTime;
     m_prevPassPacketCount = m_gatherer.validValuesCount();
@@ -39,7 +39,7 @@ void Logger<KnownKey>::printStats()
               << '\n';                                                              //
 
     const auto &blockTimings = m_gatherer.timingData().timing();
-    const size_t avgSampleSize{m_totalValidCount() / 256};
+    const size_t avgSampleSize {m_totalValidCount() / 256};
     double min = blockTimings[0].globalMetric().min;
     double max = blockTimings[0].globalMetric().max;
     for (const auto &sampleGroup : blockTimings)
@@ -97,7 +97,7 @@ void Logger<KnownKey>::init(size_t finalValidValuesCount)
 }
 
 template <bool KnownKey>
-Logger<KnownKey>::Logger(const Gatherer<KnownKey> &gatherer) noexcept : m_gatherer{gatherer}
+Logger<KnownKey>::Logger(const Gatherer<KnownKey> &gatherer) noexcept : m_gatherer {gatherer}
 {
 }
 

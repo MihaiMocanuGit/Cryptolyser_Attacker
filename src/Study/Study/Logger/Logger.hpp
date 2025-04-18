@@ -9,9 +9,9 @@ class Logger
 {
   private:
     const Gatherer<KnownKey> &m_gatherer;
-    timespec m_startStudyTime{};
-    timespec m_prevPassTime{.tv_sec = 0, .tv_nsec = 0};
-    size_t m_prevPassPacketCount{0};
+    timespec m_startStudyTime {};
+    timespec m_prevPassTime {.tv_sec = 0, .tv_nsec = 0};
+    size_t m_prevPassPacketCount {0};
     size_t m_finalValidCount;
     [[nodiscard]] size_t m_totalSentCount() const;
     [[nodiscard]] size_t m_totalReceivedCount() const;
