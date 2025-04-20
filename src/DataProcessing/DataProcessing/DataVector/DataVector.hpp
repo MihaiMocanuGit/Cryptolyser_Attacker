@@ -58,9 +58,9 @@ class DataVector
 
     void remove(size_t index);
 
-    void update(size_t index, std::function<void(T &elem)> modifyRule);
+    void update(size_t index, const std::invocable<size_t, T &> auto &modifyRule);
 
-    void update_foreach(std::function<void(size_t index, T &elem)> modifyRule);
+    void update_foreach(const std::invocable<size_t, T &> auto &modifyRule);
 };
 
 template <HasMetric T>
@@ -139,7 +139,7 @@ template <HasMetric T>
 template <class Iterator>
 DataVector<T>::DataVector(Iterator begin, Iterator end)
 {
-    std::for_each(m_data.begin(), m_data.end(), [this](const auto &elem) { add(elem); });
+    std::for_each(begin, end, [this](const auto &elem) { add(elem); });
 }
 
 template <HasMetric T>
@@ -173,21 +173,21 @@ const T &DataVector<T>::operator[](size_t index) const
 }
 
 template <HasMetric T>
-void DataVector<T>::update(size_t index, std::function<void(T &)> modifyRule)
+void DataVector<T>::update(size_t index, const std::invocable<size_t, T &> auto &modifyRule)
 {
     assert(index < m_data.size());
     Metrics<double> globalBefore {globalMetric()};
     Metrics<double> localBefore {m_data[index].globalMetric()};
 
     T &chosen {m_data[index]};
-    modifyRule(chosen);
+    modifyRule(index, chosen);
 
     Metrics<double> localAfter {chosen.globalMetric()};
     m_globalMetric = m_computeAfterUpdate(globalBefore, localBefore, localAfter);
 }
 
 template <HasMetric T>
-void DataVector<T>::update_foreach(std::function<void(size_t index, T &elem)> modifyRule)
+void DataVector<T>::update_foreach(const std::invocable<size_t, T &> auto &modifyRule)
 {
     // as the index is frequently a useful piece of information, a simple for loop is used.
     // TODO: Modify the signature of update(index, (void)(T&)) to accept the used modifyRule. This

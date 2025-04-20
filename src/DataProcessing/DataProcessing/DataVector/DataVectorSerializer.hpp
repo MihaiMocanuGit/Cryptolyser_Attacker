@@ -88,7 +88,7 @@ void loadFromCsv(const std::filesystem::path &path, DataVector<T> &metricsVector
             // in this case we want to join every element from nextLoad with every element
             // already present in the vector held at index idValue
             metricsVector.update(idValue,
-                                 [&nextLoad](T &elem) { joinDataVectors(elem, nextLoad); });
+                                 [&nextLoad](size_t, T &elem) { joinDataVectors(elem, nextLoad); });
         }
     };
 

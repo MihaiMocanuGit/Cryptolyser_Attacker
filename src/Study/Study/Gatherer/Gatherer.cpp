@@ -52,8 +52,12 @@ Gatherer<KnownKey>::ObtainStatus Gatherer<KnownKey>::obtain(uint32_t id)
     {
         size_t byteValue {static_cast<size_t>(studyData[byte])};
         m_timingData.timing().update(
-            byte, [timing, byteValue](auto &byte)
-            { byte.update(byteValue, [timing](auto &byteValue) { byteValue.insert(timing); }); });
+            byte,
+            [timing, byteValue](size_t, auto &byte)
+            {
+                byte.update(byteValue, [timing](size_t, auto &byteValue)
+                            { byteValue.insert(timing); });
+            });
     }
     return ObtainStatus::success;
 }

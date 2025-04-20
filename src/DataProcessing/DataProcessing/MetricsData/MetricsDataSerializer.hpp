@@ -14,7 +14,7 @@ namespace Serializer
 template <Real T>
 void saveToCsv(const std::filesystem::path &path, const MetricsData<T> &metricsData)
 {
-    saveToCsv(path, metricsData.globalMetrics());
+    saveToCsv(path, metricsData.globalMetric());
 }
 
 template <Real T>
