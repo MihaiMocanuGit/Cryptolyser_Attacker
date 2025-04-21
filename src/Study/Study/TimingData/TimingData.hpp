@@ -6,6 +6,7 @@
 #include "DataProcessing/SampleData/SampleData.hpp"
 
 #include <array>
+#include <cassert>
 
 template <bool KnownKey, HasMetric DataType = SampleData<double>>
 class TimingData
@@ -49,6 +50,8 @@ class TimingData
     const DataVector<DataVector<DataType>> &timing() const noexcept;
     DataVector<DataVector<DataType>> &timing();
 
+    void insertTiming(const DataVector<DataVector<DataType>> &data);
+
     void reserveForEach(size_t reserveSize);
 
     [[nodiscard]] size_t dataSize() const noexcept;
@@ -56,6 +59,16 @@ class TimingData
     [[nodiscard]] const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &key() const noexcept
         requires(KnownKey);
 };
+
+template <bool KnownKey, HasMetric DataType>
+void TimingData<KnownKey, DataType>::insertTiming(const DataVector<DataVector<DataType>> &data)
+{
+    //    assert(data.size() == m_timings.size());
+    //    for (const auto &elem : data)
+    //        assert(elem.size() == m_timings.size());
+
+    joinDataVectors(m_timings, data);
+}
 
 template <bool KnownKey, HasMetric DataType>
 DataVector<DataVector<DataType>> &TimingData<KnownKey, DataType>::timing()
