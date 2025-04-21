@@ -21,17 +21,21 @@ class Correlate
     [[nodiscard]] const std::vector<std::array<double, 256>> &data() const;
     [[nodiscard]] std::vector<std::array<std::pair<double, std::byte>, 256>> order() const;
 
-    template <HasMetric DataTypeVictim2, HasMetric DataTypeDoppel2>
-    Correlate &operator+=(const Correlate &rhs);
+    template <HasMetric DataTypeVictim2 = DataTypeVictim,
+              HasMetric DataTypeDoppel2 = DataTypeDoppel>
+    Correlate<DataTypeVictim, DataTypeDoppel> &
+        operator+=(const Correlate<DataTypeVictim2, DataTypeDoppel2> &rhs);
 
-    template <HasMetric DataTypeVictim2, HasMetric DataTypeDoppel2>
-    Correlate operator+(const Correlate &rhs) const;
+    template <HasMetric DataTypeVictim2 = DataTypeVictim,
+              HasMetric DataTypeDoppel2 = DataTypeDoppel>
+    Correlate<DataTypeVictim, DataTypeDoppel>
+        operator+(const Correlate<DataTypeVictim2, DataTypeDoppel2> &rhs) const;
 };
 
 template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
 template <HasMetric DataTypeVictim2, HasMetric DataTypeDoppel2>
-Correlate<DataTypeVictim, DataTypeDoppel>
-    Correlate<DataTypeVictim, DataTypeDoppel>::operator+(const Correlate &rhs) const
+Correlate<DataTypeVictim, DataTypeDoppel> Correlate<DataTypeVictim, DataTypeDoppel>::operator+(
+    const Correlate<DataTypeVictim2, DataTypeDoppel2> &rhs) const
 {
     Correlate result {*this};
     return result += rhs;
@@ -39,8 +43,8 @@ Correlate<DataTypeVictim, DataTypeDoppel>
 
 template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
 template <HasMetric DataTypeVictim2, HasMetric DataTypeDoppel2>
-Correlate<DataTypeVictim, DataTypeDoppel> &
-    Correlate<DataTypeVictim, DataTypeDoppel>::operator+=(const Correlate &rhs)
+Correlate<DataTypeVictim, DataTypeDoppel> &Correlate<DataTypeVictim, DataTypeDoppel>::operator+=(
+    const Correlate<DataTypeVictim2, DataTypeDoppel2> &rhs)
 {
     for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
     {
