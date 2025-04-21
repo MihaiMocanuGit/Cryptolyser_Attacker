@@ -106,7 +106,7 @@ void joinDataVectors(T &destination, const T &source)
     {
         // T is MetricsData/SampleData<double>, so in this case, we just want to append the data at
         // the end of sample.
-        destination.insert(source.data());
+        destination.insert(source.begin(), source.end());
     }
 }
 
