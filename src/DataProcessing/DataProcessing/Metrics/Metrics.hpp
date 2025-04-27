@@ -39,7 +39,10 @@ template <Real Real_t>
 template <typename InputIterator>
 Metrics<Real_t> Metrics<Real_t>::compute(InputIterator begin, InputIterator end)
 {
+    if (begin == end)
+        return {};
     assert(begin < end);
+
     size_t aSize {0};
     if (end > begin)
         aSize = end - begin;

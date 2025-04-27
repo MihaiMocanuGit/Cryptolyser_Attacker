@@ -4,6 +4,7 @@
 #include "DataProcessing/DistributionData/DistributionData.hpp"
 #include "Gatherer/Gatherer.hpp"
 #include "Logger/Logger.hpp"
+#include "SerializerManager/SerializerManager.hpp"
 
 #include <csignal>
 #include <filesystem>
@@ -14,11 +15,11 @@ class Study
   private:
     Gatherer<KnownKey> m_gatherer;
     Logger<KnownKey> m_logger;
-    const volatile sig_atomic_t &m_continueRunningFlag;
+    const std::atomic_flag &m_continueRunningFlag;
     const std::filesystem::path &m_saveDirPath;
 
   public:
-    Study(Gatherer<KnownKey> &&gatherer, const volatile sig_atomic_t &continueRunningFlag,
+    Study(Gatherer<KnownKey> &&gatherer, const std::atomic_flag &continueRunningFlag,
           const std::filesystem::path &saveDirPath);
 
     void run(size_t desiredCount, size_t logFreq, size_t saveMetricsFreq, double lb = 0,
