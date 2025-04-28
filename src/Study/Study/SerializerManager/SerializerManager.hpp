@@ -19,6 +19,10 @@ class SerializerManager
                         const TimingData<KnownKey, DataType> &timingData);
 
     template <bool KnownKey, HasMetric DataType = SampleData<double>>
+    static void loadRaw(const std::filesystem::path &path,
+                        TimingData<KnownKey, DataType> &timingData);
+
+    template <bool KnownKey, HasMetric DataType = SampleData<double>>
     static void saveMetrics(const std::filesystem::path &path,
                             const TimingData<KnownKey, DataType> &data);
 
@@ -31,6 +35,13 @@ void SerializerManager::saveRaw(const std::filesystem::path &path,
                                 const TimingData<KnownKey, DataType> &timingData)
 {
     Serializer::saveToCsv(path, timingData.timing());
+}
+
+template <bool KnownKey, HasMetric DataType>
+void SerializerManager::loadRaw(const std::filesystem::path &path,
+                                TimingData<KnownKey, DataType> &timingData)
+{
+    Serializer::loadFromCsv(path, timingData.timing());
 }
 
 template <bool KnownKey, HasMetric DataType>
