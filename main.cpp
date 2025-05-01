@@ -12,6 +12,7 @@
 #include "backends/imgui_impl_opengl3.h"
 #include "backends/imgui_impl_sdl2.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include "SDL_opengles2.h"
@@ -64,8 +65,8 @@ int main(int argc, char **argv)
     }
 
     GUI::AppGUI gui {g_continueRunning};
-    SDL_Window *window {gui.init()};
-    // Our state
+    gui.init();
+
 #ifdef NDEBUG
     bool show_demo_window = false;
 #else
@@ -81,6 +82,35 @@ int main(int argc, char **argv)
     gui.runEveryFrame(
         [&]()
         {
+            static bool firstFrame {true};
+
+            ImGuiID dockspace {ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport())};
+            if (firstFrame)
+            {
+
+                ImGuiID id = dockspace;
+                ImGui::DockBuilderRemoveNode(id);
+                ImGui::DockBuilderAddNode(id);
+
+                ImVec2 size {600, 300};
+
+                ImGui::DockBuilderSetNodeSize(id, size);
+                ImGui::DockBuilderSetNodePos(id, {0.0f, 0.0f});
+
+                ImGuiID dock1 =
+                    ImGui::DockBuilderSplitNode(id, ImGuiDir_Up, 1 / 3.0f, nullptr, &id);
+                ImGuiID dock2 =
+                    ImGui::DockBuilderSplitNode(id, ImGuiDir_Down, 2 / 3.0f, nullptr, &id);
+
+                ImGui::DockBuilderDockWindow("Study", dock1);
+                ImGui::DockBuilderDockWindow("Filter", dock1);
+                ImGui::DockBuilderDockWindow("CombineData", dock1);
+                ImGui::DockBuilderDockWindow("Correlate", dock1);
+                ImGui::DockBuilderDockWindow("Workload", dock2);
+
+                ImGui::DockBuilderFinish(id);
+            }
+
             if (show_demo_window)
                 ImGui::ShowDemoWindow(&show_demo_window);
 
@@ -88,6 +118,7 @@ int main(int argc, char **argv)
             studyWindow.constructWindow();
             filterWindow.constructWindow();
             combineDataWindow.constructWindow();
+
             {
                 ImGui::Begin("Correlate");
 
@@ -95,6 +126,8 @@ int main(int argc, char **argv)
 
                 ImGui::End();
             }
+
+            firstFrame = false;
         });
     return 0;
 }
