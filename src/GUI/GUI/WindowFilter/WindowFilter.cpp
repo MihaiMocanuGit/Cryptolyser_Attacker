@@ -1,7 +1,10 @@
 #include "WindowFilter.hpp"
 
-GUI::WindowFilter::WindowFilter(App::WorkloadManager &workloadManager)
-    : App::Workable {workloadManager}
+#include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
+
+GUI::WindowFilter::WindowFilter(std::string_view name, App::WorkloadManager &workloadManager)
+    : WindowI {name}, App::Workable {workloadManager}
 {
     m_buffers.savePath = std::filesystem::current_path().string();
     m_buffers.loadPath = std::filesystem::current_path().string();
@@ -14,7 +17,7 @@ std::unique_ptr<App::JobI> GUI::WindowFilter::job() const
 
 void GUI::WindowFilter::constructWindow()
 {
-    ImGui::Begin("Filter");
+    ImGui::Begin(m_name.c_str());
     ImGui::Text("This is where you can filter the raw timing data.");
     ImGui::SetNextItemWidth(65.0f);
     if (ImGui::InputFloat("Lower Bound", &m_buffers.lb))

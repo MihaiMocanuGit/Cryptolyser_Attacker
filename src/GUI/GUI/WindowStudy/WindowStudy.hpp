@@ -3,8 +3,6 @@
 #include "../WindowI/WindowI.hpp"
 #include "App/JobStudy/JobStudy.hpp"
 #include "App/Workable/Workable.hpp"
-#include "imgui.h"
-#include "misc/cpp/imgui_stdlib.h"
 
 namespace GUI
 {
@@ -14,7 +12,7 @@ class WindowStudy : public WindowI, public App::Workable
     App::BuffersStudy m_buffers {};
 
   public:
-    explicit WindowStudy(App::WorkloadManager &workloadManager);
+    WindowStudy(std::string_view name, App::WorkloadManager &workloadManager);
 
     [[nodiscard]] std::unique_ptr<App::JobI> job() const override;
 

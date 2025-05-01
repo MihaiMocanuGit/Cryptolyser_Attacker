@@ -1,7 +1,11 @@
 #include "WindowCombineData.hpp"
 
-GUI::WindowCombineData::WindowCombineData(App::WorkloadManager &workloadManager)
-    : App::Workable {workloadManager}
+#include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
+
+GUI::WindowCombineData::WindowCombineData(std::string_view name,
+                                          App::WorkloadManager &workloadManager)
+    : WindowI {name}, App::Workable {workloadManager}
 {
     std::string currentPath {std::filesystem::current_path().string()};
     m_buffers.loadPaths.push_back(currentPath);
@@ -19,7 +23,7 @@ void GUI::WindowCombineData::constructWindow()
 {
     std::string currentPath {std::filesystem::current_path().string()};
 
-    ImGui::Begin("CombineData");
+    ImGui::Begin(m_name.c_str());
     ImGui::Text("This is where you can combine two or more raw timing data into a new one.");
     ImGui::SetNextItemWidth(250.0f);
     if (ImGui::InputText("Save Path", &m_buffers.savePath))

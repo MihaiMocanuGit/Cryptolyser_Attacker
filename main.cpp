@@ -74,10 +74,10 @@ int main(int argc, char **argv)
 #endif
 
     App::WorkloadManager workloadManager {g_continueRunning};
-    GUI::WindowWorkloadQueue workloadQueueWindow {workloadManager};
-    GUI::WindowStudy studyWindow {workloadManager};
-    GUI::WindowFilter filterWindow {workloadManager};
-    GUI::WindowCombineData combineDataWindow {workloadManager};
+    GUI::WindowWorkloadQueue workloadQueueWindow {"Workload", workloadManager};
+    GUI::WindowStudy studyWindow {"Study", workloadManager};
+    GUI::WindowFilter filterWindow {"Filter", workloadManager};
+    GUI::WindowCombineData combineDataWindow {"CombineData", workloadManager};
 
     gui.runEveryFrame(
         [&]()
@@ -102,11 +102,11 @@ int main(int argc, char **argv)
                 ImGuiID dock2 =
                     ImGui::DockBuilderSplitNode(id, ImGuiDir_Down, 2 / 3.0f, nullptr, &id);
 
-                ImGui::DockBuilderDockWindow("Study", dock1);
-                ImGui::DockBuilderDockWindow("Filter", dock1);
-                ImGui::DockBuilderDockWindow("CombineData", dock1);
+                ImGui::DockBuilderDockWindow(studyWindow.name().data(), dock1);
+                ImGui::DockBuilderDockWindow(filterWindow.name().data(), dock1);
+                ImGui::DockBuilderDockWindow(combineDataWindow.name().data(), dock1);
                 ImGui::DockBuilderDockWindow("Correlate", dock1);
-                ImGui::DockBuilderDockWindow("Workload", dock2);
+                ImGui::DockBuilderDockWindow(workloadQueueWindow.name().data(), dock2);
 
                 ImGui::DockBuilderFinish(id);
             }

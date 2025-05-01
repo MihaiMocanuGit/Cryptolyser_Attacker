@@ -1,5 +1,9 @@
 #include "WindowWorkloadQueue.hpp"
 
+#include "GUI/WindowI/WindowI.hpp"
+#include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
+
 #include <sstream>
 
 namespace GUI
@@ -11,8 +15,9 @@ std::ostringstream WindowWorkloadQueue::m_cerrBuff;
 void WindowWorkloadQueue::coutInit() { std::cout.rdbuf(m_coutBuff.rdbuf()); };
 void WindowWorkloadQueue::cerrInit() { std::cerr.rdbuf(m_cerrBuff.rdbuf()); };
 
-WindowWorkloadQueue::WindowWorkloadQueue(App::WorkloadManager &workloadManager)
-    : m_workloadManager {workloadManager}
+WindowWorkloadQueue::WindowWorkloadQueue(std::string_view name,
+                                         App::WorkloadManager &workloadManager)
+    : WindowI {name}, m_workloadManager {workloadManager}
 {
     coutInit();
     cerrInit();
@@ -20,7 +25,7 @@ WindowWorkloadQueue::WindowWorkloadQueue(App::WorkloadManager &workloadManager)
 
 void WindowWorkloadQueue::constructWindow()
 {
-    ImGui::Begin("Workload");
+    ImGui::Begin(m_name.c_str());
 
     ImGui::Text("This is where you can manage the work queue.");
     constexpr float topWidthRatio {1.0f / 3.0};

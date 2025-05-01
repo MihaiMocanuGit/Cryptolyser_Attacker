@@ -3,8 +3,6 @@
 #include "../WindowI/WindowI.hpp"
 #include "App/JobCorrelate/JobCorrelate.hpp"
 #include "App/WorkloadManager/WorkloadManager.hpp"
-#include "imgui.h"
-#include "misc/cpp/imgui_stdlib.h"
 
 namespace GUI
 {
@@ -22,7 +20,7 @@ class WindowWorkloadQueue : public WindowI
     static void cerrInit();
 
   public:
-    explicit WindowWorkloadQueue(App::WorkloadManager &workloadManager);
+    WindowWorkloadQueue(std::string_view name, App::WorkloadManager &workloadManager);
 
     void constructWindow() override;
 };

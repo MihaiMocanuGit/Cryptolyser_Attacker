@@ -1,7 +1,10 @@
 #include "WindowStudy.hpp"
 
-GUI::WindowStudy::WindowStudy(App::WorkloadManager &workloadManager)
-    : App::Workable {workloadManager}
+#include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
+
+GUI::WindowStudy::WindowStudy(std::string_view name, App::WorkloadManager &workloadManager)
+    : WindowI {name}, App::Workable {workloadManager}
 {
     m_buffers.savePath = std::filesystem::current_path().string();
 }
@@ -13,7 +16,7 @@ std::unique_ptr<App::JobI> GUI::WindowStudy::job() const
 
 void GUI::WindowStudy::constructWindow()
 {
-    ImGui::Begin("Study");
+    ImGui::Begin(m_name.c_str());
 
     ImGui::Text("This is where you can start a study session.");
     ImGui::SetNextItemWidth(30.0f);
