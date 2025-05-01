@@ -1,6 +1,6 @@
 #include "JobCombineData.hpp"
 
-App::JobCombineData::JobCombineData(const App::BuffersDataCombine &buffers,
+App::JobCombineData::JobCombineData(const App::BuffersCombineData &buffers,
                                     const std::atomic_flag &continueRunning)
     : JobI {continueRunning}
 {

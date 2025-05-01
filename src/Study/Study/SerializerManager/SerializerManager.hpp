@@ -5,11 +5,14 @@
 #include "DataProcessing/DistributionData/DistributionDataSerializer.hpp"
 #include "Study/TimingData/TimingData.hpp"
 
+#include <array>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <unordered_map>
+
 class SerializerManager
 {
-  private:
   public:
     static void saveDistribution(const std::filesystem::path &path,
                                  const DistributionData<double> &distributionData);
@@ -21,6 +24,15 @@ class SerializerManager
     template <bool KnownKey, HasMetric DataType = SampleData<double>>
     static void loadRaw(const std::filesystem::path &path,
                         TimingData<KnownKey, DataType> &timingData);
+
+    struct TimingMetadata
+    {
+        unsigned dataSize;
+        bool knownKey;
+        std::array<std::byte, PACKET_KEY_BYTE_SIZE> key;
+    };
+
+    static TimingMetadata loadTimingMetadata(const std::filesystem::path &path);
 
     template <bool KnownKey, HasMetric DataType = SampleData<double>>
     static void saveMetrics(const std::filesystem::path &path,
@@ -34,6 +46,22 @@ template <bool KnownKey, HasMetric DataType>
 void SerializerManager::saveRaw(const std::filesystem::path &path,
                                 const TimingData<KnownKey, DataType> &timingData)
 {
+    // Save the metadata to a new file in the same directory.
+    std::filesystem::path metadata {path / "meta.data"};
+    std::filesystem::create_directories(metadata);
+    std::ofstream out {metadata};
+    out << "$DataSize: " << timingData.dataSize() << ";\n";
+    out << "$KnownKey: " << KnownKey << ";\n";
+    if constexpr (KnownKey)
+    {
+        std::string keyStr {""};
+        for (std::byte byte : timingData.key())
+            keyStr += std::to_string(static_cast<unsigned>(byte)) + ' ';
+        keyStr.pop_back(); // delete the last ' '
+
+        out << "$Key: " << keyStr << ";\n";
+    }
+
     Serializer::saveToCsv(path, timingData.timing());
 }
 

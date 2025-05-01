@@ -10,7 +10,7 @@
 
 namespace App
 {
-struct BuffersDataCombine
+struct BuffersCombineData
 {
     std::vector<std::string> loadPaths {};
     std::string savePath {};
@@ -28,7 +28,7 @@ class JobCombineData : public JobI
     } input;
 
   public:
-    explicit JobCombineData(const BuffersDataCombine &buffers,
+    explicit JobCombineData(const BuffersCombineData &buffers,
                             const std::atomic_flag &continueRunning);
 
     void operator()() override;
