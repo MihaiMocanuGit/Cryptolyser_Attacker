@@ -27,22 +27,96 @@ void WindowWorkloadQueue::constructWindow()
 {
     ImGui::Begin(m_name.c_str());
 
-    ImGui::Text("This is where you can manage the work queue.");
+    ImGui::TextWrapped("This is where you can manage the work queue.");
     constexpr float topWidthRatio {1.0f / 3.0};
     ImGui::BeginChild("##WorkloadControl",
-                      {ImGui::GetWindowSize().x / 2, ImGui::GetWindowSize().y * topWidthRatio},
+                      {ImGui::GetWindowSize().x / 3.5f, ImGui::GetWindowSize().y * topWidthRatio},
                       ImGuiChildFlags_Borders);
-    if (m_workloadManager.state() != App::NewWorkloadManager::States::BUSY)
+
+    size_t noJobs {m_workloadManager.size()};
+    size_t currentJob {m_workloadManager.currentJobIndex()};
+
+    switch (m_workloadManager.state())
     {
-        ImGui::Text("Workload currently contains %zu new cloneJobs.",
-                    m_workloadManager.size() - m_workloadManager.currentJobIndex());
-        if (m_workloadManager.size() > 0 and ImGui::Button("Start Workload!"))
-            m_workloadManager.start();
-    }
-    else
-    {
-        ImGui::Text("Currently running m_workload... (%zu / %zu)",
-                    m_workloadManager.currentJobIndex(), m_workloadManager.size());
+        case App::NewWorkloadManager::States::NOT_STARTED:
+        {
+            ImGui::TextWrapped("The Manager is not running.");
+            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
+            if (noJobs > 0)
+            {
+                if (ImGui::Button("Run queued jobs"))
+                    m_workloadManager.start();
+                if (ImGui::Button("Remove all possible jobs"))
+                    m_workloadManager.removeAllPossibleJobs();
+            }
+            break;
+        }
+        case App::NewWorkloadManager::States::BUSY:
+        {
+            ImGui::TextWrapped("The Manager is currently running.");
+            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
+            ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
+            if (noJobs > 0)
+            {
+                if (ImGui::Button("Remove all possible jobs"))
+                    m_workloadManager.removeAllPossibleJobs();
+                if (ImGui::Button("Pause after this job."))
+                    m_workloadManager.pauseAfterJob();
+            }
+            break;
+        }
+        case App::NewWorkloadManager::States::PAUSE_AFTER_THIS:
+        {
+            ImGui::TextWrapped("The Manager will pause after finishing the current job.");
+            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
+            ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
+            if (noJobs > 0)
+            {
+                if (ImGui::Button("Remove all possible jobs"))
+                    m_workloadManager.removeAllPossibleJobs();
+            }
+            break;
+        }
+        case App::NewWorkloadManager::States::PAUSED:
+        {
+            ImGui::TextWrapped("The Manager has been paused.");
+            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
+            ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
+            if (noJobs > 0)
+            {
+                if (ImGui::Button("Remove all possible jobs"))
+                    m_workloadManager.removeAllPossibleJobs();
+            }
+            if (ImGui::Button("Resume"))
+                m_workloadManager.resume();
+            break;
+        }
+        case App::NewWorkloadManager::States::FORCEFULLY_STOPPED:
+        {
+            ImGui::TextWrapped(
+                "The Manager has been forcefully paused. The app should close soon.");
+            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
+            ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
+            break;
+        }
+        case App::NewWorkloadManager::States::FINISHED:
+        {
+            ImGui::TextWrapped(
+                "The Manager has finished. Rearm if you want to modify the queue and run again.");
+            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
+            ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
+            if (ImGui::Button("Rearm"))
+                m_workloadManager.rearmManager();
+            break;
+        }
+        case App::NewWorkloadManager::States::INVALID:
+        {
+            ImGui::TextWrapped(
+                "The Manager has reached and invalid state. You're on your own, sorry :((");
+            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
+            ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
+            break;
+        }
     }
     ImGui::EndChild();
     ImGui::SameLine();
@@ -57,6 +131,42 @@ void WindowWorkloadQueue::constructWindow()
     const size_t currentJobIndex {m_workloadManager.currentJobIndex()};
     for (size_t index {0}; index < descriptions.size(); ++index)
     {
+        if (ImGui::Button(std::format("-##{}", index).c_str()))
+        {
+            try
+            {
+                m_workloadManager.removeJob(index);
+            }
+            catch (...)
+            {
+                std::cout << "Job with index " << index << " cannot be removed." << std::endl;
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(std::format("^##{}", index).c_str()))
+        {
+            try
+            {
+                m_workloadManager.swapJobs(index, index - 1);
+            }
+            catch (...)
+            {
+                std::cout << "Job with index " << index << " cannot be moved up." << std::endl;
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(std::format("v##{}", index).c_str()))
+        {
+            try
+            {
+                m_workloadManager.swapJobs(index, index + 1);
+            }
+            catch (...)
+            {
+                std::cout << "Job with index " << index << " cannot be moved down." << std::endl;
+            }
+        }
+        ImGui::SameLine();
         if (index != currentJobIndex)
             ImGui::Text("%zu | %s", index, descriptions[index].c_str());
         else

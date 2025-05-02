@@ -69,6 +69,8 @@ class NewWorkloadManager
 
     bool removeJob(size_t jobIndex);
 
+    bool removeAllPossibleJobs();
+
     bool swapJobs(size_t jobIndex1, size_t jobIndex2);
 
     bool start(size_t firstJobIndex = 0);
@@ -84,6 +86,8 @@ class NewWorkloadManager
     [[nodiscard]] std::vector<std::string> jobDescriptions() const;
 
     [[nodiscard]] const std::atomic_flag &continueRunning() const noexcept;
+
+    ~NewWorkloadManager();
 };
 
 } // namespace App

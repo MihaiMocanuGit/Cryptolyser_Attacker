@@ -16,6 +16,7 @@ SerializerManager::TimingMetadata
     std::string line;
     while (std::getline(in, line))
         metadata += line;
+    in.close();
 
     TimingMetadata result {};
 

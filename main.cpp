@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     GUI::WindowStudy studyWindow {"Study", workloadManager};
     GUI::WindowFilter filterWindow {"Filter", workloadManager};
     GUI::WindowCombineData combineDataWindow {"CombineData", workloadManager};
-    GUI::WindowCorrelate correlateWindow {"CorrelateWindow", workloadManager};
+    GUI::WindowCorrelate correlateWindow {"Correlate", workloadManager};
 
     gui.runEveryFrame(
         [&]()

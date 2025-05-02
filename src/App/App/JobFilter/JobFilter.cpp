@@ -12,11 +12,16 @@ App::JobFilter::JobFilter(const App::BuffersFilter &buffers,
 
 void App::JobFilter::operator()()
 {
+    std::cout << "Started Filter job.\n";
     TimingData<false> timingData {0};
+    std::cout << "Loading timing data...\n";
     SerializerManager::loadRaw(input.loadPath, timingData);
+    std::cout << "Filtering the timing data...\n";
     Filter::filter<double>(timingData.timing(),
                            [this](double data) { return input.lb <= data and data <= input.ub; });
+    std::cout << "Saving the filtered timing data...\n";
     SerializerManager::saveRaw(input.savePath, timingData);
+    std::cout << "Finished Filter job.\n\n";
 }
 
 std::string App::JobFilter::description() const noexcept

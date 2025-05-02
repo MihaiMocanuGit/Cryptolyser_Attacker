@@ -20,6 +20,7 @@ App::JobStudy::JobStudy(const App::BuffersStudy &buffers, const std::atomic_flag
 
 void App::JobStudy::operator()()
 {
+    std::cout << "Started Study job.\n";
     if (input.knownKey)
     {
         ServerConnection<true> connection {input.ip, input.port};
@@ -29,7 +30,11 @@ void App::JobStudy::operator()()
         Study<true> study {std::move(gatherer), m_continueRunning, input.savePath};
         DistributionData<double>::Bounds bounds {input.lb, input.ub};
         if (input.calibrate)
+        {
+            std::cout << "Started calibration...\n";
             bounds = study.calibrateBounds(1'000'000, input.lbConfidence, input.ubConfidence);
+            std::cout << "Finished calibration.\n";
+        }
         study.run(input.packetCount, 1024 * 1024, 1024 * 1024, bounds.lb, bounds.ub);
     }
     else
@@ -41,9 +46,14 @@ void App::JobStudy::operator()()
         Study<false> study {std::move(gatherer), m_continueRunning, input.savePath};
         DistributionData<double>::Bounds bounds {input.lb, input.ub};
         if (input.calibrate)
+        {
+            std::cout << "Started calibration...\n";
             bounds = study.calibrateBounds(1'000'000, input.lbConfidence, input.ubConfidence);
+            std::cout << "Finished calibration.\n";
+        }
         study.run(input.packetCount, 1024, 1024 * 1024, bounds.lb, bounds.ub);
     }
+    std::cout << "Finished Study job.\n\n";
 }
 
 std::string App::JobStudy::description() const noexcept

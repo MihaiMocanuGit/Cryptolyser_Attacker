@@ -45,10 +45,10 @@ bool NewWorkloadManager::addJob(std::unique_ptr<JobI> job)
         case States::PAUSE_AFTER_THIS:
             [[fallthrough]];
         case States::PAUSED:
-            [[fallthrough]];
-        case States::FINISHED:
             add();
             return true;
+        case States::FINISHED:
+            return false;
         case States::FORCEFULLY_STOPPED:
             return false;
         case States::INVALID:
@@ -72,21 +72,65 @@ bool NewWorkloadManager::removeJob(size_t jobIndex)
         case States::BUSY:
             [[fallthrough]];
         case States::PAUSE_AFTER_THIS:
+            if (jobIndex == m_currentJobIndex.load())
+                return false;
             [[fallthrough]];
         case States::PAUSED:
         {
-            if (m_currentJobIndex.load() <= jobIndex)
+            if (jobIndex < m_currentJobIndex.load())
                 return false;
+            //            // If we remove the last element, we need to specify that we finished the
+            //            queuea.
+            //            // Otherwise, while processing the queue, we might get an out of range
+            //            error from time
+            //            // to time, depending on the current thread synchronisation
+            //            if (jobIndex == size() - 1 and jobIndex == m_currentJobIndex.load())
+            //            {
+            //                m_currentState = States::FINISHED;
+            //                std::lock_guard lock {m_workloadMutex};
+            //                m_workload.erase(m_workload.begin() + jobIndex);
+            //                return true;
+            //            }
             std::lock_guard lock {m_workloadMutex};
             m_workload.erase(m_workload.begin() + jobIndex);
             return true;
         }
         case States::FINISHED:
+            return false;
+        case States::FORCEFULLY_STOPPED:
+            return false;
+        case States::INVALID:
+            throw std::runtime_error("WorkloadManager: Invalid State");
+    }
+    throw std::runtime_error("WorkloadManager: Invalid State");
+}
+
+bool NewWorkloadManager::removeAllPossibleJobs()
+{
+    switch (m_currentState)
+    {
+        case States::NOT_STARTED:
         {
             std::lock_guard lock {m_workloadMutex};
-            m_workload.erase(m_workload.begin() + jobIndex);
+            m_workload.erase(m_workload.begin(), m_workload.end());
             return true;
         }
+        case States::BUSY:
+            [[fallthrough]];
+        case States::PAUSE_AFTER_THIS:
+        {
+            std::lock_guard lock {m_workloadMutex};
+            m_workload.erase(m_workload.begin() + m_currentJobIndex.load() + 1, m_workload.end());
+            return true;
+        }
+        case States::PAUSED:
+        {
+            std::lock_guard lock {m_workloadMutex};
+            m_workload.erase(m_workload.begin() + m_currentJobIndex.load(), m_workload.end());
+            return true;
+        }
+        case States::FINISHED:
+            return false;
         case States::FORCEFULLY_STOPPED:
             return false;
         case States::INVALID:
@@ -114,18 +158,14 @@ bool NewWorkloadManager::swapJobs(size_t jobIndex1, size_t jobIndex2)
             [[fallthrough]];
         case States::PAUSED:
         {
-            if (m_currentJobIndex.load() <= jobIndex1 or m_currentJobIndex.load() <= jobIndex2)
+            if (jobIndex1 <= m_currentJobIndex.load() or jobIndex2 <= m_currentJobIndex.load())
                 return false;
             std::lock_guard lock {m_workloadMutex};
             std::swap(m_workload[jobIndex1], m_workload[jobIndex2]);
             return true;
         }
         case States::FINISHED:
-        {
-            std::lock_guard lock {m_workloadMutex};
-            std::swap(m_workload[jobIndex1], m_workload[jobIndex2]);
-            return true;
-        }
+            return false;
         case States::FORCEFULLY_STOPPED:
             return false;
         case States::INVALID:
@@ -145,6 +185,7 @@ bool NewWorkloadManager::start(size_t firstJobIndex)
             m_currentJobIndex = firstJobIndex;
             m_currentState = States::BUSY;
             m_worker = std::thread {&NewWorkloadManager::m_processWorkload, this};
+            m_worker.detach();
             return true;
         }
         case States::BUSY:
@@ -179,7 +220,11 @@ void NewWorkloadManager::m_processWorkload()
         {
             // We copy the current job so that we don't keep this mutex alive for too long.
             std::lock_guard workloadLock {m_workloadMutex};
-            job = m_workload.at(m_currentJobIndex.load())->clone();
+            if (m_currentJobIndex.load() < m_workload.size())
+                job = m_workload.at(m_currentJobIndex.load())->clone();
+            else
+                assert(m_currentJobIndex.load() <
+                       m_workload.size()); // If we arrive here, this will fail.
         }
         // start the job
         try
@@ -194,8 +239,14 @@ void NewWorkloadManager::m_processWorkload()
             std::cerr << "\tPausing Manager...\n" << std::endl;
             m_currentState = States::PAUSED;
         }
-        if (m_currentJobIndex.load() == size())
+        // if the manager is paused at the last job, and we remove it, then m_currentJobIndex will
+        // be one over the new size().
+        if (m_currentJobIndex.load() >= size())
+        {
             m_currentState = States::FINISHED;
+            assert(m_currentJobIndex <= size() + 1);
+            m_currentJobIndex.store(size());
+        }
         else if (m_currentState == States::PAUSE_AFTER_THIS)
             m_currentState = States::PAUSED;
     }
@@ -228,9 +279,19 @@ bool NewWorkloadManager::resume()
     switch (m_currentState)
     {
         case States::PAUSED:
-            m_currentState = States::NOT_STARTED;
-            start(m_currentJobIndex);
-            return true;
+        {
+            if (m_currentJobIndex < size())
+            {
+                m_currentState = States::NOT_STARTED;
+                start(m_currentJobIndex);
+                return true;
+            }
+            else
+            {
+                m_currentState = States::FINISHED;
+                return true;
+            }
+        }
         case States::NOT_STARTED:
             [[fallthrough]];
         case States::BUSY:
@@ -318,5 +379,7 @@ std::vector<std::string> NewWorkloadManager::jobDescriptions() const
 {
     return m_g_continueRunning;
 }
+
+NewWorkloadManager::~NewWorkloadManager() { m_currentState = States::FORCEFULLY_STOPPED; }
 
 } // namespace App

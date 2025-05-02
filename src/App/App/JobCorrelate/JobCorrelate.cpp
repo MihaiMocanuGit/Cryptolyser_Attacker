@@ -23,9 +23,11 @@ App::JobCorrelate::JobCorrelate(const App::BuffersCorrelate &buffers,
 
 void App::JobCorrelate::operator()()
 {
+    std::cout << "Started Correlate job...\n";
     // Load all the known victim timing data
     std::vector<TimingData<false, MetricsData<double>>> victimData;
     victimData.reserve(input.victimLoadPaths.size());
+    std::cout << "Loading the victim timing data...\n";
     for (const auto &loadPath : input.victimLoadPaths)
     {
         const auto metadata {SerializerManager::loadTimingMetadata(loadPath)};
@@ -40,6 +42,7 @@ void App::JobCorrelate::operator()()
     Correlate<MetricsData<double>, MetricsData<double>> correlate {};
 
     // Load one by one the doppel timing data
+    std::cout << "Loading the doppel timing data...\n";
     for (const auto &loadPath : input.doppelLoadPaths)
     {
         const auto metadata {SerializerManager::loadTimingMetadata(loadPath)};
@@ -114,6 +117,7 @@ void App::JobCorrelate::operator()()
     std::filesystem::create_directories(input.savePath);
     std::ofstream out {input.savePath};
     out << output;
+    std::cout << "Finished Correlate job.\n\n";
 }
 
 std::string App::JobCorrelate::description() const noexcept

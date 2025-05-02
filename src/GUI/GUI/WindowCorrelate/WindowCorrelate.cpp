@@ -44,8 +44,6 @@ void GUI::WindowCorrelate::constructWindow()
                                                                 : "Key"};
                 if (ImGui::InputScalar(id.c_str(), ImGuiDataType_U8, &m_buffers.victimKey[i]))
                 {
-                    std::cout << "Study buffer key" << i << ": " << (unsigned)m_buffers.victimKey[i]
-                              << std::endl;
                 }
                 if (i != PACKET_KEY_BYTE_SIZE - 1)
                     ImGui::SameLine();
@@ -94,7 +92,7 @@ void GUI::WindowCorrelate::constructWindow()
         }
     }
 
-    if (ImGui::Button("Queue Combine Data job"))
+    if (ImGui::Button("Queue Correlate job"))
     {
         m_workloadManager.addJob(job());
     }

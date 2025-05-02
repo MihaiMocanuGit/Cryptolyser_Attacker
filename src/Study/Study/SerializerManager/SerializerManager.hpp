@@ -48,7 +48,7 @@ void SerializerManager::saveRaw(const std::filesystem::path &path,
 {
     // Save the metadata to a new file in the same directory.
     std::filesystem::path metadata {path / "meta.data"};
-    std::filesystem::create_directories(metadata);
+    std::filesystem::create_directories(path);
     std::ofstream out {metadata};
     out << "$DataSize: " << timingData.dataSize() << ";\n";
     out << "$KnownKey: " << KnownKey << ";\n";
@@ -61,6 +61,7 @@ void SerializerManager::saveRaw(const std::filesystem::path &path,
 
         out << "$Key: " << keyStr << ";\n";
     }
+    out.close();
 
     Serializer::saveToCsv(path, timingData.timing());
 }

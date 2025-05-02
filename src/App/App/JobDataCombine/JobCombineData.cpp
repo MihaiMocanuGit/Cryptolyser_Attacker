@@ -11,20 +11,26 @@ App::JobCombineData::JobCombineData(const App::BuffersCombineData &buffers,
 
 void App::JobCombineData::operator()()
 {
+    std::cout << "Started Combine Data job...\n";
     if (input.onlyMetrics)
     {
         TimingData<false, MetricsData<double>> timingData {0};
+        std::cout << "Loading timing data...\n";
         for (const auto &loadPath : input.loadPaths)
             SerializerManager::loadRaw(loadPath, timingData);
+        std::cout << "Saving the combined timing data...\n";
         SerializerManager::saveRaw(input.savePath, timingData);
     }
     else
     {
         TimingData<false, SampleData<double>> timingData {0};
+        std::cout << "Loading timing data...\n";
         for (const auto &loadPath : input.loadPaths)
             SerializerManager::loadRaw(loadPath, timingData);
+        std::cout << "Saving the combined timing data...\n";
         SerializerManager::saveRaw(input.savePath, timingData);
     }
+    std::cout << "Finished Combine Data job.\n\n";
 }
 
 std::string App::JobCombineData::description() const noexcept
