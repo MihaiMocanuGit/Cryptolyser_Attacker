@@ -1,5 +1,6 @@
 #include "WindowFilter.hpp"
 
+#include "../Helpers.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
@@ -32,12 +33,12 @@ void GUI::WindowFilter::constructWindow()
         m_buffers.ub = std::clamp(m_buffers.ub, 0.0f, std::numeric_limits<float>::max());
         std::cout << "Filter buffer upper bound: " << m_buffers.ub << std::endl;
     }
-    ImGui::SetNextItemWidth(250.0f);
+    ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
     if (ImGui::InputText("Load Path", &m_buffers.loadPath, ImGuiInputTextFlags_ElideLeft))
     {
         std::cout << "Filter buffer load path: " << m_buffers.loadPath << std::endl;
     }
-    ImGui::SetNextItemWidth(250.0f);
+    ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
     if (ImGui::InputText("Save Path", &m_buffers.savePath, ImGuiInputTextFlags_ElideLeft))
     {
         std::cout << "Filter buffer save path: " << m_buffers.savePath << std::endl;

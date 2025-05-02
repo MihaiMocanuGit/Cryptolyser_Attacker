@@ -6,7 +6,9 @@ add_subdirectory(GUI/WindowFilter)
 add_subdirectory(GUI/WindowStudy)
 
 add_library(GUI STATIC
-        GUI/GUI.hpp GUI/GUI.cpp)
+        GUI/GUI.hpp GUI/GUI.cpp
+        GUI/Helpers.hpp
+)
 
 target_link_libraries(GUI PUBLIC
         WindowI

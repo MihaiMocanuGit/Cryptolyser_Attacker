@@ -1,5 +1,6 @@
 #include "WindowStudy.hpp"
 
+#include "../Helpers.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
@@ -56,7 +57,7 @@ void GUI::WindowStudy::constructWindow()
     {
         std::cout << "Study buffer port: " << m_buffers.port << std::endl;
     }
-    ImGui::SetNextItemWidth(250.0f);
+    ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
     if (ImGui::InputText("Save Path", &m_buffers.savePath, ImGuiInputTextFlags_ElideLeft))
     {
         std::cout << "Study buffer savePath: " << m_buffers.savePath << std::endl;

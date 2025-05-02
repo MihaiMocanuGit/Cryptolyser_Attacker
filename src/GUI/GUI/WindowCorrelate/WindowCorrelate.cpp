@@ -1,12 +1,13 @@
 #include "WindowCorrelate.hpp"
 
+#include "../Helpers.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
 GUI::WindowCorrelate::WindowCorrelate(std::string_view name, App::WorkloadManager &workloadManager)
     : WindowI {name}, App::Workable {workloadManager}
 {
-    std::string currentPath {std::filesystem::current_path().string()};
+    std::string currentPath {Helpers::pathTextDefaultLocation};
     m_buffers.victimLoadPaths.push_back(currentPath);
     m_buffers.doppelLoadPaths.push_back(currentPath);
     m_buffers.savePath = currentPath;
@@ -20,12 +21,12 @@ std::unique_ptr<App::JobI> GUI::WindowCorrelate::job() const
 
 void GUI::WindowCorrelate::constructWindow()
 {
-    std::string currentPath {std::filesystem::current_path().string()};
+    std::string currentPath {Helpers::pathTextDefaultLocation};
 
     ImGui::Begin(m_name.c_str());
     ImGui::Text("This is where you can correlate the studied keys.");
-    ImGui::SetNextItemWidth(250.0f);
-    if (ImGui::InputText("Save Path", &m_buffers.savePath))
+    ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
+    if (ImGui::InputText("Save Path", &m_buffers.savePath, ImGuiInputTextFlags_ElideLeft))
     {
     }
     {
@@ -61,8 +62,9 @@ void GUI::WindowCorrelate::constructWindow()
         unsigned index {0};
         for (std::string &inputLine : m_buffers.victimLoadPaths)
         {
-            ImGui::SetNextItemWidth(250.0f);
-            if (ImGui::InputText(std::format("Victim Load Path {}", index).c_str(), &inputLine))
+            ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
+            if (ImGui::InputText(std::format("Victim Load Path {}", index).c_str(), &inputLine,
+                                 ImGuiInputTextFlags_ElideLeft))
             {
             }
             ++index;
@@ -82,8 +84,9 @@ void GUI::WindowCorrelate::constructWindow()
         unsigned index {0};
         for (std::string &inputLine : m_buffers.doppelLoadPaths)
         {
-            ImGui::SetNextItemWidth(250.0f);
-            if (ImGui::InputText(std::format("Doppel Load Path {}", index).c_str(), &inputLine))
+            ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
+            if (ImGui::InputText(std::format("Doppel Load Path {}", index).c_str(), &inputLine,
+                                 ImGuiInputTextFlags_ElideLeft))
             {
             }
             ++index;
