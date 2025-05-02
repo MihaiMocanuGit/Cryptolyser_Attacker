@@ -141,3 +141,8 @@ std::string App::JobCorrelate::description() const noexcept
 
     return description;
 }
+
+std::unique_ptr<App::JobI> App::JobCorrelate::clone() const
+{
+    return std::make_unique<JobCorrelate>(*this);
+}

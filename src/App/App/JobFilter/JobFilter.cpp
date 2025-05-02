@@ -24,3 +24,8 @@ std::string App::JobFilter::description() const noexcept
     return std::format("Filter - [{}, {}], {} -> {}", input.lb, input.ub, input.loadPath.string(),
                        input.savePath.string());
 }
+
+std::unique_ptr<App::JobI> App::JobFilter::clone() const
+{
+    return std::make_unique<JobFilter>(*this);
+}

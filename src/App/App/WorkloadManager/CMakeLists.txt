@@ -1,5 +1,7 @@
 add_library(WorkloadManager STATIC
         WorkloadManager.hpp WorkloadManager.cpp
+        NewWorkloadManager.cpp
+        NewWorkloadManager.hpp
 )
 
 target_include_directories(WorkloadManager

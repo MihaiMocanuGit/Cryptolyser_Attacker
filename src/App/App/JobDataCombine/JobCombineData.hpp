@@ -35,6 +35,8 @@ class JobCombineData : public JobI
 
     [[nodiscard]] std::string description() const noexcept override;
 
+    [[nodiscard]] std::unique_ptr<JobI> clone() const override;
+
     ~JobCombineData() override = default;
 };
 } // namespace App

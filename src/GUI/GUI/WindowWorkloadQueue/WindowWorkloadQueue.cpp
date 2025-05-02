@@ -34,14 +34,14 @@ void WindowWorkloadQueue::constructWindow()
                       ImGuiChildFlags_Borders);
     if (not m_workloadManager.busy())
     {
-        ImGui::Text("Workload currently contains %zu new jobs.",
+        ImGui::Text("Workload currently contains %zu new cloneJobs.",
                     m_workloadManager.totalJobsCount() - m_workloadManager.processedJobsCount());
         if (ImGui::Button("Start Workload!"))
             m_workloadManager.start();
     }
     else
     {
-        ImGui::Text("Currently running workload... (%zu / %zu)",
+        ImGui::Text("Currently running m_workload... (%zu / %zu)",
                     m_workloadManager.processedJobsCount(), m_workloadManager.totalJobsCount());
     }
     ImGui::EndChild();

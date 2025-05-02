@@ -35,3 +35,8 @@ std::string App::JobCombineData::description() const noexcept
     description.pop_back(); // remove the last char which is ' '.
     return description;
 }
+
+std::unique_ptr<App::JobI> App::JobCombineData::clone() const
+{
+    return std::make_unique<JobCombineData>(*this);
+}

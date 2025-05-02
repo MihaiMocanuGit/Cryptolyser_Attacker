@@ -57,3 +57,8 @@ std::string App::JobStudy::description() const noexcept
     return std::format("Study - PacketCount: {}, Key: {}, SavePath: {}", input.packetCount,
                        hexKeyArray, input.savePath.string());
 }
+
+std::unique_ptr<App::JobI> App::JobStudy::clone() const
+{
+    return std::make_unique<JobStudy>(*this);
+}
