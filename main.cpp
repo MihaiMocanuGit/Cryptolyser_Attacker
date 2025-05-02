@@ -2,6 +2,7 @@
 ///
 #include "App/WorkloadManager/WorkloadManager.hpp"
 #include "GUI/GUI.hpp"
+#include "GUI/WindowCorrelate/WindowCorrelate.hpp"
 #include "GUI/WindowDataCombine/WindowCombineData.hpp"
 #include "GUI/WindowFilter/WindowFilter.hpp"
 #include "GUI/WindowStudy/WindowStudy.hpp"
@@ -78,6 +79,7 @@ int main(int argc, char **argv)
     GUI::WindowStudy studyWindow {"Study", workloadManager};
     GUI::WindowFilter filterWindow {"Filter", workloadManager};
     GUI::WindowCombineData combineDataWindow {"CombineData", workloadManager};
+    GUI::WindowCorrelate correlateWindow {"CorrelateWindow", workloadManager};
 
     gui.runEveryFrame(
         [&]()
@@ -105,7 +107,7 @@ int main(int argc, char **argv)
                 ImGui::DockBuilderDockWindow(studyWindow.name().data(), dock1);
                 ImGui::DockBuilderDockWindow(filterWindow.name().data(), dock1);
                 ImGui::DockBuilderDockWindow(combineDataWindow.name().data(), dock1);
-                ImGui::DockBuilderDockWindow("Correlate", dock1);
+                ImGui::DockBuilderDockWindow(correlateWindow.name().data(), dock1);
                 ImGui::DockBuilderDockWindow(workloadQueueWindow.name().data(), dock2);
 
                 ImGui::DockBuilderFinish(id);
@@ -118,14 +120,7 @@ int main(int argc, char **argv)
             studyWindow.constructWindow();
             filterWindow.constructWindow();
             combineDataWindow.constructWindow();
-
-            {
-                ImGui::Begin("Correlate");
-
-                ImGui::Text("This is where you can correlate the studied keys.");
-
-                ImGui::End();
-            }
+            correlateWindow.constructWindow();
 
             firstFrame = false;
         });
