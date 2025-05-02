@@ -2,14 +2,14 @@
 
 #include "../WindowI/WindowI.hpp"
 #include "App/JobCorrelate/JobCorrelate.hpp"
-#include "App/WorkloadManager/WorkloadManager.hpp"
+#include "App/WorkloadManager/NewWorkloadManager.hpp"
 
 namespace GUI
 {
 class WindowWorkloadQueue : public WindowI
 {
   private:
-    App::WorkloadManager &m_workloadManager;
+    App::NewWorkloadManager &m_workloadManager;
 
     static std::ostringstream m_coutBuff;
 
@@ -20,7 +20,7 @@ class WindowWorkloadQueue : public WindowI
     static void cerrInit();
 
   public:
-    WindowWorkloadQueue(std::string_view name, App::WorkloadManager &workloadManager);
+    WindowWorkloadQueue(std::string_view name, App::NewWorkloadManager &workloadManager);
 
     void constructWindow() override;
 };

@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     bool show_demo_window = true;
 #endif
 
-    App::WorkloadManager workloadManager {g_continueRunning};
+    App::NewWorkloadManager workloadManager {g_continueRunning};
     GUI::WindowWorkloadQueue workloadQueueWindow {"Workload", workloadManager};
     GUI::WindowStudy studyWindow {"Study", workloadManager};
     GUI::WindowFilter filterWindow {"Filter", workloadManager};

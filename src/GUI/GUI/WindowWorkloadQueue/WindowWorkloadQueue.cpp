@@ -16,7 +16,7 @@ void WindowWorkloadQueue::coutInit() { std::cout.rdbuf(m_coutBuff.rdbuf()); };
 void WindowWorkloadQueue::cerrInit() { std::cerr.rdbuf(m_cerrBuff.rdbuf()); };
 
 WindowWorkloadQueue::WindowWorkloadQueue(std::string_view name,
-                                         App::WorkloadManager &workloadManager)
+                                         App::NewWorkloadManager &workloadManager)
     : WindowI {name}, m_workloadManager {workloadManager}
 {
     coutInit();
@@ -32,17 +32,17 @@ void WindowWorkloadQueue::constructWindow()
     ImGui::BeginChild("##WorkloadControl",
                       {ImGui::GetWindowSize().x / 2, ImGui::GetWindowSize().y * topWidthRatio},
                       ImGuiChildFlags_Borders);
-    if (not m_workloadManager.busy())
+    if (m_workloadManager.state() != App::NewWorkloadManager::States::BUSY)
     {
         ImGui::Text("Workload currently contains %zu new cloneJobs.",
-                    m_workloadManager.totalJobsCount() - m_workloadManager.processedJobsCount());
-        if (ImGui::Button("Start Workload!"))
+                    m_workloadManager.size() - m_workloadManager.currentJobIndex());
+        if (m_workloadManager.size() > 0 and ImGui::Button("Start Workload!"))
             m_workloadManager.start();
     }
     else
     {
         ImGui::Text("Currently running m_workload... (%zu / %zu)",
-                    m_workloadManager.processedJobsCount(), m_workloadManager.totalJobsCount());
+                    m_workloadManager.currentJobIndex(), m_workloadManager.size());
     }
     ImGui::EndChild();
     ImGui::SameLine();
@@ -53,13 +53,15 @@ void WindowWorkloadQueue::constructWindow()
     ImGui::BeginChild("##WorkloadQueueDescription", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders,
                       ImGuiWindowFlags_AlwaysVerticalScrollbar |
                           ImGuiWindowFlags_AlwaysHorizontalScrollbar);
-    const auto &descriptions = m_workloadManager.queuedJobDescriptions();
-    const size_t startingQueuePos {m_workloadManager.processedJobsCount()};
-    size_t position {1}, offset {0};
-    if (m_workloadManager.busy())
-        offset++;
-    for (const std::string &description : descriptions)
-        ImGui::Text("%zu | %s", startingQueuePos + offset + position++, description.c_str());
+    const auto &descriptions = m_workloadManager.jobDescriptions();
+    const size_t currentJobIndex {m_workloadManager.currentJobIndex()};
+    for (size_t index {0}; index < descriptions.size(); ++index)
+    {
+        if (index != currentJobIndex)
+            ImGui::Text("%zu | %s", index, descriptions[index].c_str());
+        else
+            ImGui::Text("HERE --> %zu | %s", index, descriptions[index].c_str());
+    }
     ImGui::EndChild();
     ImGui::EndChild();
     ImGui::Text("Console Output.");

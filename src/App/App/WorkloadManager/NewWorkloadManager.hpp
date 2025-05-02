@@ -82,6 +82,8 @@ class NewWorkloadManager
     [[nodiscard]] std::vector<std::unique_ptr<JobI>> cloneJobs() const;
 
     [[nodiscard]] std::vector<std::string> jobDescriptions() const;
+
+    [[nodiscard]] const std::atomic_flag &continueRunning() const noexcept;
 };
 
 } // namespace App

@@ -4,7 +4,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
-GUI::WindowFilter::WindowFilter(std::string_view name, App::WorkloadManager &workloadManager)
+GUI::WindowFilter::WindowFilter(std::string_view name, App::NewWorkloadManager &workloadManager)
     : WindowI {name}, App::Workable {workloadManager}
 {
     m_buffers.savePath = std::filesystem::current_path().string();
@@ -47,7 +47,7 @@ void GUI::WindowFilter::constructWindow()
     {
         std::cout << "Queue Filter button pressed" << std::endl;
 
-        m_workloadManager.push(job());
+        m_workloadManager.addJob(job());
     }
     ImGui::End();
 }

@@ -165,6 +165,11 @@ bool NewWorkloadManager::start(size_t firstJobIndex)
 
 void NewWorkloadManager::m_processWorkload()
 {
+    if (size() == 0) // Start was called with an empty queue, rearm and exit.
+    {
+        m_currentState = States::NOT_STARTED;
+        return;
+    }
     // Process the work queue as long as we don't get an external stop/pause command
     // Likewise, if the whole queue was processed, then also stop.
     while (m_g_continueRunning.test() and
@@ -177,10 +182,21 @@ void NewWorkloadManager::m_processWorkload()
             job = m_workload.at(m_currentJobIndex.load())->clone();
         }
         // start the job
-        job->operator()();
-        // the job has finished, so we can now increment the index
-        m_currentJobIndex.fetch_add(1);
-        if (m_currentState == States::PAUSE_AFTER_THIS)
+        try
+        {
+            job->operator()();
+            // the job has finished, so we can now increment the index
+            m_currentJobIndex.fetch_add(1);
+        }
+        catch (const std::exception &err)
+        {
+            std::cerr << "WorkloadManager job error: " << err.what() << '\n';
+            std::cerr << "\tPausing Manager...\n" << std::endl;
+            m_currentState = States::PAUSED;
+        }
+        if (m_currentJobIndex.load() == size())
+            m_currentState = States::FINISHED;
+        else if (m_currentState == States::PAUSE_AFTER_THIS)
             m_currentState = States::PAUSED;
     }
     if (not m_g_continueRunning.test())
@@ -296,6 +312,11 @@ std::vector<std::string> NewWorkloadManager::jobDescriptions() const
     for (const auto &job : m_workload)
         copy.emplace_back(job->description());
     return copy;
+}
+
+[[nodiscard]] const std::atomic_flag &NewWorkloadManager::continueRunning() const noexcept
+{
+    return m_g_continueRunning;
 }
 
 } // namespace App

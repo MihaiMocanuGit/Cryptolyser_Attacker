@@ -5,7 +5,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 
 GUI::WindowCombineData::WindowCombineData(std::string_view name,
-                                          App::WorkloadManager &workloadManager)
+                                          App::NewWorkloadManager &workloadManager)
     : WindowI {name}, App::Workable {workloadManager}
 {
     std::string currentPath {Helpers::pathTextDefaultLocation};
@@ -55,7 +55,7 @@ void GUI::WindowCombineData::constructWindow()
     }
     if (ImGui::Button("Queue Combine Data job"))
     {
-        m_workloadManager.push(job());
+        m_workloadManager.addJob(job());
     }
     ImGui::End();
 }

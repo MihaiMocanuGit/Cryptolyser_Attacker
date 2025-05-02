@@ -4,7 +4,8 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
-GUI::WindowCorrelate::WindowCorrelate(std::string_view name, App::WorkloadManager &workloadManager)
+GUI::WindowCorrelate::WindowCorrelate(std::string_view name,
+                                      App::NewWorkloadManager &workloadManager)
     : WindowI {name}, App::Workable {workloadManager}
 {
     std::string currentPath {Helpers::pathTextDefaultLocation};
@@ -95,7 +96,7 @@ void GUI::WindowCorrelate::constructWindow()
 
     if (ImGui::Button("Queue Combine Data job"))
     {
-        m_workloadManager.push(job());
+        m_workloadManager.addJob(job());
     }
     ImGui::End();
 }

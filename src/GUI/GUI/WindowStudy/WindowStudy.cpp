@@ -4,7 +4,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
-GUI::WindowStudy::WindowStudy(std::string_view name, App::WorkloadManager &workloadManager)
+GUI::WindowStudy::WindowStudy(std::string_view name, App::NewWorkloadManager &workloadManager)
     : WindowI {name}, App::Workable {workloadManager}
 {
     m_buffers.savePath = std::filesystem::current_path().string();
@@ -125,7 +125,7 @@ void GUI::WindowStudy::constructWindow()
         }
     }
     if (ImGui::Button("Queue Study Run"))
-        m_workloadManager.push(job());
+        m_workloadManager.addJob(job());
 
     ImGui::End();
 }
