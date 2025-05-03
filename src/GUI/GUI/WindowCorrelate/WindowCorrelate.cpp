@@ -1,6 +1,6 @@
 #include "WindowCorrelate.hpp"
 
-#include "../Helpers.hpp"
+#include "../Widgets/Widgets.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
@@ -8,7 +8,7 @@ GUI::WindowCorrelate::WindowCorrelate(std::string_view name,
                                       App::NewWorkloadManager &workloadManager)
     : WindowI {name}, App::Workable {workloadManager}
 {
-    std::string currentPath {Helpers::pathTextDefaultLocation};
+    std::string currentPath {Widgets::fileExplorerWidget_defaultPath};
     m_buffers.victimLoadPaths.push_back(currentPath);
     m_buffers.doppelLoadPaths.push_back(currentPath);
     m_buffers.savePath = currentPath;
@@ -22,14 +22,11 @@ std::unique_ptr<App::JobI> GUI::WindowCorrelate::job() const
 
 void GUI::WindowCorrelate::constructWindow()
 {
-    std::string currentPath {Helpers::pathTextDefaultLocation};
+    std::string currentPath {Widgets::fileExplorerWidget_defaultPath};
 
     ImGui::Begin(m_name.c_str());
     ImGui::Text("This is where you can correlate the studied keys.");
-    ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
-    if (ImGui::InputText("Save Path", &m_buffers.savePath, ImGuiInputTextFlags_ElideLeft))
-    {
-    }
+    Widgets::fileExplorerWidget(m_buffers.savePath, "Save Path", "Search##SavePath");
     {
         ImGui::Text("Paths for victim timing data.");
         if (ImGui::Checkbox("Known Victim Key", &m_buffers.victimKeyKnown))
@@ -61,11 +58,8 @@ void GUI::WindowCorrelate::constructWindow()
         unsigned index {0};
         for (std::string &inputLine : m_buffers.victimLoadPaths)
         {
-            ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
-            if (ImGui::InputText(std::format("Victim Load Path {}", index).c_str(), &inputLine,
-                                 ImGuiInputTextFlags_ElideLeft))
-            {
-            }
+            Widgets::fileExplorerWidget(inputLine, std::format("Victim Load Path {}", index),
+                                        std::format("Search##VictimLoadPath{}", index));
             ++index;
         }
     }
@@ -83,11 +77,8 @@ void GUI::WindowCorrelate::constructWindow()
         unsigned index {0};
         for (std::string &inputLine : m_buffers.doppelLoadPaths)
         {
-            ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
-            if (ImGui::InputText(std::format("Doppel Load Path {}", index).c_str(), &inputLine,
-                                 ImGuiInputTextFlags_ElideLeft))
-            {
-            }
+            Widgets::fileExplorerWidget(inputLine, std::format("Doppel Load Path {}", index),
+                                        std::format("Search##DoppelLoadPath{}", index));
             ++index;
         }
     }

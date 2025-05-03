@@ -4,10 +4,10 @@ add_subdirectory(GUI/WindowCorrelate)
 add_subdirectory(GUI/WindowDataCombine)
 add_subdirectory(GUI/WindowFilter)
 add_subdirectory(GUI/WindowStudy)
+add_subdirectory(GUI/Widgets)
 
 add_library(GUI STATIC
         GUI/GUI.hpp GUI/GUI.cpp
-        GUI/Helpers.hpp
 )
 
 target_link_libraries(GUI PUBLIC
@@ -17,7 +17,10 @@ target_link_libraries(GUI PUBLIC
         WindowDataCombine
         WindowFilter
         WindowStudy
+        Widgets
 )
+
+target_link_libraries(GUI PRIVATE imgui)
 
 target_include_directories(GUI
         PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

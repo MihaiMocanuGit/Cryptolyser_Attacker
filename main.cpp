@@ -115,7 +115,6 @@ int main(int argc, char **argv)
 
             if (show_demo_window)
                 ImGui::ShowDemoWindow(&show_demo_window);
-
             workloadQueueWindow.constructWindow();
             studyWindow.constructWindow();
             filterWindow.constructWindow();

@@ -1,6 +1,6 @@
 #include "WindowCombineData.hpp"
 
-#include "../Helpers.hpp"
+#include "../Widgets/Widgets.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
@@ -8,7 +8,7 @@ GUI::WindowCombineData::WindowCombineData(std::string_view name,
                                           App::NewWorkloadManager &workloadManager)
     : WindowI {name}, App::Workable {workloadManager}
 {
-    std::string currentPath {Helpers::pathTextDefaultLocation};
+    std::string currentPath {Widgets::fileExplorerWidget_defaultPath};
     m_buffers.loadPaths.push_back(currentPath);
     m_buffers.loadPaths.push_back(currentPath);
     m_buffers.savePath = currentPath;
@@ -26,10 +26,7 @@ void GUI::WindowCombineData::constructWindow()
 
     ImGui::Begin(m_name.c_str());
     ImGui::Text("This is where you can combine two or more raw timing data into a new one.");
-    ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
-    if (ImGui::InputText("Save Path", &m_buffers.savePath, ImGuiInputTextFlags_ElideLeft))
-    {
-    }
+    Widgets::fileExplorerWidget(m_buffers.savePath, "Save Path", "Search##SavePath");
     if (ImGui::Button("+"))
     {
         m_buffers.loadPaths.push_back(currentPath);
@@ -46,11 +43,8 @@ void GUI::WindowCombineData::constructWindow()
     unsigned index {0};
     for (std::string &inputLine : m_buffers.loadPaths)
     {
-        ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
-        if (ImGui::InputText(std::format("Load Path {}", index).c_str(), &inputLine,
-                             ImGuiInputTextFlags_ElideLeft))
-        {
-        }
+        Widgets::fileExplorerWidget(inputLine, std::format("Load Path {}", index),
+                                    std::format("Search##LoadPath{}", index));
         ++index;
     }
     if (ImGui::Button("Queue Combine Data job"))

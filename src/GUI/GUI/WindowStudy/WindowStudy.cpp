@@ -1,6 +1,6 @@
 #include "WindowStudy.hpp"
 
-#include "../Helpers.hpp"
+#include "../Widgets/Widgets.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
@@ -52,10 +52,7 @@ void GUI::WindowStudy::constructWindow()
     if (ImGui::InputScalar("IP : PORT", ImGuiDataType_U16, &m_buffers.port))
     {
     }
-    ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
-    if (ImGui::InputText("Save Path", &m_buffers.savePath, ImGuiInputTextFlags_ElideLeft))
-    {
-    }
+    Widgets::fileExplorerWidget(m_buffers.savePath, "Save Path", "Search##1");
     ImGui::SetNextItemWidth(180.0f);
     if (ImGui::InputScalar("Packet count", ImGuiDataType_U64, &m_buffers.packetCount))
     {
