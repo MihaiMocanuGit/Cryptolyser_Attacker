@@ -1,6 +1,6 @@
 #include "WindowWorkloadQueue.hpp"
 
-#include "GUI/WindowI/WindowI.hpp"
+#include "../WindowI/WindowI.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 

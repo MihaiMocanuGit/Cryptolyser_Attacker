@@ -9,20 +9,14 @@
 #include "GUI/WindowWorkloadQueue/WindowWorkloadQueue.hpp"
 /// THIRD PARTY INCLUDES
 ///
-#include "SDL.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "backends/imgui_impl_sdl2.h"
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "misc/cpp/imgui_stdlib.h"
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include "SDL_opengles2.h"
 #else
-#include "SDL_opengl.h"
 #endif
 /// STL INCLUDES
 ///
-#include <algorithm>
 #include <csignal>
 #include <iostream>
 
@@ -115,7 +109,6 @@ int main(int argc, char **argv)
 
             if (show_demo_window)
                 ImGui::ShowDemoWindow(&show_demo_window);
-
             workloadQueueWindow.constructWindow();
             studyWindow.constructWindow();
             filterWindow.constructWindow();

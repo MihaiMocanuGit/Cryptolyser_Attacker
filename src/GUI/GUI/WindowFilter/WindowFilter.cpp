@@ -1,6 +1,6 @@
 #include "WindowFilter.hpp"
 
-#include "../Helpers.hpp"
+#include "../Widgets/Widgets.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
@@ -31,14 +31,8 @@ void GUI::WindowFilter::constructWindow()
     {
         m_buffers.ub = std::clamp(m_buffers.ub, 0.0f, std::numeric_limits<float>::max());
     }
-    ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
-    if (ImGui::InputText("Load Path", &m_buffers.loadPath, ImGuiInputTextFlags_ElideLeft))
-    {
-    }
-    ImGui::SetNextItemWidth(Helpers::pathTextFieldWidth);
-    if (ImGui::InputText("Save Path", &m_buffers.savePath, ImGuiInputTextFlags_ElideLeft))
-    {
-    }
+    Widgets::fileExplorerWidget(m_buffers.loadPath, "Load Path", "Search##1");
+    Widgets::fileExplorerWidget(m_buffers.savePath, "Save Path", "Search##2");
     if (ImGui::Button("Queue Filter"))
     {
         m_workloadManager.addJob(job());
