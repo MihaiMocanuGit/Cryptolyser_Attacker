@@ -15,11 +15,11 @@ class Study
   private:
     Gatherer<KnownKey> m_gatherer;
     Logger<KnownKey> m_logger;
-    const std::atomic_flag &m_continueRunningFlag;
+    const std::atomic_bool &m_continueRunningFlag;
     const std::filesystem::path &m_saveDirPath;
 
   public:
-    Study(Gatherer<KnownKey> &&gatherer, const std::atomic_flag &continueRunningFlag,
+    Study(Gatherer<KnownKey> &&gatherer, const std::atomic_bool &continueRunningFlag,
           const std::filesystem::path &saveDirPath);
 
     void run(size_t desiredCount, size_t logFreq, size_t saveMetricsFreq, double lb = 0,

@@ -44,7 +44,7 @@ class JobStudy : public JobI
     } input;
 
   public:
-    explicit JobStudy(const BuffersStudy &buffers, const std::atomic_flag &continueRunning);
+    explicit JobStudy(const BuffersStudy &buffers, const std::atomic_bool &continueRunning);
 
     void operator()() override;
 

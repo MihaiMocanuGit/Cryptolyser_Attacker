@@ -28,7 +28,8 @@
 
 namespace
 {
-std::atomic_flag g_continueRunning {true};
+std::atomic_bool g_continueRunning {true};
+
 void exitHandler(int signal)
 {
     static int count = 0;
@@ -45,7 +46,7 @@ void exitHandler(int signal)
         std::cout << "Forced quit." << std::endl;
         exit(EXIT_SUCCESS);
     }
-    g_continueRunning.clear();
+    g_continueRunning.store(false);
     count++;
 }
 } // namespace

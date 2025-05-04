@@ -20,16 +20,16 @@ class WorkloadManager
     std::thread m_worker;
     std::deque<std::unique_ptr<JobI>> m_workload {};
     std::mutex m_workloadsMutex;
-    std::atomic_flag m_busy {false};
+    std::atomic_bool m_busy {false};
     std::atomic<size_t> m_totalJobsCount {0};
     std::atomic<size_t> m_processedJobsCount {0};
 
-    const std::atomic_flag &m_continueRunning;
+    const std::atomic_bool &m_continueRunning;
 
     void panicClean();
 
   public:
-    explicit WorkloadManager(const std::atomic_flag &continueRunning);
+    explicit WorkloadManager(const std::atomic_bool &continueRunning);
 
     void push(std::unique_ptr<JobI> job);
 
@@ -45,7 +45,7 @@ class WorkloadManager
 
     void tryForcefulStop() noexcept;
 
-    [[nodiscard]] const std::atomic_flag &continueRunning() const noexcept
+    [[nodiscard]] const std::atomic_bool &continueRunning() const noexcept
     {
         return m_continueRunning;
     }

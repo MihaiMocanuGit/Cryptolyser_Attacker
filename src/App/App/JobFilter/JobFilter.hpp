@@ -29,7 +29,7 @@ class JobFilter : public JobI
     } input;
 
   public:
-    explicit JobFilter(const BuffersFilter &buffers, const std::atomic_flag &continueRunning);
+    explicit JobFilter(const BuffersFilter &buffers, const std::atomic_bool &continueRunning);
 
     void operator()() override;
 

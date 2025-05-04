@@ -4,12 +4,12 @@ void App::WorkloadManager::panicClean()
 {
     std::lock_guard<std::mutex> workloadLock {m_workloadsMutex};
     m_workload = std::deque<std::unique_ptr<JobI>> {};
-    m_busy.clear(std::memory_order::release);
+    m_busy.store(false);
     m_totalJobsCount = 0;
     m_processedJobsCount = 0;
 }
 
-App::WorkloadManager::WorkloadManager(const std::atomic_flag &continueRunning)
+App::WorkloadManager::WorkloadManager(const std::atomic_bool &continueRunning)
     : m_continueRunning {continueRunning}
 {
 }
@@ -35,7 +35,8 @@ void App::WorkloadManager::start()
 {
     const auto processWorkQueue = [this]()
     {
-        assert(m_busy.test_and_set(std::memory_order::release) == false);
+        assert(m_busy.load() == false);
+        m_busy.store(true);
         try
         {
             while (true)
@@ -68,9 +69,9 @@ void App::WorkloadManager::start()
             panicClean();
             return;
         }
-        m_busy.clear(std::memory_order::release);
+        m_busy.store(false);
     };
-    if (not m_busy.test())
+    if (not m_busy.load())
     {
         m_worker = std::thread {processWorkQueue};
         m_worker.detach();
@@ -81,6 +82,6 @@ size_t App::WorkloadManager::totalJobsCount() const noexcept { return m_totalJob
 
 size_t App::WorkloadManager::processedJobsCount() const noexcept { return m_processedJobsCount; }
 
-bool App::WorkloadManager::busy() const noexcept { return m_busy.test(); }
+bool App::WorkloadManager::busy() const noexcept { return m_busy.load(); }
 
 void App::WorkloadManager::tryForcefulStop() noexcept { panicClean(); }

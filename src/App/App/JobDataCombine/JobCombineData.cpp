@@ -1,7 +1,7 @@
 #include "JobCombineData.hpp"
 
 App::JobCombineData::JobCombineData(const App::BuffersCombineData &buffers,
-                                    const std::atomic_flag &continueRunning)
+                                    const std::atomic_bool &continueRunning)
     : JobI {continueRunning}
 {
     input.savePath = buffers.savePath;

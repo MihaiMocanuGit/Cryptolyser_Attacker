@@ -8,7 +8,7 @@
 #include "Study/TimingData/TimingData.hpp"
 
 App::JobCorrelate::JobCorrelate(const App::BuffersCorrelate &buffers,
-                                const std::atomic_flag &continueRunning)
+                                const std::atomic_bool &continueRunning)
     : JobI {continueRunning}
 {
     input.savePath = buffers.savePath;

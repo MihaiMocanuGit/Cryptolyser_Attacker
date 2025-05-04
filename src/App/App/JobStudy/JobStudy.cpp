@@ -1,6 +1,6 @@
 #include "JobStudy.hpp"
 
-App::JobStudy::JobStudy(const App::BuffersStudy &buffers, const std::atomic_flag &continueRunning)
+App::JobStudy::JobStudy(const App::BuffersStudy &buffers, const std::atomic_bool &continueRunning)
     : JobI {continueRunning}
 {
     input.calibrate = buffers.calibrate;
