@@ -1,6 +1,8 @@
 #pragma once
 #include "../JobI/JobI.hpp"
+#include "Correlate/Correlate.hpp"
 #include "Cryptolyser_Common/connection_data_types.h"
+#include "DataProcessing/MetricsData/MetricsData.hpp"
 
 #include <array>
 #include <filesystem>
@@ -29,6 +31,16 @@ class JobCorrelate : public JobI
         std::filesystem::path savePath {};
         std::array<std::byte, PACKET_KEY_BYTE_SIZE> victimKey {std::byte(0)};
     } input;
+
+    Correlate<MetricsData<double>, MetricsData<double>> m_computeCorrelation() const;
+
+    std::string m_createCorrelationDataString(
+        const Correlate<MetricsData<double>, MetricsData<double>> &correlate,
+        SampleData<double> &byteCorrPos) const;
+
+    std::string
+        m_summariseKeyStats(const Correlate<MetricsData<double>, MetricsData<double>> &correlate,
+                            const SampleData<double> byteCorrPos) const;
 
   public:
     explicit JobCorrelate(const BuffersCorrelate &buffers, const std::atomic_bool &continueRunning);
