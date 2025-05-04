@@ -1,6 +1,6 @@
 #pragma once
 #include "../JobI/JobI.hpp"
-#include "../WorkloadManager/NewWorkloadManager.hpp"
+#include "../WorkloadManager/WorkloadManager.hpp"
 
 #include <memory>
 
@@ -9,10 +9,10 @@ namespace App
 class Workable
 {
   protected:
-    NewWorkloadManager &m_workloadManager;
+    WorkloadManager &m_workloadManager;
 
   public:
-    explicit Workable(NewWorkloadManager &workloadManager) : m_workloadManager {workloadManager} {}
+    explicit Workable(WorkloadManager &workloadManager) : m_workloadManager {workloadManager} {}
 
     [[nodiscard]] virtual std::unique_ptr<JobI> job() const = 0;
 

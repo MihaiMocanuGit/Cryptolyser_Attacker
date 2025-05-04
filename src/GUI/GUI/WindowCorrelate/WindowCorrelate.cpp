@@ -4,8 +4,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
-GUI::WindowCorrelate::WindowCorrelate(std::string_view name,
-                                      App::NewWorkloadManager &workloadManager)
+GUI::WindowCorrelate::WindowCorrelate(std::string_view name, App::WorkloadManager &workloadManager)
     : WindowI {name}, App::Workable {workloadManager}
 {
     std::string currentPath {Widgets::fileExplorerWidget_defaultPath};

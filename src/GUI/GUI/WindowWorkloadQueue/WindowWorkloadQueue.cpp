@@ -16,7 +16,7 @@ void WindowWorkloadQueue::coutInit() { std::cout.rdbuf(m_coutBuff.rdbuf()); };
 void WindowWorkloadQueue::cerrInit() { std::cerr.rdbuf(m_cerrBuff.rdbuf()); };
 
 WindowWorkloadQueue::WindowWorkloadQueue(std::string_view name,
-                                         App::NewWorkloadManager &workloadManager)
+                                         App::WorkloadManager &workloadManager)
     : WindowI {name}, m_workloadManager {workloadManager}
 {
     coutInit();
@@ -38,7 +38,7 @@ void WindowWorkloadQueue::constructWindow()
 
     switch (m_workloadManager.state())
     {
-        case App::NewWorkloadManager::States::NOT_STARTED:
+        case App::WorkloadManager::States::NOT_STARTED:
         {
             ImGui::TextWrapped("The Manager is not running.");
             ImGui::TextWrapped("Number of jobs: %zu", noJobs);
@@ -51,7 +51,7 @@ void WindowWorkloadQueue::constructWindow()
             }
             break;
         }
-        case App::NewWorkloadManager::States::BUSY:
+        case App::WorkloadManager::States::BUSY:
         {
             ImGui::TextWrapped("The Manager is currently running.");
             ImGui::TextWrapped("Number of jobs: %zu", noJobs);
@@ -65,7 +65,7 @@ void WindowWorkloadQueue::constructWindow()
             }
             break;
         }
-        case App::NewWorkloadManager::States::PAUSE_AFTER_THIS:
+        case App::WorkloadManager::States::PAUSE_AFTER_THIS:
         {
             ImGui::TextWrapped("The Manager will pause after finishing the current job.");
             ImGui::TextWrapped("Number of jobs: %zu", noJobs);
@@ -77,7 +77,7 @@ void WindowWorkloadQueue::constructWindow()
             }
             break;
         }
-        case App::NewWorkloadManager::States::PAUSED:
+        case App::WorkloadManager::States::PAUSED:
         {
             ImGui::TextWrapped("The Manager has been paused.");
             ImGui::TextWrapped("Number of jobs: %zu", noJobs);
@@ -91,7 +91,7 @@ void WindowWorkloadQueue::constructWindow()
                 m_workloadManager.resume();
             break;
         }
-        case App::NewWorkloadManager::States::FORCEFULLY_STOPPED:
+        case App::WorkloadManager::States::FORCEFULLY_STOPPED:
         {
             ImGui::TextWrapped(
                 "The Manager has been forcefully paused. The app should close soon.");
@@ -99,7 +99,7 @@ void WindowWorkloadQueue::constructWindow()
             ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
             break;
         }
-        case App::NewWorkloadManager::States::FINISHED:
+        case App::WorkloadManager::States::FINISHED:
         {
             ImGui::TextWrapped(
                 "The Manager has finished. Rearm if you want to modify the queue and run again.");
@@ -109,7 +109,7 @@ void WindowWorkloadQueue::constructWindow()
                 m_workloadManager.rearmManager();
             break;
         }
-        case App::NewWorkloadManager::States::INVALID:
+        case App::WorkloadManager::States::INVALID:
         {
             ImGui::TextWrapped(
                 "The Manager has reached and invalid state. You're on your own, sorry :((");
