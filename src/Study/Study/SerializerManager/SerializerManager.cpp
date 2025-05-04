@@ -19,25 +19,31 @@ SerializerManager::TimingMetadata
     in.close();
 
     TimingMetadata result {};
-
+    using namespace std::string_literals;
     // DATA SIZE
-    size_t start {metadata.find("$DataSize:")};
+    size_t start {metadata.find("$DataSize:") + "$DataSize:"s.size()};
+    while (metadata[start] == ' ')
+        start++;
     size_t end {metadata.find(';', start)};
-    std::string dataSizeStr {metadata.substr(start, end)};
+    std::string dataSizeStr {metadata.substr(start, end - start)};
     result.dataSize = static_cast<unsigned>(std::stoul(dataSizeStr));
 
     // KNOWN KEY
-    start = metadata.find("$KnownKey:", end);
+    start = metadata.find("$KnownKey:", end) + "$KnownKey:"s.size();
+    while (metadata[start] == ' ')
+        start++;
     end = metadata.find(";", start);
-    std::string knownKeyStr {metadata.substr(start, end)};
+    std::string knownKeyStr {metadata.substr(start, end - start)};
     result.knownKey = std::stoul(knownKeyStr) != 0;
 
     if (result.knownKey)
     {
         // KEY
-        start = metadata.find("$Key:", end);
+        start = metadata.find("$Key:", end) + "$Key:"s.size();
+        while (metadata[start] == ' ')
+            start++;
         end = metadata.find(";", start);
-        std::string keyStr {metadata.substr(start, end)};
+        std::string keyStr {metadata.substr(start, end - start)};
         std::stringstream keyStream {keyStr};
         for (std::byte &byte : result.key)
         {
