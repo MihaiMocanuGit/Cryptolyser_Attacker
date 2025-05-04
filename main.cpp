@@ -1,6 +1,5 @@
 /// PROJECT INCLUDES
 ///
-#include "App/WorkloadManager/WorkloadManager.hpp"
 #include "GUI/GUI.hpp"
 #include "GUI/WindowCorrelate/WindowCorrelate.hpp"
 #include "GUI/WindowDataCombine/WindowCombineData.hpp"
@@ -69,7 +68,7 @@ int main(int argc, char **argv)
     bool show_demo_window = true;
 #endif
 
-    App::NewWorkloadManager workloadManager {g_continueRunning};
+    App::WorkloadManager workloadManager {g_continueRunning};
     GUI::WindowWorkloadQueue workloadQueueWindow {"Workload", workloadManager};
     GUI::WindowStudy studyWindow {"Study", workloadManager};
     GUI::WindowFilter filterWindow {"Filter", workloadManager};

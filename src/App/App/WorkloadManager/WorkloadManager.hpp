@@ -16,38 +16,80 @@ namespace App
 {
 class WorkloadManager
 {
+  public:
+    enum class States
+    {
+        NOT_STARTED, // State appears:
+                     //      1. Right after object init.
+                     //      2. After the whole workqueue has been processed. That is, the manager
+                     //      had been "rearmed" after it was in a FINISHED state.
+
+        BUSY, // State while processing the work queue
+
+        PAUSE_AFTER_THIS, // Got a pause command, will pause the processing after the current job
+
+        PAUSED, // Finished processing the current job (that got PAUSE_AFTER_THIS), so we're
+                // stopping. NOTE that PAUSE can only appear like so: BUSY -> PAUSE_AFTER_THIS ->
+                // PAUSED
+
+        FORCEFULLY_STOPPED, // g_continueRunning has been set to False;
+
+        FINISHED, // All cloneJobs have been processed
+
+        INVALID, // Something really wrong happened...
+    };
+
   private:
-    std::thread m_worker;
-    std::deque<std::unique_ptr<JobI>> m_workload {};
-    std::mutex m_workloadsMutex;
-    std::atomic_bool m_busy {false};
-    std::atomic<size_t> m_totalJobsCount {0};
-    std::atomic<size_t> m_processedJobsCount {0};
+    std::jthread m_worker;
 
-    const std::atomic_bool &m_continueRunning;
+    std::vector<std::unique_ptr<JobI>> m_workload {};
 
-    void panicClean();
+    mutable std::mutex m_workloadMutex;
+
+    std::atomic_size_t m_currentJobIndex {0};
+
+    const std::atomic_bool &m_g_continueRunning;
+
+    void m_throwOnInvalidIndex(size_t index) const;
+
+    std::atomic<States> m_currentState {States::NOT_STARTED};
+
+    void m_processWorkload();
 
   public:
     explicit WorkloadManager(const std::atomic_bool &continueRunning);
 
-    void push(std::unique_ptr<JobI> job);
+    States state() const noexcept;
 
-    std::vector<std::string> queuedJobDescriptions() noexcept;
+    size_t currentJobIndex() const noexcept;
 
-    void start();
+    size_t size() const noexcept;
 
-    [[nodiscard]] size_t totalJobsCount() const noexcept;
+    bool addJob(std::unique_ptr<JobI> job);
 
-    [[nodiscard]] size_t processedJobsCount() const noexcept;
+    bool removeJob(size_t jobIndex);
 
-    [[nodiscard]] bool busy() const noexcept;
+    bool removeAllPossibleJobs();
 
-    void tryForcefulStop() noexcept;
+    bool swapJobs(size_t jobIndex1, size_t jobIndex2);
 
-    [[nodiscard]] const std::atomic_bool &continueRunning() const noexcept
-    {
-        return m_continueRunning;
-    }
+    bool start(size_t firstJobIndex = 0);
+
+    bool resume();
+
+    bool pauseAfterJob();
+
+    bool forceStopCurrent();
+
+    bool rearmManager();
+
+    [[nodiscard]] std::vector<std::unique_ptr<JobI>> cloneJobs() const;
+
+    [[nodiscard]] std::vector<std::string> jobDescriptions() const;
+
+    [[nodiscard]] const std::atomic_bool &continueRunning() const noexcept;
+
+    ~WorkloadManager();
 };
+
 } // namespace App

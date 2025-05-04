@@ -5,7 +5,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 
 GUI::WindowCombineData::WindowCombineData(std::string_view name,
-                                          App::NewWorkloadManager &workloadManager)
+                                          App::WorkloadManager &workloadManager)
     : WindowI {name}, App::Workable {workloadManager}
 {
     std::string currentPath {Widgets::fileExplorerWidget_defaultPath};
