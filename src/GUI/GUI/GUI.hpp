@@ -20,11 +20,11 @@ class AppGUI
 {
   private:
     SDL_Window *window {nullptr};
-    std::atomic_flag &m_continueRunning;
+    std::atomic_bool &m_continueRunning;
     SDL_GLContext gl_context;
 
   public:
-    explicit AppGUI(std::atomic_flag &continueRunning);
+    explicit AppGUI(std::atomic_bool &continueRunning);
 
     bool init();
 
@@ -39,7 +39,7 @@ template <class F, class... Args>
     requires std::invocable<F, Args...>
 void AppGUI::runEveryFrame(F &&processFrame, Args &&...args)
 {
-    while (m_continueRunning.test())
+    while (m_continueRunning.load())
     {
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear
@@ -55,10 +55,10 @@ void AppGUI::runEveryFrame(F &&processFrame, Args &&...args)
         {
             ImGui_ImplSDL2_ProcessEvent(&event);
             if (event.type == SDL_QUIT)
-                m_continueRunning.clear();
+                m_continueRunning.store(false);
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&
                 event.window.windowID == SDL_GetWindowID(window))
-                m_continueRunning.clear();
+                m_continueRunning.store(false);
         }
         if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED)
         {

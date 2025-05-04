@@ -9,10 +9,10 @@ namespace App
 class JobI
 {
   protected:
-    const std::atomic_flag &m_continueRunning;
+    const std::atomic_bool &m_continueRunning;
 
   public:
-    explicit JobI(const std::atomic_flag &continueRunning) : m_continueRunning {continueRunning} {}
+    explicit JobI(const std::atomic_bool &continueRunning) : m_continueRunning {continueRunning} {}
 
     virtual void operator()() = 0;
 

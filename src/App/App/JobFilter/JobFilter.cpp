@@ -1,7 +1,7 @@
 #include "JobFilter.hpp"
 
 App::JobFilter::JobFilter(const App::BuffersFilter &buffers,
-                          const std::atomic_flag &continueRunning)
+                          const std::atomic_bool &continueRunning)
     : JobI {continueRunning}
 {
     input.lb = buffers.lb;

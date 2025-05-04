@@ -29,7 +29,7 @@ class JobCombineData : public JobI
 
   public:
     explicit JobCombineData(const BuffersCombineData &buffers,
-                            const std::atomic_flag &continueRunning);
+                            const std::atomic_bool &continueRunning);
 
     void operator()() override;
 

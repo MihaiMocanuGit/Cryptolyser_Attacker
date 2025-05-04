@@ -4,7 +4,7 @@
 
 namespace App
 {
-NewWorkloadManager::NewWorkloadManager(const std::atomic_flag &continueRunning)
+NewWorkloadManager::NewWorkloadManager(const std::atomic_bool &continueRunning)
     : m_g_continueRunning {continueRunning}
 {
 }
@@ -213,7 +213,7 @@ void NewWorkloadManager::m_processWorkload()
     }
     // Process the work queue as long as we don't get an external stop/pause command
     // Likewise, if the whole queue was processed, then also stop.
-    while (m_g_continueRunning.test() and
+    while (m_g_continueRunning.load() and
            (m_currentState == States::BUSY or m_currentState == States::PAUSE_AFTER_THIS))
     {
         std::unique_ptr<JobI> job;
@@ -250,7 +250,7 @@ void NewWorkloadManager::m_processWorkload()
         else if (m_currentState == States::PAUSE_AFTER_THIS)
             m_currentState = States::PAUSED;
     }
-    if (not m_g_continueRunning.test())
+    if (not m_g_continueRunning.load())
         m_currentState.store(States::FORCEFULLY_STOPPED);
 
     switch (m_currentState)
@@ -375,7 +375,7 @@ std::vector<std::string> NewWorkloadManager::jobDescriptions() const
     return copy;
 }
 
-[[nodiscard]] const std::atomic_flag &NewWorkloadManager::continueRunning() const noexcept
+[[nodiscard]] const std::atomic_bool &NewWorkloadManager::continueRunning() const noexcept
 {
     return m_g_continueRunning;
 }

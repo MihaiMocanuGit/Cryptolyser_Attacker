@@ -31,7 +31,7 @@ class JobCorrelate : public JobI
     } input;
 
   public:
-    explicit JobCorrelate(const BuffersCorrelate &buffers, const std::atomic_flag &continueRunning);
+    explicit JobCorrelate(const BuffersCorrelate &buffers, const std::atomic_bool &continueRunning);
 
     void operator()() override;
 

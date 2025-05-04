@@ -48,7 +48,7 @@ class NewWorkloadManager
 
     std::atomic_size_t m_currentJobIndex {0};
 
-    const std::atomic_flag &m_g_continueRunning;
+    const std::atomic_bool &m_g_continueRunning;
 
     void m_throwOnInvalidIndex(size_t index) const;
 
@@ -57,7 +57,7 @@ class NewWorkloadManager
     void m_processWorkload();
 
   public:
-    explicit NewWorkloadManager(const std::atomic_flag &continueRunning);
+    explicit NewWorkloadManager(const std::atomic_bool &continueRunning);
 
     States state() const noexcept;
 
@@ -85,7 +85,7 @@ class NewWorkloadManager
 
     [[nodiscard]] std::vector<std::string> jobDescriptions() const;
 
-    [[nodiscard]] const std::atomic_flag &continueRunning() const noexcept;
+    [[nodiscard]] const std::atomic_bool &continueRunning() const noexcept;
 
     ~NewWorkloadManager();
 };

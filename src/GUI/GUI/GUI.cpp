@@ -3,7 +3,7 @@
 namespace GUI
 {
 
-AppGUI::AppGUI(std::atomic_flag &continueRunning) : m_continueRunning {continueRunning} {}
+AppGUI::AppGUI(std::atomic_bool &continueRunning) : m_continueRunning {continueRunning} {}
 
 bool AppGUI::init()
 {
