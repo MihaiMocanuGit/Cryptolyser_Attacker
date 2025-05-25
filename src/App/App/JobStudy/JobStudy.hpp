@@ -19,8 +19,8 @@ struct BuffersStudy
     bool knownKey {false};
     std::array<std::byte, PACKET_KEY_BYTE_SIZE> key {static_cast<std::byte>(0)};
     std::string savePath {""};
-    size_t packetCount {2000};
-    bool calibrate {false};
+    size_t packetCount {1 << 26};
+    bool calibrate {true};
     float lbConfidence {0.0001}, ubConfidence {0.0025};
     float lb {500}, ub {4000};
     uint32_t dataSize {16};

@@ -93,10 +93,10 @@ void Study<KnownKey>::run(size_t desiredCount, size_t logFreq, size_t saveMetric
 
         if (status == Gatherer<KnownKey>::ObtainStatus::success)
         {
-            if (isTimeTo(logFreq))
+            [[unlikely]] if (isTimeTo(logFreq))
                 m_logger.printStats();
 
-            if (isTimeTo(saveMetricsFreq))
+            [[unlikely]] if (isTimeTo(saveMetricsFreq))
             {
                 std::cout << "Saving Metrics: " << m_gatherer.validValuesCount() << std::endl;
                 SerializerManager::saveMetrics(m_saveDirPath /
@@ -107,6 +107,7 @@ void Study<KnownKey>::run(size_t desiredCount, size_t logFreq, size_t saveMetric
         packageId++;
     }
 
+    std::cout << "Saving raw data\n";
     SerializerManager::saveRaw(m_saveDirPath / "Raw" / "LB.csv", m_gatherer.sampleLB());
     SerializerManager::saveRaw(m_saveDirPath / "Raw" / "UB.csv", m_gatherer.sampleUB());
     SerializerManager::saveRaw(m_saveDirPath / "Raw", m_gatherer.timingData());

@@ -48,7 +48,7 @@ SerializerManager::TimingMetadata
         for (std::byte &byte : result.key)
         {
             unsigned byteTmp;
-            keyStream >> byteTmp;
+            keyStream >> std::hex >> byteTmp;
             byte = static_cast<std::byte>(byteTmp);
         }
     }

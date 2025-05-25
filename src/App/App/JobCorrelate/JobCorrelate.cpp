@@ -163,8 +163,12 @@ std::string App::JobCorrelate::description() const noexcept
 {
     std::string description {"Correlate - Victim Key: "};
     if (input.victimKeyKnown)
+    {
         for (std::byte byte : input.victimKey)
-            description += std::to_string(static_cast<unsigned>(byte)) + ' ';
+            description += std::format("{:02x} ", static_cast<unsigned>(byte));
+        description.pop_back();
+        description += ", ";
+    }
     else
         description += "Unknown ";
 

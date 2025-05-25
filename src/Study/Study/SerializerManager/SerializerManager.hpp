@@ -56,7 +56,7 @@ void SerializerManager::saveRaw(const std::filesystem::path &path,
     {
         std::string keyStr {""};
         for (std::byte byte : timingData.key())
-            keyStr += std::to_string(static_cast<unsigned>(byte)) + ' ';
+            keyStr += std::format("{:02x} ", static_cast<unsigned>(byte));
         keyStr.pop_back(); // delete the last ' '
 
         out << "$Key: " << keyStr << ";\n";

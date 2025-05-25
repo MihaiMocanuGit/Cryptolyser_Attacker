@@ -35,7 +35,7 @@ void App::JobStudy::operator()()
             bounds = study.calibrateBounds(1'000'000, input.lbConfidence, input.ubConfidence);
             std::cout << "Finished calibration.\n";
         }
-        study.run(input.packetCount, 1024 * 1024, 1024 * 1024, bounds.lb, bounds.ub);
+        study.run(input.packetCount, 1024 * 1024, 16 * 1024 * 1024, bounds.lb, bounds.ub);
     }
     else
     {
@@ -51,7 +51,7 @@ void App::JobStudy::operator()()
             bounds = study.calibrateBounds(1'000'000, input.lbConfidence, input.ubConfidence);
             std::cout << "Finished calibration.\n";
         }
-        study.run(input.packetCount, 1024, 1024 * 1024, bounds.lb, bounds.ub);
+        study.run(input.packetCount, 1024 * 1024, 16 * 1024 * 1024, bounds.lb, bounds.ub);
     }
     std::cout << "Finished Study job.\n\n";
 }
@@ -60,8 +60,11 @@ std::string App::JobStudy::description() const noexcept
 {
     std::string hexKeyArray {""};
     if (input.knownKey)
+    {
         for (std::byte byte : input.key)
-            hexKeyArray += std::format("{:02x}", static_cast<unsigned>(byte));
+            hexKeyArray += std::format("{:02x} ", static_cast<unsigned>(byte));
+        hexKeyArray.pop_back();
+    }
     else
         hexKeyArray = "Unknown";
     return std::format("Study - PacketCount: {}, Key: {}, SavePath: {}", input.packetCount,

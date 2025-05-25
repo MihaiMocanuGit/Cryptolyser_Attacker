@@ -20,7 +20,7 @@ void saveToCsv(const std::filesystem::path &path, const DataVector<T> &metricsVe
 {
     std::filesystem::create_directories(path);
 
-    unsigned numberThreads {std::thread::hardware_concurrency() / 2};
+    unsigned numberThreads {1}; //{std::thread::hardware_concurrency() / 2};
     if (not numberThreads)
         numberThreads = 1;
 
