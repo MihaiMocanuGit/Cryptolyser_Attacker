@@ -15,8 +15,9 @@ static constexpr float pathTextFieldWidth {400.0};
 void GUI::Widgets::fileExplorerWidget(std::string &r_path, std::string_view textLabel,
                                       std::string_view buttonLabel)
 {
+    static std::string lastFilepath {fileExplorerWidget_defaultPath};
     if (r_path.empty())
-        r_path = fileExplorerWidget_defaultPath;
+        r_path = lastFilepath;
     if (ImGui::Button(buttonLabel.data()))
     {
         static std::atomic_bool isExplorerOpen;
@@ -35,6 +36,7 @@ void GUI::Widgets::fileExplorerWidget(std::string &r_path, std::string_view text
                 if (result == NFD_OKAY)
                 {
                     r_path = outPath.get();
+                    lastFilepath = r_path;
                 }
                 else if (result == NFD_ERROR)
                 {
