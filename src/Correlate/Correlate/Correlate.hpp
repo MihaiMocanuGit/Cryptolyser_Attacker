@@ -94,12 +94,14 @@ Correlate<DataTypeVictim, DataTypeDoppel>::Correlate(
             long double correlation_i {0.0};
             for (unsigned j {0}; j < 256; ++j)
             {
-                long double t_j {t[byte][j].globalMetric().mean};
-                t_j -= t[byte].globalMetric().mean;
+                long double meanT {t[byte].standardizeMetric(j).mean};
+                long double t_j {meanT};
+                t_j -= t.timing().standardizeMetric(byte).mean;
 
                 unsigned u_index {(i ^ j) ^ static_cast<unsigned>(t.key()[byte])};
-                long double u_i_j {u[byte][u_index].globalMetric().mean};
-                u_i_j -= u[byte].globalMetric().mean;
+                long double meanU {u[byte].standardizeMetric(u_index).mean};
+                long double u_i_j {meanU};
+                u_i_j -= u.timing().standardizeMetric(byte).mean;
 
                 long double value {t_j * u_i_j};
                 correlation_i += value;
