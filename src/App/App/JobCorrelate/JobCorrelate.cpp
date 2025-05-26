@@ -3,37 +3,49 @@
 #include "Correlate/Correlate.hpp"
 #include "Cryptolyser_Common/connection_data_types.h"
 #include "DataProcessing/MetricsData/MetricsData.hpp"
+#include "DataProcessing/SampleData/SampleData.hpp"
 #include "Study/SerializerManager/SerializerManager.hpp"
-#include "Study/Study.hpp"
 #include "Study/TimingData/TimingData.hpp"
+
+#include <iostream>
+
+namespace
+{
+void repairLineEnd(std::string &line)
+{
+    if (line.ends_with(' '))
+        line.pop_back();
+    if (line.ends_with(','))
+        line.pop_back();
+    line += '\n';
+}
+} // namespace
 
 std::string App::JobCorrelate::m_createCorrelationDataString(
     const Correlate<MetricsData<double>, MetricsData<double>> &correlate,
-    SampleData<double> &byteCorrPos) const
+    std::array<unsigned, AES_BLOCK_BYTE_SIZE> &byteCorrPos) const
 {
     std::string dataString {""};
     const auto orderedCorr {correlate.order()};
+
     // Write header.
-    for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE - 1; ++byte)
+    for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
         dataString += std::format("Byte_{}_Corr, Byte_{}_Key, ", byte, byte);
-    dataString +=
-        std::format("Byte_{}_Corr, Byte_{}_Key\n", PACKET_KEY_BYTE_SIZE - 1,
-                    PACKET_KEY_BYTE_SIZE - 1); // Write the pair of (correlation value , key value)
-    for (unsigned value {0}; value < 256; value++)
+    repairLineEnd(dataString);
+
+    // Write the Corr - Key pair for every value (in decreasing order relative to Corr)
+    for (unsigned rank {0}; rank < 256; rank++)
     {
-        for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE - 1; ++byte)
+        for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
         {
-            const auto &pair {orderedCorr[byte][value]};
-            dataString += std::format("{}, {}, ", pair.first, static_cast<unsigned>(pair.second));
+            const auto &pair {orderedCorr[byte][rank]};
+            dataString +=
+                std::format("{}, {:#04x}, ", pair.first, static_cast<unsigned>(pair.second));
 
             if (this->input.victimKeyKnown and this->input.victimKey[byte] == pair.second)
-                byteCorrPos.insert(value);
+                byteCorrPos[byte] = rank;
         }
-        const auto &pair {orderedCorr[PACKET_KEY_BYTE_SIZE - 1][value]};
-        dataString += std::format("{}, {}\n", pair.first, static_cast<unsigned>(pair.second));
-        if (this->input.victimKeyKnown and
-            this->input.victimKey[PACKET_KEY_BYTE_SIZE - 1] == pair.second)
-            byteCorrPos.insert(value);
+        repairLineEnd(dataString);
     }
     return dataString;
 }
@@ -80,44 +92,39 @@ Correlate<MetricsData<double>, MetricsData<double>> App::JobCorrelate::m_compute
 
 std::string App::JobCorrelate::m_summariseKeyStats(
     const Correlate<MetricsData<double>, MetricsData<double>> &correlate,
-    const SampleData<double> byteCorrPos) const
+    const std::array<unsigned, AES_BLOCK_BYTE_SIZE> &byteCorrPos) const
 {
-    std::string summary {
-        ""}; // if we have the key, we can print some additional (and useful) statistics.
+    std::string summary {""};
+    // if we have the key, we can print some additional (and useful) statistics.
     if (input.victimKeyKnown)
     {
         summary += '\n';
         summary += "Stats for key:, ";
         for (std::byte keyByte : input.victimKey)
-        {
-            summary += std::to_string(static_cast<unsigned>(keyByte)) + ' ';
-        }
-        summary += '\n';
+            summary += std::format("{:02x}, ", static_cast<unsigned>(keyByte));
+        repairLineEnd(summary);
+
         // Printing a new header.
         summary += "Byte:, ";
-        for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE - 1; ++byte)
-        {
+        for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
             summary += std::format("{}, ", byte);
-        }
-        summary += std::format("{}\n", PACKET_KEY_BYTE_SIZE - 1);
+        repairLineEnd(summary);
 
         // print the position of the key bytes in the ordered correlation array.
         summary += "Pos:, ";
-        for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE - 1; ++byte)
+        for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
             summary += std::format("{}, ", byteCorrPos[byte]);
-        summary += std::format("{}\n", byteCorrPos[PACKET_KEY_BYTE_SIZE - 1]);
+        repairLineEnd(summary);
 
         // print the correlation value of the key bytes in the ordered correlation array.
         summary += "Corr:, ";
-        for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE - 1; ++byte)
+        for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
             summary += std::format(
                 "{}, ", correlate.data()[byte][static_cast<unsigned>(input.victimKey[byte])]);
-        summary +=
-            std::format("{}\n", correlate.data()[PACKET_KEY_BYTE_SIZE - 1][static_cast<unsigned>(
-                                    input.victimKey[PACKET_KEY_BYTE_SIZE - 1])]);
+        repairLineEnd(summary);
 
         // Print some metrics for the positions of key bytes.
-        const auto &stats {byteCorrPos.globalMetric()};
+        auto stats {SampleData<double> {byteCorrPos.begin(), byteCorrPos.end()}.globalMetric()};
         summary += std::format("\nAvg Pos:, {}\nStd Dev:, {}\nMax Pos:, {}\nMin Pos:, {}\n",
                                stats.mean, stats.stdDev, stats.max, stats.min);
     }
@@ -143,7 +150,7 @@ void App::JobCorrelate::operator()()
     std::cout << "Started Correlate job...\n";
     auto correlate = m_computeCorrelation();
 
-    SampleData<double> byteCorrPos {};
+    std::array<unsigned, AES_BLOCK_BYTE_SIZE> byteCorrPos {};
     std::string csvOutput {m_createCorrelationDataString(correlate, byteCorrPos)};
 
     std::string summary {m_summariseKeyStats(correlate, byteCorrPos)};

@@ -36,11 +36,11 @@ class JobCorrelate : public JobI
 
     std::string m_createCorrelationDataString(
         const Correlate<MetricsData<double>, MetricsData<double>> &correlate,
-        SampleData<double> &byteCorrPos) const;
+        std::array<unsigned, AES_BLOCK_BYTE_SIZE> &byteCorrPos) const;
 
     std::string
         m_summariseKeyStats(const Correlate<MetricsData<double>, MetricsData<double>> &correlate,
-                            const SampleData<double> byteCorrPos) const;
+                            const std::array<unsigned, AES_BLOCK_BYTE_SIZE> &byteCorrPos) const;
 
   public:
     explicit JobCorrelate(const BuffersCorrelate &buffers, const std::atomic_bool &continueRunning);
