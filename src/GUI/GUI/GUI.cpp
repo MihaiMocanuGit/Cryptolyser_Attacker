@@ -81,7 +81,7 @@ bool AppGUI::init()
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    //    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look
     // identical to regular ones.
