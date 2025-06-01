@@ -7,133 +7,133 @@
 #include <cassert>
 #include <vector>
 
-template <Real T>
+template <Real R>
 class SampleData
 {
   private:
-    std::vector<T> m_data {};
-    MetricsData<T> m_metricsData {};
+    std::vector<R> m_data {};
+    MetricsData<R> m_metricsData {};
 
   public:
     SampleData() = default;
 
-    explicit SampleData(std::vector<T> data);
+    explicit SampleData(std::vector<R> data);
 
     template <typename InputIterator>
     SampleData(InputIterator begin, InputIterator end);
 
     void reserve(std::size_t newCapacity);
 
-    typename std::vector<T>::const_iterator insert(T dataValue);
+    typename std::vector<R>::const_iterator insert(R dataValue);
 
-    typename std::vector<T>::const_iterator insert(const std::vector<T> &data);
+    typename std::vector<R>::const_iterator insert(const std::vector<R> &data);
 
     template <typename InputIterator>
-    typename std::vector<T>::const_iterator insert(InputIterator begin, InputIterator end);
+    typename std::vector<R>::const_iterator insert(InputIterator begin, InputIterator end);
 
-    typename std::vector<T>::const_iterator cbegin() const noexcept;
+    typename std::vector<R>::const_iterator cbegin() const noexcept;
 
-    typename std::vector<T>::const_iterator begin() const noexcept;
+    typename std::vector<R>::const_iterator begin() const noexcept;
 
-    typename std::vector<T>::const_iterator cend() const noexcept;
+    typename std::vector<R>::const_iterator cend() const noexcept;
 
-    typename std::vector<T>::const_iterator end() const noexcept;
+    typename std::vector<R>::const_iterator end() const noexcept;
 
     [[nodiscard]] const Metrics<double> &globalMetric() const noexcept;
 
-    const std::vector<T> &data() const noexcept;
+    const std::vector<R> &data() const noexcept;
 
     [[nodiscard]] size_t size() const noexcept;
 
-    const T &operator[](size_t index) const;
+    const R &operator[](size_t index) const;
 };
 
-template <Real T>
-const T &SampleData<T>::operator[](size_t index) const
+template <Real R>
+const R &SampleData<R>::operator[](size_t index) const
 {
     assert(index < m_data.size());
     return m_data[index];
 }
 
-template <Real T>
-size_t SampleData<T>::size() const noexcept
+template <Real R>
+size_t SampleData<R>::size() const noexcept
 {
     return m_metricsData.size();
 }
 
-template <Real T>
-const std::vector<T> &SampleData<T>::data() const noexcept
+template <Real R>
+const std::vector<R> &SampleData<R>::data() const noexcept
 {
     return m_data;
 }
 
-template <Real T>
-const Metrics<double> &SampleData<T>::globalMetric() const noexcept
+template <Real R>
+const Metrics<double> &SampleData<R>::globalMetric() const noexcept
 {
     return m_metricsData.globalMetric();
 }
 
-template <Real T>
-typename std::vector<T>::const_iterator SampleData<T>::end() const noexcept
+template <Real R>
+typename std::vector<R>::const_iterator SampleData<R>::end() const noexcept
 {
     return m_data.end();
 }
 
-template <Real T>
-typename std::vector<T>::const_iterator SampleData<T>::cend() const noexcept
+template <Real R>
+typename std::vector<R>::const_iterator SampleData<R>::cend() const noexcept
 {
     return m_data.cend();
 }
 
-template <Real T>
-typename std::vector<T>::const_iterator SampleData<T>::begin() const noexcept
+template <Real R>
+typename std::vector<R>::const_iterator SampleData<R>::begin() const noexcept
 {
     return m_data.begin();
 }
 
-template <Real T>
-typename std::vector<T>::const_iterator SampleData<T>::cbegin() const noexcept
+template <Real R>
+typename std::vector<R>::const_iterator SampleData<R>::cbegin() const noexcept
 {
     return m_data.cbegin();
 }
 
-template <Real T>
+template <Real R>
 template <typename InputIterator>
-typename std::vector<T>::const_iterator SampleData<T>::insert(InputIterator begin,
+typename std::vector<R>::const_iterator SampleData<R>::insert(InputIterator begin,
                                                               InputIterator end)
 {
     m_metricsData.insert(begin, end);
     return m_data.insert(m_data.end(), begin, end);
 }
 
-template <Real T>
-typename std::vector<T>::const_iterator SampleData<T>::insert(T dataValue)
+template <Real R>
+typename std::vector<R>::const_iterator SampleData<R>::insert(R dataValue)
 {
     m_metricsData.insert(dataValue);
     return m_data.insert(m_data.end(), dataValue);
 }
 
-template <Real T>
-typename std::vector<T>::const_iterator SampleData<T>::insert(const std::vector<T> &data)
+template <Real R>
+typename std::vector<R>::const_iterator SampleData<R>::insert(const std::vector<R> &data)
 {
     return insert(data.begin(), data.end());
 }
 
-template <Real T>
-void SampleData<T>::reserve(std::size_t newCapacity)
+template <Real R>
+void SampleData<R>::reserve(std::size_t newCapacity)
 {
     m_data.reserve(newCapacity);
 }
 
-template <Real T>
+template <Real R>
 template <typename InputIterator>
-SampleData<T>::SampleData(InputIterator begin, InputIterator end)
+SampleData<R>::SampleData(InputIterator begin, InputIterator end)
     : m_data {begin, end}, m_metricsData {begin, end}
 {
 }
 
-template <Real T>
-SampleData<T>::SampleData(std::vector<T> data) : m_data {std::move(data)}, m_metricsData {m_data}
+template <Real R>
+SampleData<R>::SampleData(std::vector<R> data) : m_data {std::move(data)}, m_metricsData {m_data}
 {
 }
 #endif // CRYPTOLYSER_ATTACKER_NEW_SAMPLEDATA_HPP

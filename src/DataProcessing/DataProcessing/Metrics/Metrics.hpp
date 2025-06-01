@@ -7,8 +7,8 @@
 #include <cstdint>
 #include <numeric>
 
-template <typename T>
-concept Real = std::floating_point<T> || std::integral<T>;
+template <typename R>
+concept Real = std::floating_point<R> || std::integral<R>;
 
 template <Real R>
 struct Metrics
@@ -82,8 +82,8 @@ Metrics<Real_t>::Metrics(Real_t sum, size_t size, Real_t mean, Real_t variance, 
 {
 }
 
-template <typename T>
-concept HasMetric = requires(T a) {
+template <typename R>
+concept HasMetric = requires(R a) {
     { a.globalMetric() } -> std::convertible_to<Metrics<double>>;
 };
 
