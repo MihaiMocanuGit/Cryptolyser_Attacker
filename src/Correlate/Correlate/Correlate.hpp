@@ -9,7 +9,7 @@ template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
 class Correlate
 {
   private:
-    std::vector<std::array<double, 256>> m_normalCorrelation {PACKET_KEY_BYTE_SIZE, {0.0}};
+    std::vector<std::array<double, 256>> m_correlation {PACKET_KEY_BYTE_SIZE, {0.0}};
 
     static void m_normalize(std::array<double, 256> &correlation);
 
@@ -49,7 +49,7 @@ Correlate<DataTypeVictim, DataTypeDoppel> &Correlate<DataTypeVictim, DataTypeDop
     for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
     {
         for (unsigned value {0}; value < 256; ++value)
-            m_normalCorrelation[byte][value] += rhs.data()[byte][value];
+            m_correlation[byte][value] += rhs.data()[byte][value];
     }
     return *this;
 }
@@ -64,7 +64,7 @@ std::vector<std::array<std::pair<double, std::byte>, 256>>
     {
         for (unsigned value {0}; value < 256; ++value)
             result[byte][value] =
-                std::make_pair(m_normalCorrelation[byte][value], static_cast<std::byte>(value));
+                std::make_pair(m_correlation[byte][value], static_cast<std::byte>(value));
 
         std::sort(result[byte].begin(), result[byte].end(),
                   [](const auto &first, const auto &second) { return first.first > second.first; });
@@ -76,7 +76,7 @@ std::vector<std::array<std::pair<double, std::byte>, 256>>
 template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
 const std::vector<std::array<double, 256>> &Correlate<DataTypeVictim, DataTypeDoppel>::data() const
 {
-    return m_normalCorrelation;
+    return m_correlation;
 }
 
 template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
@@ -106,9 +106,9 @@ Correlate<DataTypeVictim, DataTypeDoppel>::Correlate(
                 long double value {t_j * u_i_j};
                 correlation_i += value;
             }
-            m_normalCorrelation[byte][i] = static_cast<double>(correlation_i);
+            m_correlation[byte][i] = static_cast<double>(correlation_i);
         }
-        m_normalize(m_normalCorrelation[byte]);
+        m_normalize(m_correlation[byte]);
     }
 }
 
