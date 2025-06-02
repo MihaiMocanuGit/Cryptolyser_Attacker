@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../WindowI/WindowI.hpp"
+#include "../WorkableWindow/WorkableWindow.hpp"
 #include "App/JobCorrelate/JobCorrelate.hpp"
-#include "App/Workable/Workable.hpp"
 
 namespace GUI
 {
-class WindowCorrelate : public WindowI, public App::Workable
+class WindowCorrelate : public WindowI, public WorkableWindow
 {
   private:
     App::JobCorrelate::Buffers m_buffers {};

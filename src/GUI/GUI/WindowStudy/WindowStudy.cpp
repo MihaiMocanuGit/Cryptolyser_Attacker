@@ -5,7 +5,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 
 GUI::WindowStudy::WindowStudy(std::string_view name, App::WorkloadManager &workloadManager)
-    : WindowI {name}, App::Workable {workloadManager}
+    : WindowI {name}, WorkableWindow {workloadManager}
 {
     m_buffers.savePath = std::filesystem::current_path().string();
 }

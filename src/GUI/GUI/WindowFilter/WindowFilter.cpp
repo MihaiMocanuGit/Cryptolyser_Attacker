@@ -5,7 +5,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 
 GUI::WindowFilter::WindowFilter(std::string_view name, App::WorkloadManager &workloadManager)
-    : WindowI {name}, App::Workable {workloadManager}
+    : WindowI {name}, WorkableWindow {workloadManager}
 {
     m_buffers.savePath = std::filesystem::current_path().string();
     m_buffers.loadPath = std::filesystem::current_path().string();

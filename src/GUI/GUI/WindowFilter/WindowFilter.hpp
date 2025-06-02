@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../WindowI/WindowI.hpp"
+#include "../WorkableWindow/WorkableWindow.hpp"
 #include "App/JobFilter/JobFilter.hpp"
-#include "App/Workable/Workable.hpp"
 
 namespace GUI
 {
-class WindowFilter : public WindowI, public App::Workable
+class WindowFilter : public WindowI, public WorkableWindow
 {
   private:
     App::JobFilter::Buffers m_buffers {};

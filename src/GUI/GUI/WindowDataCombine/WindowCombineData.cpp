@@ -6,7 +6,7 @@
 
 GUI::WindowCombineData::WindowCombineData(std::string_view name,
                                           App::WorkloadManager &workloadManager)
-    : WindowI {name}, App::Workable {workloadManager}
+    : WindowI {name}, WorkableWindow {workloadManager}
 {
     std::string currentPath {Widgets::fileExplorerWidget_defaultPath};
     m_buffers.loadPaths.push_back(currentPath);

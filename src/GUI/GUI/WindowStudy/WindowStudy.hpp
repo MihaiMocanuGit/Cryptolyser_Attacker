@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../WindowI/WindowI.hpp"
+#include "../WorkableWindow/WorkableWindow.hpp"
 #include "App/JobStudy/JobStudy.hpp"
-#include "App/Workable/Workable.hpp"
 
 namespace GUI
 {
-class WindowStudy : public WindowI, public App::Workable
+class WindowStudy : public WindowI, public WorkableWindow
 {
   private:
     App::JobStudy::Buffers m_buffers {};

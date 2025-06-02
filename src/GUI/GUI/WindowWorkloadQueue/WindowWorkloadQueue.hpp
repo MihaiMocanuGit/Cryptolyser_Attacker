@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../WindowI/WindowI.hpp"
-#include "App/JobCorrelate/JobCorrelate.hpp"
 #include "App/WorkloadManager/WorkloadManager.hpp"
 
 namespace GUI
