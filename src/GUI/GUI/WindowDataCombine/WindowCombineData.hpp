@@ -9,7 +9,7 @@ namespace GUI
 class WindowCombineData : public WindowI, public App::Workable
 {
   private:
-    App::BuffersCombineData m_buffers {};
+    App::JobCombineData::Buffers m_buffers {};
 
   public:
     WindowCombineData(std::string_view name, App::WorkloadManager &workloadManager);

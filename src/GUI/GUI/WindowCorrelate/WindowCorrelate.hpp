@@ -9,7 +9,7 @@ namespace GUI
 class WindowCorrelate : public WindowI, public App::Workable
 {
   private:
-    App::BuffersCorrelate m_buffers {};
+    App::JobCorrelate::Buffers m_buffers {};
 
   public:
     WindowCorrelate(std::string_view name, App::WorkloadManager &workloadManager);

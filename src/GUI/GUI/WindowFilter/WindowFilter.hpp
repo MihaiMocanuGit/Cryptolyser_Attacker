@@ -9,7 +9,7 @@ namespace GUI
 class WindowFilter : public WindowI, public App::Workable
 {
   private:
-    App::BuffersFilter m_buffers {};
+    App::JobFilter::Buffers m_buffers {};
 
   public:
     WindowFilter(std::string_view name, App::WorkloadManager &workloadManager);

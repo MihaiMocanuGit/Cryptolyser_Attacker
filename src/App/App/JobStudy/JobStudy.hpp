@@ -12,19 +12,6 @@
 
 namespace App
 {
-struct BuffersStudy
-{
-    uint8_t ip[4] {127, 0, 0, 1};
-    uint16_t port {8081};
-    bool knownKey {false};
-    std::array<std::byte, PACKET_KEY_BYTE_SIZE> key {static_cast<std::byte>(0)};
-    std::string savePath {""};
-    size_t packetCount {1 << 26};
-    bool calibrate {true};
-    float lbConfidence {0.0001}, ubConfidence {0.0025};
-    float lb {500}, ub {4000};
-    uint32_t dataSize {16};
-};
 
 class JobStudy : public JobI
 {
@@ -44,7 +31,21 @@ class JobStudy : public JobI
     } input;
 
   public:
-    explicit JobStudy(const BuffersStudy &buffers, const std::atomic_bool &continueRunning);
+    struct Buffers
+    {
+        uint8_t ip[4] {127, 0, 0, 1};
+        uint16_t port {8081};
+        bool knownKey {false};
+        std::array<std::byte, PACKET_KEY_BYTE_SIZE> key {static_cast<std::byte>(0)};
+        std::string savePath {""};
+        size_t packetCount {1 << 26};
+        bool calibrate {true};
+        float lbConfidence {0.0001}, ubConfidence {0.0025};
+        float lb {500}, ub {4000};
+        uint32_t dataSize {16};
+    };
+
+    explicit JobStudy(const Buffers &buffers, const std::atomic_bool &continueRunning);
 
     void operator()() override;
 

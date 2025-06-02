@@ -9,7 +9,7 @@ namespace GUI
 class WindowStudy : public WindowI, public App::Workable
 {
   private:
-    App::BuffersStudy m_buffers {};
+    App::JobStudy::Buffers m_buffers {};
 
   public:
     WindowStudy(std::string_view name, App::WorkloadManager &workloadManager);

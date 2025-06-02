@@ -131,7 +131,7 @@ std::string App::JobCorrelate::m_summariseKeyStats(
     return summary;
 }
 
-App::JobCorrelate::JobCorrelate(const App::BuffersCorrelate &buffers,
+App::JobCorrelate::JobCorrelate(const App::JobCorrelate::Buffers &buffers,
                                 const std::atomic_bool &continueRunning)
     : JobI {continueRunning}
 {

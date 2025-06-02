@@ -11,12 +11,6 @@
 
 namespace App
 {
-struct BuffersFilter
-{
-    float lb {0.0f}, ub {0.0f};
-    std::string savePath {};
-    std::string loadPath {};
-};
 
 class JobFilter : public JobI
 {
@@ -29,7 +23,14 @@ class JobFilter : public JobI
     } input;
 
   public:
-    explicit JobFilter(const BuffersFilter &buffers, const std::atomic_bool &continueRunning);
+    struct Buffers
+    {
+        float lb {0.0f}, ub {0.0f};
+        std::string savePath {};
+        std::string loadPath {};
+    };
+
+    explicit JobFilter(const Buffers &buffers, const std::atomic_bool &continueRunning);
 
     void operator()() override;
 

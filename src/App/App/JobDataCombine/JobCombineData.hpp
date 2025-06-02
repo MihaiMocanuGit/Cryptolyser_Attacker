@@ -10,12 +10,6 @@
 
 namespace App
 {
-struct BuffersCombineData
-{
-    std::vector<std::string> loadPaths {};
-    std::string savePath {};
-    bool onlyMetrics {false};
-};
 
 class JobCombineData : public JobI
 {
@@ -28,8 +22,14 @@ class JobCombineData : public JobI
     } input;
 
   public:
-    explicit JobCombineData(const BuffersCombineData &buffers,
-                            const std::atomic_bool &continueRunning);
+    struct Buffers
+    {
+        std::vector<std::string> loadPaths {};
+        std::string savePath {};
+        bool onlyMetrics {false};
+    };
+
+    explicit JobCombineData(const Buffers &buffers, const std::atomic_bool &continueRunning);
 
     void operator()() override;
 

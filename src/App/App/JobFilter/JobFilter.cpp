@@ -1,6 +1,6 @@
 #include "JobFilter.hpp"
 
-App::JobFilter::JobFilter(const App::BuffersFilter &buffers,
+App::JobFilter::JobFilter(const App::JobFilter::Buffers &buffers,
                           const std::atomic_bool &continueRunning)
     : JobI {continueRunning}
 {

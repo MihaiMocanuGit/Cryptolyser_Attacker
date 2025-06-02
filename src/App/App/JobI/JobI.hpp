@@ -11,7 +11,11 @@ class JobI
   protected:
     const std::atomic_bool &m_continueRunning;
 
+    struct Input;
+
   public:
+    struct Buffers;
+
     explicit JobI(const std::atomic_bool &continueRunning) : m_continueRunning {continueRunning} {}
 
     virtual void operator()() = 0;

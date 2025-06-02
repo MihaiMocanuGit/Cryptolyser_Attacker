@@ -11,14 +11,6 @@
 
 namespace App
 {
-struct BuffersCorrelate
-{
-    std::vector<std::string> doppelLoadPaths {};
-    std::vector<std::string> victimLoadPaths {};
-    bool victimKeyKnown {true};
-    std::array<std::byte, PACKET_KEY_BYTE_SIZE> victimKey {std::byte(0)};
-    std::string savePath {};
-};
 
 class JobCorrelate : public JobI
 {
@@ -43,7 +35,16 @@ class JobCorrelate : public JobI
                             const std::array<unsigned, AES_BLOCK_BYTE_SIZE> &byteCorrPos) const;
 
   public:
-    explicit JobCorrelate(const BuffersCorrelate &buffers, const std::atomic_bool &continueRunning);
+    struct Buffers
+    {
+        std::vector<std::string> doppelLoadPaths {};
+        std::vector<std::string> victimLoadPaths {};
+        bool victimKeyKnown {true};
+        std::array<std::byte, PACKET_KEY_BYTE_SIZE> victimKey {std::byte(0)};
+        std::string savePath {};
+    };
+
+    explicit JobCorrelate(const Buffers &buffers, const std::atomic_bool &continueRunning);
 
     void operator()() override;
 
