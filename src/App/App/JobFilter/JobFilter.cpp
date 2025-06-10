@@ -22,6 +22,7 @@ void App::JobFilter::operator()()
     if (metadata.knownKey)
     {
         TimingData<true> timingData {metadata.dataSize, metadata.key};
+        timingData.setIV(metadata.IV);
         SerializerManager::loadRaw(input.loadPath, timingData);
         std::cout << "Filtering the timing data...\n";
         Filter::filter<double>(timingData.timing(), [this](double data)
@@ -33,6 +34,7 @@ void App::JobFilter::operator()()
     else
     {
         TimingData<false> timingData {metadata.dataSize};
+        timingData.setIV(metadata.IV);
         SerializerManager::loadRaw(input.loadPath, timingData);
         std::cout << "Filtering the timing data...\n";
         Filter::filter<double>(timingData.timing(), [this](double data)

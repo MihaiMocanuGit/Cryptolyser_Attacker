@@ -60,6 +60,7 @@ Correlate<MetricsData<double>, MetricsData<double>> App::JobCorrelate::m_compute
     {
         const auto metadata {SerializerManager::loadTimingMetadata(loadPath)};
         TimingData<false, MetricsData<double>> timingData {metadata.dataSize};
+        timingData.setIV(metadata.IV);
         SerializerManager::loadRaw(loadPath, timingData);
 
         victimData.emplace_back(std::move(timingData));
@@ -75,6 +76,7 @@ Correlate<MetricsData<double>, MetricsData<double>> App::JobCorrelate::m_compute
         const auto metadata {SerializerManager::loadTimingMetadata(loadPath)};
         assert(metadata.knownKey);
         TimingData<true, MetricsData<double>> doppel {metadata.dataSize, metadata.key};
+        doppel.setIV(metadata.IV);
         SerializerManager::loadRaw(loadPath, doppel);
 
         // Compute the correlations between all the loaded victim timing data and the new doppel

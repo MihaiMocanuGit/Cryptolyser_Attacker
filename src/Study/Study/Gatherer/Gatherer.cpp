@@ -1,8 +1,10 @@
 #include "Gatherer.hpp"
 
+#include "Cryptolyser_Common/connection_data_types.h"
 #include "DataProcessing/Timings/TimingProcessing.hpp"
 #include "Study/TimingData/TimingData.hpp"
 
+#include <algorithm>
 #include <random>
 
 template <bool KnownKey>
@@ -48,16 +50,24 @@ Gatherer<KnownKey>::ObtainStatus Gatherer<KnownKey>::obtain(uint32_t id)
         return ObtainStatus::ignoredUB;
     }
 
+    // Remember the first IV
+    if (not m_timingData.IV().has_value())
+    {
+        std::array<std::byte, AES_BLOCK_BYTE_SIZE> iv = {};
+        for (unsigned i {0}; i < AES_BLOCK_BYTE_SIZE; ++i)
+            iv[i] = std::byte {result->iv[i]};
+        m_timingData.setIV(iv);
+    }
+
     for (unsigned byte {0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
     {
-        size_t byteValue {static_cast<size_t>(studyData[byte])};
-        m_timingData.timing().update(
-            byte,
-            [timing, byteValue](size_t, auto &byte)
-            {
-                byte.update(byteValue, [timing](size_t, auto &byteValue)
-                            { byteValue.insert(timing); });
-            });
+        size_t byteValue {static_cast<size_t>(studyData[byte]) ^ result->iv[byte]};
+        m_timingData.timing().update(byte,
+                                     [timing, byteValue](size_t, auto &byte)
+                                     {
+                                         byte.update(byteValue, [timing](size_t, auto &byteValue)
+                                                     { byteValue.insert(timing); });
+                                     });
     }
     return ObtainStatus::success;
 }

@@ -31,6 +31,7 @@ class SerializerManager
         unsigned dataSize;
         bool knownKey;
         std::array<std::byte, PACKET_KEY_BYTE_SIZE> key;
+        std::array<std::byte, AES_BLOCK_BYTE_SIZE> IV;
     };
 
     static TimingMetadata loadTimingMetadata(const std::filesystem::path &path);
@@ -52,6 +53,14 @@ void SerializerManager::saveRaw(const std::filesystem::path &path,
     std::filesystem::create_directories(path);
     std::ofstream out {metadata};
     out << "$DataSize: " << timingData.dataSize() << ";\n";
+
+    std::string ivStr {"$IV: "};
+    for (std::byte byte : *timingData.IV())
+        ivStr += std::format("{:02x} ", static_cast<uint8_t>(byte));
+    ivStr.pop_back();
+    ivStr += ";\n";
+    out << ivStr;
+
     out << "$KnownKey: " << KnownKey << ";\n";
     if constexpr (KnownKey)
     {

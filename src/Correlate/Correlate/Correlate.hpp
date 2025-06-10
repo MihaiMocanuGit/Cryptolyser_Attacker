@@ -98,7 +98,7 @@ Correlate<DataTypeVictim, DataTypeDoppel>::Correlate(
                 long double t_j {meanT};
                 t_j -= t.timing().standardizeMetric(byte).mean;
 
-                unsigned u_index {(i ^ j) ^ static_cast<unsigned>(t.key()[byte])};
+                unsigned u_index {i ^ j ^ static_cast<unsigned>(t.key()[byte])};
                 long double meanU {u[byte].standardizeMetric(u_index).mean};
                 long double u_i_j {meanU};
                 u_i_j -= u.timing().standardizeMetric(byte).mean;

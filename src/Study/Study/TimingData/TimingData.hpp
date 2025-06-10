@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cassert>
+#include <optional>
 
 template <bool KnownKey, HasMetric DataType = SampleData<double>>
 class TimingData
@@ -16,6 +17,7 @@ class TimingData
     {
     };
 
+    std::optional<std::array<std::byte, AES_BLOCK_BYTE_SIZE>> m_IV = {};
     size_t m_dataSize;
     [[no_unique_address]] std::conditional_t<KnownKey, std::array<std::byte, PACKET_KEY_BYTE_SIZE>,
                                              empty_t> m_key;
@@ -53,6 +55,11 @@ class TimingData
     void insertTiming(const DataVector<DataVector<DataType>> &data);
 
     void reserveForEach(size_t reserveSize);
+
+    void setIV(const std::array<std::byte, AES_BLOCK_BYTE_SIZE> &IV) noexcept;
+
+    [[nodiscard]] const std::optional<std::array<std::byte, AES_BLOCK_BYTE_SIZE>> &
+        IV() const noexcept;
 
     [[nodiscard]] size_t dataSize() const noexcept;
 
@@ -132,4 +139,19 @@ size_t TimingData<KnownKey, DataType>::dataSize() const noexcept
 {
     return m_dataSize;
 }
+
+template <bool KnownKey, HasMetric DataType>
+void TimingData<KnownKey, DataType>::setIV(
+    const std::array<std::byte, AES_BLOCK_BYTE_SIZE> &IV) noexcept
+{
+    m_IV = IV;
+}
+
+template <bool KnownKey, HasMetric DataType>
+const std::optional<std::array<std::byte, AES_BLOCK_BYTE_SIZE>> &
+    TimingData<KnownKey, DataType>::IV() const noexcept
+{
+    return m_IV;
+}
+
 #endif // CRYPTOLYSER_ATTACKER_TIMINGDATA_HPP

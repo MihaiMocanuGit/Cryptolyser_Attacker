@@ -37,6 +37,20 @@ SerializerManager::TimingMetadata
     std::string dataSizeStr {metadata.substr(start, end - start)};
     result.dataSize = static_cast<unsigned>(std::stoul(dataSizeStr));
 
+    // IV
+    start = metadata.find("$IV:", end) + "$IV:"s.size();
+    while (metadata[start] == ' ')
+        start++;
+    end = metadata.find(";", start);
+    std::string ivStr {metadata.substr(start, end - start)};
+    std::stringstream ivStream {ivStr};
+    for (std::byte &byte : result.IV)
+    {
+        unsigned byteTmp;
+        ivStream >> std::hex >> byteTmp;
+        byte = static_cast<std::byte>(byteTmp);
+    }
+
     // KNOWN KEY
     start = metadata.find("$KnownKey:", end) + "$KnownKey:"s.size();
     while (metadata[start] == ' ')
