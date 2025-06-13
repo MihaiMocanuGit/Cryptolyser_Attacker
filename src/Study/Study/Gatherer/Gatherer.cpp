@@ -61,7 +61,7 @@ Gatherer<KnownKey>::ObtainStatus Gatherer<KnownKey>::obtain(uint32_t id)
 
     for (unsigned byte {0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
     {
-        size_t byteValue {static_cast<size_t>(studyData[byte]) ^ result->iv[byte]};
+        size_t byteValue {result->iv[byte]};
         m_timingData.timing().update(byte,
                                      [timing, byteValue](size_t, auto &byte)
                                      {
