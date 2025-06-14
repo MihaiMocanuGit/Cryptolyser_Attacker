@@ -9,7 +9,6 @@ void SerializerManager::saveDistribution(const std::filesystem::path &path,
 SerializerManager::TimingMetadata
     SerializerManager::loadTimingMetadata(const std::filesystem::path &path)
 {
-    std::unordered_map<std::string_view, std::string> metadataVars;
     std::filesystem::path metadataPath {path / "meta.data"};
     std::ifstream in {metadataPath};
     std::string metadata {""};
