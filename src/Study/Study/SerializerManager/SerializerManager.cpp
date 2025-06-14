@@ -1,5 +1,8 @@
 #include "SerializerManager.hpp"
 
+#include <filesystem>
+#include <stdexcept>
+
 void SerializerManager::saveDistribution(const std::filesystem::path &path,
                                          const DistributionData<double> &distributionData)
 {
@@ -9,7 +12,14 @@ void SerializerManager::saveDistribution(const std::filesystem::path &path,
 SerializerManager::TimingMetadata
     SerializerManager::loadTimingMetadata(const std::filesystem::path &path)
 {
-    std::filesystem::path metadataPath {path / "meta.data"};
+    std::filesystem::path metadataPath {};
+    if (std::filesystem::exists(path / "meta.data"))
+        metadataPath = path / "meta.data";
+    else if (std::filesystem::exists(path / "Raw" / "meta.data"))
+        metadataPath = path / "Raw" / "meta.data";
+    else
+        throw std::runtime_error(std::format("No meta.data to load here: {}", path.string()));
+
     std::ifstream in {metadataPath};
     std::string metadata {""};
     std::string line;

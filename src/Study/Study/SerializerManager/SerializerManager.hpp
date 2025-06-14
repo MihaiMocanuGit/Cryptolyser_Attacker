@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <stdexcept>
 #include <unordered_map>
 
 class SerializerManager
@@ -70,7 +71,12 @@ template <bool KnownKey, HasMetric DataType>
 void SerializerManager::loadRaw(const std::filesystem::path &path,
                                 TimingData<KnownKey, DataType> &timingData)
 {
-    Serializer::loadFromCsv(path, timingData.timing());
+    if (std::filesystem::exists(path / "meta.data"))
+        Serializer::loadFromCsv(path, timingData.timing());
+    else if (std::filesystem::exists(path / "Raw" / "meta.data"))
+        Serializer::loadFromCsv(path / "Raw", timingData.timing());
+    else
+        throw std::runtime_error {std::format("No timing data to load here: {}", path.string())};
 }
 
 template <bool KnownKey, HasMetric DataType>
