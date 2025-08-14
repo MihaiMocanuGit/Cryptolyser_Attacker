@@ -28,8 +28,9 @@ void ServerConnection<KnownKey>::m_closeSocket()
 }
 
 template <bool KnownKey>
-ServerConnection<KnownKey>::ServerConnection(std::string_view ip, uint16_t port)
-    : m_ip {ip}, m_port {port}
+ServerConnection<KnownKey>::ServerConnection(std::string_view ip, uint16_t port,
+                                             packet_type_e aesType)
+    : m_ip {ip}, m_port {port}, m_aesType {aesType}
 {
 }
 
@@ -78,7 +79,8 @@ void ServerConnection<KnownKey>::closeConnection()
 template <bool KnownKey>
 ServerConnection<KnownKey>::ServerConnection(ServerConnection &&serverConnection) noexcept
     : m_ip {serverConnection.m_ip}, m_port {serverConnection.m_port},
-      m_sock {serverConnection.m_port}, m_receiverAddr {serverConnection.m_receiverAddr},
+      m_aesType {serverConnection.m_aesType}, m_sock {serverConnection.m_port},
+      m_receiverAddr {serverConnection.m_receiverAddr},
       m_isConnectionActive {serverConnection.m_isConnectionActive}
 {
 }

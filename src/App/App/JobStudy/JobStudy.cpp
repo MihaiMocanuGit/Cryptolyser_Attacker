@@ -13,6 +13,7 @@ App::JobStudy::JobStudy(const App::JobStudy::Buffers &buffers,
     const auto &ip = buffers.ip;
     input.ip = std::format("{}.{}.{}.{}", ip[0], ip[1], ip[2], ip[3]);
     input.port = buffers.port;
+    input.aesType = static_cast<packet_type_e>(buffers.aesTypeIndex);
     input.knownKey = buffers.knownKey;
     input.key = buffers.key;
     input.packetCount = buffers.packetCount;
@@ -24,7 +25,7 @@ void App::JobStudy::operator()()
     std::cout << "Started Study job.\n";
     if (input.knownKey)
     {
-        ServerConnection<true> connection {input.ip, input.port};
+        ServerConnection<true> connection {input.ip, input.port, input.aesType};
         TimingData<true, SampleData<double>> timingData {input.dataSize, input.key};
         Gatherer<true> gatherer {std::move(connection), std::move(timingData)};
 
@@ -40,7 +41,7 @@ void App::JobStudy::operator()()
     }
     else
     {
-        ServerConnection<false> connection {input.ip, input.port};
+        ServerConnection<false> connection {input.ip, input.port, input.aesType};
         TimingData<false, SampleData<double>> timingData {input.dataSize};
         Gatherer<false> gatherer {std::move(connection), std::move(timingData)};
 

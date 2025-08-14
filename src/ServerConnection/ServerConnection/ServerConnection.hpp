@@ -18,6 +18,7 @@ class ServerConnection
   private:
     std::string_view m_ip;
     uint16_t m_port;
+    packet_type_e m_aesType;
     int m_sock {-1};
     sockaddr_in m_receiverAddr {};
     bool m_isConnectionActive {false};
@@ -28,7 +29,7 @@ class ServerConnection
 
   public:
     static const uint32_t DATA_MAX_SIZE;
-    ServerConnection(std::string_view ip, uint16_t port);
+    ServerConnection(std::string_view ip, uint16_t port, packet_type_e aesType);
     ServerConnection(ServerConnection &&serverConnection) noexcept;
     ServerConnection &operator=(ServerConnection &&rhs) noexcept;
     ~ServerConnection();
@@ -67,9 +68,10 @@ typename std::enable_if<T, std::optional<connection_response_t>>::type
     connection_packet_t packet {};
     packet.packet_id = htobe32(packet_id);
     packet.data_length = htobe32(bytes.size());
-    std::memcpy(packet.key, key.data(), PACKET_AES_BLOCK_SIZE);
     if (not bytes.empty())
         std::memcpy(packet.byte_data, bytes.data(), bytes.size());
+    packet.packet_type = static_cast<uint8_t>(m_aesType);
+    std::memcpy(packet.key, key.data(), PACKET_AES_BLOCK_SIZE);
     if (sendto(m_sock, &packet, sizeof(packet), 0,
                reinterpret_cast<struct sockaddr *>(&m_receiverAddr), sizeof(m_receiverAddr)) < 0)
     {
@@ -117,6 +119,7 @@ typename std::enable_if<T, std::optional<connection_response_t>>::type
     packet.data_length = htobe32(bytes.size());
     if (not bytes.empty())
         std::memcpy(packet.byte_data, bytes.data(), bytes.size());
+    packet.packet_type = static_cast<uint8_t>(m_aesType);
     if (sendto(m_sock, &packet, sizeof(packet), 0,
                reinterpret_cast<struct sockaddr *>(&m_receiverAddr), sizeof(m_receiverAddr)) < 0)
     {

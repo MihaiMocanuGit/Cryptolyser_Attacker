@@ -20,6 +20,7 @@ class JobStudy : public JobI
     {
         std::string ip {};
         uint16_t port {};
+        packet_type_e aesType {};
         bool knownKey {false};
         std::array<std::byte, PACKET_KEY_SIZE> key {static_cast<std::byte>(0)};
         std::filesystem::path savePath {};
@@ -35,6 +36,7 @@ class JobStudy : public JobI
     {
         uint8_t ip[4] {127, 0, 0, 1};
         uint16_t port {8081};
+        uint8_t aesTypeIndex {0};
         bool knownKey {false};
         std::array<std::byte, PACKET_KEY_SIZE> key {static_cast<std::byte>(0)};
         std::string savePath {""};

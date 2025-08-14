@@ -52,6 +52,21 @@ void GUI::WindowStudy::constructWindow()
     if (ImGui::InputScalar("IP : PORT", ImGuiDataType_U16, &m_buffers.port))
     {
     }
+    constexpr unsigned NO_AES_TYPES {static_cast<unsigned>(packet_type_e::COUNT)};
+    static std::array<bool, NO_AES_TYPES> aesTypeOptions = {false};
+    aesTypeOptions.at(m_buffers.aesTypeIndex) = true;
+    const std::array<std::string_view, NO_AES_TYPES> AES_TYPE_NAMES = {"ECB", "CBC", "CTR"};
+    for (unsigned i {0u}; i < NO_AES_TYPES; ++i)
+    {
+        if (ImGui::Checkbox(AES_TYPE_NAMES[i].data(), &aesTypeOptions[i]))
+        {
+            aesTypeOptions.fill(false);
+            aesTypeOptions[i] = true;
+            m_buffers.aesTypeIndex = i;
+        }
+        ImGui::SameLine();
+    }
+    ImGui::Text("AES Modes");
     Widgets::fileExplorerWidget(m_buffers.savePath, "Save Path", "Search##1");
     ImGui::SetNextItemWidth(180.0f);
     if (ImGui::InputScalar("Packet count", ImGuiDataType_U64, &m_buffers.packetCount))
