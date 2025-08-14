@@ -21,18 +21,18 @@ class JobCorrelate : public JobI
         std::vector<std::filesystem::path> victimLoadPaths {};
         bool victimKeyKnown {true};
         std::filesystem::path savePath {};
-        std::array<std::byte, PACKET_KEY_BYTE_SIZE> victimKey {std::byte(0)};
+        std::array<std::byte, PACKET_KEY_SIZE> victimKey {std::byte(0)};
     } input;
 
     Correlate<MetricsData<double>, MetricsData<double>> m_computeCorrelation() const;
 
     std::string m_createCorrelationDataString(
         const Correlate<MetricsData<double>, MetricsData<double>> &correlate,
-        std::array<unsigned, AES_BLOCK_BYTE_SIZE> &byteCorrPos) const;
+        std::array<unsigned, PACKET_AES_BLOCK_SIZE> &byteCorrPos) const;
 
     std::string
         m_summariseKeyStats(const Correlate<MetricsData<double>, MetricsData<double>> &correlate,
-                            const std::array<unsigned, AES_BLOCK_BYTE_SIZE> &byteCorrPos) const;
+                            const std::array<unsigned, PACKET_AES_BLOCK_SIZE> &byteCorrPos) const;
 
   public:
     struct Buffers
@@ -40,7 +40,7 @@ class JobCorrelate : public JobI
         std::vector<std::string> doppelLoadPaths {};
         std::vector<std::string> victimLoadPaths {};
         bool victimKeyKnown {true};
-        std::array<std::byte, PACKET_KEY_BYTE_SIZE> victimKey {std::byte(0)};
+        std::array<std::byte, PACKET_KEY_SIZE> victimKey {std::byte(0)};
         std::string savePath {};
     };
 

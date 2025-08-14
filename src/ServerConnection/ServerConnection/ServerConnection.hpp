@@ -40,7 +40,7 @@ class ServerConnection
 
     template <bool T = KnownKey>
     typename std::enable_if<T, std::optional<connection_response_t>>::type
-        transmit(uint32_t packet_id, const std::array<std::byte, AES_BLOCK_BYTE_SIZE> &key,
+        transmit(uint32_t packet_id, const std::array<std::byte, PACKET_AES_BLOCK_SIZE> &key,
                  const std::vector<std::byte> &bytes);
 
     template <bool T = not KnownKey>
@@ -58,16 +58,16 @@ typename std::enable_if<T, std::optional<connection_response_t>>::type
 {
     if (not m_isConnectionActive)
         return {};
-    if (CONNECTION_DATA_MAX_SIZE < bytes.size())
+    if (PACKET_BYTE_DATA_SIZE < bytes.size())
     {
         std::cerr << "Error, too many bytes for a single packet." << std::endl;
         m_closeSocket();
         return {};
     }
-    connection_key_packet_t packet {};
+    connection_packet_t packet {};
     packet.packet_id = htobe32(packet_id);
     packet.data_length = htobe32(bytes.size());
-    std::memcpy(packet.key, key.data(), AES_BLOCK_BYTE_SIZE);
+    std::memcpy(packet.key, key.data(), PACKET_AES_BLOCK_SIZE);
     if (not bytes.empty())
         std::memcpy(packet.byte_data, bytes.data(), bytes.size());
     if (sendto(m_sock, &packet, sizeof(packet), 0,
@@ -106,7 +106,7 @@ typename std::enable_if<T, std::optional<connection_response_t>>::type
 {
     if (not m_isConnectionActive)
         return {};
-    if (CONNECTION_DATA_MAX_SIZE < bytes.size())
+    if (PACKET_BYTE_DATA_SIZE < bytes.size())
     {
         std::cerr << "Error, too many bytes for a single packet." << std::endl;
         m_closeSocket();

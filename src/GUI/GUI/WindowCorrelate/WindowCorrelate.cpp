@@ -33,16 +33,16 @@ void GUI::WindowCorrelate::constructWindow()
         }
         if (m_buffers.victimKeyKnown)
         {
-            for (unsigned i {0}; i < PACKET_KEY_BYTE_SIZE; ++i)
+            for (unsigned i {0}; i < PACKET_KEY_SIZE; ++i)
             {
                 ImGui::SetNextItemWidth(30.0f);
-                std::string id {(i != PACKET_KEY_BYTE_SIZE - 1) ? "##key" + std::to_string(i)
+                std::string id {(i != PACKET_KEY_SIZE - 1) ? "##key" + std::to_string(i)
                                                                 : "Key"};
                 if (ImGui::InputScalar(id.c_str(), ImGuiDataType_U8, &m_buffers.victimKey[i], NULL,
                                        NULL, "%02x"))
                 {
                 }
-                if (i != PACKET_KEY_BYTE_SIZE - 1)
+                if (i != PACKET_KEY_SIZE - 1)
                     ImGui::SameLine();
             }
         }

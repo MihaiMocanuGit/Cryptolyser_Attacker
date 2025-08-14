@@ -30,7 +30,7 @@ class SerializerManager
     {
         unsigned dataSize;
         bool knownKey;
-        std::array<std::byte, PACKET_KEY_BYTE_SIZE> key;
+        std::array<std::byte, PACKET_KEY_SIZE> key;
     };
 
     static TimingMetadata loadTimingMetadata(const std::filesystem::path &path);
@@ -84,7 +84,7 @@ void SerializerManager::saveMetrics(const std::filesystem::path &path,
                                     const TimingData<KnownKey, DataType> &timingData)
 {
     std::filesystem::create_directories(path);
-    for (unsigned byte {0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
+    for (unsigned byte {0}; byte < PACKET_AES_BLOCK_SIZE; ++byte)
     {
         constexpr std::string_view header {"Value,Size,Mean,StdDev,MeanStd,StdDevStd,Min,Max\n"};
         const std::filesystem::path filePath {path / ("Byte_" + std::to_string(byte) + ".csv")};

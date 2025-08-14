@@ -9,7 +9,7 @@ template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
 class Correlate
 {
   private:
-    std::vector<std::array<double, 256>> m_correlation {PACKET_KEY_BYTE_SIZE, {0.0}};
+    std::vector<std::array<double, 256>> m_correlation {PACKET_KEY_SIZE, {0.0}};
 
     static void m_normalize(std::array<double, 256> &correlation);
 
@@ -46,7 +46,7 @@ template <HasMetric DataTypeVictim2, HasMetric DataTypeDoppel2>
 Correlate<DataTypeVictim, DataTypeDoppel> &Correlate<DataTypeVictim, DataTypeDoppel>::operator+=(
     const Correlate<DataTypeVictim2, DataTypeDoppel2> &rhs)
 {
-    for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
+    for (unsigned byte {0}; byte < PACKET_KEY_SIZE; ++byte)
     {
         for (unsigned value {0}; value < 256; ++value)
             m_correlation[byte][value] += rhs.data()[byte][value];
@@ -58,9 +58,9 @@ template <HasMetric DataTypeVictim, HasMetric DataTypeDoppel>
 std::vector<std::array<std::pair<double, std::byte>, 256>>
     Correlate<DataTypeVictim, DataTypeDoppel>::order() const
 {
-    std::vector<std::array<std::pair<double, std::byte>, 256>> result {PACKET_KEY_BYTE_SIZE};
+    std::vector<std::array<std::pair<double, std::byte>, 256>> result {PACKET_KEY_SIZE};
 
-    for (unsigned byte {0}; byte < PACKET_KEY_BYTE_SIZE; ++byte)
+    for (unsigned byte {0}; byte < PACKET_KEY_SIZE; ++byte)
     {
         for (unsigned value {0}; value < 256; ++value)
             result[byte][value] =
@@ -87,7 +87,7 @@ Correlate<DataTypeVictim, DataTypeDoppel>::Correlate(
     const TimingData<true, DataTypeVictim> &t {doppelgangerData};
     const TimingData<false, DataTypeDoppel> &u {victimData};
 
-    for (unsigned byte {0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
+    for (unsigned byte {0}; byte < PACKET_AES_BLOCK_SIZE; ++byte)
     {
         for (unsigned i {0}; i < 256; ++i)
         {

@@ -21,7 +21,7 @@ class JobStudy : public JobI
         std::string ip {};
         uint16_t port {};
         bool knownKey {false};
-        std::array<std::byte, PACKET_KEY_BYTE_SIZE> key {static_cast<std::byte>(0)};
+        std::array<std::byte, PACKET_KEY_SIZE> key {static_cast<std::byte>(0)};
         std::filesystem::path savePath {};
         size_t packetCount {};
         bool calibrate {};
@@ -36,7 +36,7 @@ class JobStudy : public JobI
         uint8_t ip[4] {127, 0, 0, 1};
         uint16_t port {8081};
         bool knownKey {false};
-        std::array<std::byte, PACKET_KEY_BYTE_SIZE> key {static_cast<std::byte>(0)};
+        std::array<std::byte, PACKET_KEY_SIZE> key {static_cast<std::byte>(0)};
         std::string savePath {""};
         size_t packetCount {1 << 26};
         bool calibrate {true};

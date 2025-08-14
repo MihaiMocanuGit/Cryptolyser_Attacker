@@ -48,7 +48,7 @@ Gatherer<KnownKey>::ObtainStatus Gatherer<KnownKey>::obtain(uint32_t id)
         return ObtainStatus::ignoredUB;
     }
 
-    for (unsigned byte {0}; byte < AES_BLOCK_BYTE_SIZE; ++byte)
+    for (unsigned byte {0}; byte < PACKET_AES_BLOCK_SIZE; ++byte)
     {
         size_t byteValue {static_cast<size_t>(studyData[byte])};
         m_timingData.timing().update(

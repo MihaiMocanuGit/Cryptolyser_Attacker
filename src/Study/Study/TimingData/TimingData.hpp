@@ -17,7 +17,7 @@ class TimingData
     };
 
     size_t m_dataSize;
-    [[no_unique_address]] std::conditional_t<KnownKey, std::array<std::byte, PACKET_KEY_BYTE_SIZE>,
+    [[no_unique_address]] std::conditional_t<KnownKey, std::array<std::byte, PACKET_KEY_SIZE>,
                                              empty_t> m_key;
 
     DataVector<DataVector<DataType>> m_timings {};
@@ -28,7 +28,7 @@ class TimingData
      * @param dataSize The size of the studied data.
      * @param key The key used when encrypting the studied data.
      */
-    TimingData(size_t dataSize, const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &key)
+    TimingData(size_t dataSize, const std::array<std::byte, PACKET_KEY_SIZE> &key)
         requires(KnownKey);
 
     /**
@@ -56,7 +56,7 @@ class TimingData
 
     [[nodiscard]] size_t dataSize() const noexcept;
 
-    [[nodiscard]] const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &key() const noexcept
+    [[nodiscard]] const std::array<std::byte, PACKET_KEY_SIZE> &key() const noexcept
         requires(KnownKey);
 };
 
@@ -105,7 +105,7 @@ void TimingData<KnownKey, DataType>::reserveForEach(size_t reserveSize)
 }
 
 template <bool KnownKey, HasMetric DataType>
-const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &
+const std::array<std::byte, PACKET_KEY_SIZE> &
     TimingData<KnownKey, DataType>::key() const noexcept
     requires(KnownKey)
 {
@@ -115,15 +115,15 @@ const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &
 template <bool KnownKey, HasMetric DataType>
 TimingData<KnownKey, DataType>::TimingData(size_t dataSize)
     requires(not KnownKey)
-    : m_dataSize {dataSize}, m_timings {AES_BLOCK_BYTE_SIZE, DataVector<DataType>(256)}
+    : m_dataSize {dataSize}, m_timings {PACKET_AES_BLOCK_SIZE, DataVector<DataType>(256)}
 {
 }
 
 template <bool KnownKey, HasMetric DataType>
 TimingData<KnownKey, DataType>::TimingData(size_t dataSize,
-                                           const std::array<std::byte, PACKET_KEY_BYTE_SIZE> &key)
+                                           const std::array<std::byte, PACKET_KEY_SIZE> &key)
     requires(KnownKey)
-    : m_dataSize {dataSize}, m_key {key}, m_timings {AES_BLOCK_BYTE_SIZE, DataVector<DataType>(256)}
+    : m_dataSize {dataSize}, m_key {key}, m_timings {PACKET_AES_BLOCK_SIZE, DataVector<DataType>(256)}
 {
 }
 

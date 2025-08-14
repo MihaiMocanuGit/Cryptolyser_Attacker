@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 template <bool KnownKey>
-constexpr uint32_t ServerConnection<KnownKey>::DATA_MAX_SIZE {CONNECTION_DATA_MAX_SIZE};
+constexpr uint32_t ServerConnection<KnownKey>::DATA_MAX_SIZE {PACKET_BYTE_DATA_SIZE};
 
 template <bool KnownKey>
 void ServerConnection<KnownKey>::m_swap(ServerConnection &server1, ServerConnection &server2)
