@@ -11,8 +11,8 @@ class Gatherer
 {
   private:
     ServerConnection<KnownKey> m_connection {};
-
     TimingData<KnownKey> m_timingData {};
+    packet_type_e m_aesType {};
 
     double m_lb {};
     SampleData<double> m_sampleLB {};
@@ -29,7 +29,8 @@ class Gatherer
     std::vector<std::byte> m_constructRandomVector();
 
   public:
-    Gatherer(ServerConnection<KnownKey> &&connection, TimingData<KnownKey> &&timingData);
+    Gatherer(ServerConnection<KnownKey> &&connection, TimingData<KnownKey> &&timingData,
+             packet_type_e aesType);
 
     Gatherer(Gatherer &&gatherer) noexcept = default;
     Gatherer &operator=(Gatherer &&rhs) noexcept = default;
@@ -61,6 +62,8 @@ class Gatherer
     const TimingData<KnownKey> &timingData() const;
 
     ServerConnection<KnownKey> &connection();
+
+    packet_type_e aesType() const noexcept;
 
     BorrowedData release();
 };

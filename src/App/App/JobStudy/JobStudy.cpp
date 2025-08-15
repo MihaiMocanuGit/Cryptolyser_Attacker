@@ -27,7 +27,7 @@ void App::JobStudy::operator()()
     {
         ServerConnection<true> connection {input.ip, input.port, input.aesType};
         TimingData<true, SampleData<double>> timingData {input.dataSize, input.key};
-        Gatherer<true> gatherer {std::move(connection), std::move(timingData)};
+        Gatherer<true> gatherer {std::move(connection), std::move(timingData), input.aesType};
 
         Study<true> study {std::move(gatherer), m_continueRunning, input.savePath};
         DistributionData<double>::Bounds bounds {input.lb, input.ub};
@@ -43,7 +43,7 @@ void App::JobStudy::operator()()
     {
         ServerConnection<false> connection {input.ip, input.port, input.aesType};
         TimingData<false, SampleData<double>> timingData {input.dataSize};
-        Gatherer<false> gatherer {std::move(connection), std::move(timingData)};
+        Gatherer<false> gatherer {std::move(connection), std::move(timingData), input.aesType};
 
         Study<false> study {std::move(gatherer), m_continueRunning, input.savePath};
         DistributionData<double>::Bounds bounds {input.lb, input.ub};
@@ -69,8 +69,9 @@ std::string App::JobStudy::description() const noexcept
     }
     else
         hexKeyArray = "Unknown";
-    return std::format("Study - PacketCount: {}, Key: {}, SavePath: {}", input.packetCount,
-                       hexKeyArray, input.savePath.string());
+    return std::format("Study - AES: {}, PacketCount: {}, Key: {}, SavePath: {}",
+                       packet_type_names[static_cast<uint8_t>(input.aesType)].data(),
+                       input.packetCount, hexKeyArray, input.savePath.string());
 }
 
 std::unique_ptr<App::JobI> App::JobStudy::clone() const

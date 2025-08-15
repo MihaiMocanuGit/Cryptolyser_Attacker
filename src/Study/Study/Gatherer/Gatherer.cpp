@@ -50,14 +50,27 @@ Gatherer<KnownKey>::ObtainStatus Gatherer<KnownKey>::obtain(uint32_t id)
 
     for (unsigned byte {0}; byte < PACKET_AES_BLOCK_SIZE; ++byte)
     {
-        size_t byteValue {static_cast<size_t>(studyData[byte])};
-        m_timingData.timing().update(
-            byte,
-            [timing, byteValue](size_t, auto &byte)
-            {
-                byte.update(byteValue, [timing](size_t, auto &byteValue)
-                            { byteValue.insert(timing); });
-            });
+        size_t byteValue;
+        switch (m_aesType)
+        {
+            case packet_type_e::ECB:
+                byteValue = static_cast<size_t>(studyData[byte]);
+                break;
+            case packet_type_e::CBC:
+                byteValue = static_cast<size_t>(studyData[byte]) ^ result->iv[byte];
+                break;
+            case packet_type_e::CTR:
+                byteValue = result->iv[byte];
+                break;
+            default:
+                break;
+        }
+        m_timingData.timing().update(byte,
+                                     [timing, byteValue](size_t, auto &byte)
+                                     {
+                                         byte.update(byteValue, [timing](size_t, auto &byteValue)
+                                                     { byteValue.insert(timing); });
+                                     });
     }
     return ObtainStatus::success;
 }
@@ -79,6 +92,12 @@ Gatherer<KnownKey>::BorrowedData Gatherer<KnownKey>::release()
 {
     m_connection.closeConnection();
     return {.connection {std::move(m_connection)}, .timingData {std::move(m_timingData)}};
+}
+
+template <bool KnownKey>
+packet_type_e Gatherer<KnownKey>::aesType() const noexcept
+{
+    return m_aesType;
 }
 
 template <bool KnownKey>
@@ -131,8 +150,9 @@ double Gatherer<KnownKey>::lb() const
 
 template <bool KnownKey>
 Gatherer<KnownKey>::Gatherer(ServerConnection<KnownKey> &&connection,
-                             TimingData<KnownKey> &&timingData)
-    : m_connection {std::move(connection)}, m_timingData {std::move(timingData)}
+                             TimingData<KnownKey> &&timingData, packet_type_e aesType)
+    : m_connection {std::move(connection)}, m_timingData {std::move(timingData)},
+      m_aesType {aesType}
 {
 }
 
