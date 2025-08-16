@@ -44,7 +44,7 @@ void exitHandler(int signal)
 }
 } // namespace
 
-int main(int argc, char **argv)
+int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
     struct sigaction sigactionExit {};
     sigactionExit.sa_handler = exitHandler;
