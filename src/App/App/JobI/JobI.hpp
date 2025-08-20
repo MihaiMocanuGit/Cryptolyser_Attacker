@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <memory>
+#include <stop_token>
 #include <string>
 
 namespace App
@@ -18,7 +19,15 @@ class JobI
 
     explicit JobI(const std::atomic_bool &continueRunning) : m_continueRunning {continueRunning} {}
 
-    virtual void operator()() = 0;
+    [[deprecated]] virtual void operator()() = 0;
+
+    enum class ExitStatus_e
+    {
+        OK,
+        KILLED,
+    };
+
+    [[nodiscard]] virtual ExitStatus_e invoke(std::stop_token stoken) = 0;
 
     [[nodiscard]] virtual std::string description() const noexcept = 0;
 
