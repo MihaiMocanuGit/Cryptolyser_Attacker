@@ -9,6 +9,8 @@
 
 #include <iostream>
 
+namespace App
+{
 namespace
 {
 void repairLineEnd(std::string &line)
@@ -21,7 +23,7 @@ void repairLineEnd(std::string &line)
 }
 } // namespace
 
-std::string App::JobCorrelate::m_createCorrelationDataString(
+std::string JobCorrelate::m_createCorrelationDataString(
     const Correlate<MetricsData<double>, MetricsData<double>> &correlate,
     std::array<unsigned, PACKET_AES_BLOCK_SIZE> &byteCorrPos) const
 {
@@ -50,7 +52,7 @@ std::string App::JobCorrelate::m_createCorrelationDataString(
     return dataString;
 }
 
-Correlate<MetricsData<double>, MetricsData<double>> App::JobCorrelate::m_computeCorrelation() const
+Correlate<MetricsData<double>, MetricsData<double>> JobCorrelate::m_computeCorrelation() const
 {
     auto processGroup = [&](const Input::Group &group, unsigned groupId)
     {
@@ -104,7 +106,7 @@ Correlate<MetricsData<double>, MetricsData<double>> App::JobCorrelate::m_compute
     return correlate;
 }
 
-std::string App::JobCorrelate::m_summariseKeyStats(
+std::string JobCorrelate::m_summariseKeyStats(
     const Correlate<MetricsData<double>, MetricsData<double>> &correlate,
     const std::array<unsigned, PACKET_AES_BLOCK_SIZE> &byteCorrPos) const
 {
@@ -145,9 +147,7 @@ std::string App::JobCorrelate::m_summariseKeyStats(
     return summary;
 }
 
-App::JobCorrelate::JobCorrelate(const App::JobCorrelate::Buffers &buffers,
-                                const std::atomic_bool &continueRunning)
-    : JobI {continueRunning}
+JobCorrelate::JobCorrelate(const JobCorrelate::Buffers &buffers) : JobI {}
 {
     input.savePath = buffers.savePath;
     input.victimKeyKnown = buffers.victimKeyKnown;
@@ -164,28 +164,40 @@ App::JobCorrelate::JobCorrelate(const App::JobCorrelate::Buffers &buffers,
     }
 }
 
-void App::JobCorrelate::operator()()
+[[nodiscard]] JobCorrelate::ExitStatus_e JobCorrelate::invoke(std::stop_token stoken)
 {
+    if (stoken.stop_requested())
+        return ExitStatus_e::KILLED;
     std::cout << "Started Correlate job...\n";
     auto correlate = m_computeCorrelation();
 
+    if (stoken.stop_requested())
+        return ExitStatus_e::KILLED;
     std::array<unsigned, PACKET_AES_BLOCK_SIZE> byteCorrPos {};
     std::string csvOutput {m_createCorrelationDataString(correlate, byteCorrPos)};
 
+    if (stoken.stop_requested())
+        return ExitStatus_e::KILLED;
     std::string summary {m_summariseKeyStats(correlate, byteCorrPos)};
     csvOutput += summary;
 
+    if (stoken.stop_requested())
+        return ExitStatus_e::KILLED;
     std::filesystem::create_directories(input.savePath);
     input.savePath /= "Correlation.csv";
+
     std::ofstream out {input.savePath};
+    if (stoken.stop_requested())
+        return ExitStatus_e::KILLED;
     out << csvOutput;
 
     std::cout << summary;
     std::cout << "Check full correlation file at: " << input.savePath.string() << "\n\n";
     std::cout << "Finished Correlate job.\n\n";
+    return ExitStatus_e::OK;
 }
 
-std::string App::JobCorrelate::description() const noexcept
+std::string JobCorrelate::description() const noexcept
 {
     std::string description {"Correlate - Victim Key: "};
     if (input.victimKeyKnown)
@@ -223,7 +235,6 @@ std::string App::JobCorrelate::description() const noexcept
     return description;
 }
 
-std::unique_ptr<App::JobI> App::JobCorrelate::clone() const
-{
-    return std::make_unique<JobCorrelate>(*this);
-}
+std::unique_ptr<JobI> JobCorrelate::clone() const { return std::make_unique<JobCorrelate>(*this); }
+
+} // namespace App

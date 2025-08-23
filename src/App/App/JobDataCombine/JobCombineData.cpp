@@ -1,23 +1,32 @@
 #include "JobCombineData.hpp"
 
-App::JobCombineData::JobCombineData(const App::JobCombineData::Buffers &buffers,
-                                    const std::atomic_bool &continueRunning)
-    : JobI {continueRunning}
+namespace App
+{
+JobCombineData::JobCombineData(const JobCombineData::Buffers &buffers) : JobI {}
 {
     input.savePath = buffers.savePath;
     for (const auto &path : buffers.loadPaths)
         input.loadPaths.emplace_back(path);
 }
 
-void App::JobCombineData::operator()()
+[[nodiscard]] JobCombineData::ExitStatus_e JobCombineData::invoke(std::stop_token stoken)
 {
+    if (stoken.stop_requested())
+        return ExitStatus_e::KILLED;
     std::cout << "Started Combine Data job...\n";
     if (input.onlyMetrics)
     {
         TimingData<false, MetricsData<double>> timingData {0};
         std::cout << "Loading timing data...\n";
         for (const auto &loadPath : input.loadPaths)
+        {
+            if (stoken.stop_requested())
+                return ExitStatus_e::KILLED;
             SerializerManager::loadRaw(loadPath, timingData);
+        }
+
+        if (stoken.stop_requested())
+            return ExitStatus_e::KILLED;
         std::cout << "Saving the combined timing data...\n";
         SerializerManager::saveRaw(input.savePath, timingData);
     }
@@ -26,14 +35,22 @@ void App::JobCombineData::operator()()
         TimingData<false, SampleData<double>> timingData {0};
         std::cout << "Loading timing data...\n";
         for (const auto &loadPath : input.loadPaths)
+        {
+            if (stoken.stop_requested())
+                return ExitStatus_e::KILLED;
             SerializerManager::loadRaw(loadPath, timingData);
+        }
+
+        if (stoken.stop_requested())
+            return ExitStatus_e::KILLED;
         std::cout << "Saving the combined timing data...\n";
         SerializerManager::saveRaw(input.savePath, timingData);
     }
     std::cout << "Finished Combine Data job.\n\n";
+    return ExitStatus_e::OK;
 }
 
-std::string App::JobCombineData::description() const noexcept
+std::string JobCombineData::description() const noexcept
 {
     std::string description {"CombineData - SavePath: " + input.savePath.string() + "LoadPaths: "};
     for (const std::filesystem::path &path : input.loadPaths)
@@ -42,7 +59,9 @@ std::string App::JobCombineData::description() const noexcept
     return description;
 }
 
-std::unique_ptr<App::JobI> App::JobCombineData::clone() const
+std::unique_ptr<JobI> JobCombineData::clone() const
 {
     return std::make_unique<JobCombineData>(*this);
 }
+
+} // namespace App

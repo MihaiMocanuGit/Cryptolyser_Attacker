@@ -10,16 +10,12 @@ namespace App
 class JobI
 {
   protected:
-    const std::atomic_bool &m_continueRunning;
-
     struct Input;
 
   public:
     struct Buffers;
 
-    explicit JobI(const std::atomic_bool &continueRunning) : m_continueRunning {continueRunning} {}
-
-    [[deprecated]] virtual void operator()() = 0;
+    JobI() = default;
 
     enum class ExitStatus_e
     {

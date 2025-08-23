@@ -2,9 +2,9 @@
 
 #include "Study/SerializerManager/SerializerManager.hpp"
 
-App::JobFilter::JobFilter(const App::JobFilter::Buffers &buffers,
-                          const std::atomic_bool &continueRunning)
-    : JobI {continueRunning}
+namespace App
+{
+JobFilter::JobFilter(const JobFilter::Buffers &buffers) : JobI {}
 {
     input.lb = buffers.lb;
     input.ub = buffers.ub;
@@ -12,8 +12,10 @@ App::JobFilter::JobFilter(const App::JobFilter::Buffers &buffers,
     input.loadPath = buffers.loadPath;
 }
 
-void App::JobFilter::operator()()
+[[nodiscard]] JobFilter::ExitStatus_e JobFilter::invoke(std::stop_token stoken)
 {
+    if (stoken.stop_requested())
+        return ExitStatus_e::KILLED;
     std::cout << "Started Filter job.\n";
     std::cout << "Loading timing data...\n";
     const auto metadata = SerializerManager::loadTimingMetadata(input.loadPath);
@@ -22,10 +24,18 @@ void App::JobFilter::operator()()
     if (metadata.knownKey)
     {
         TimingData<true> timingData {metadata.dataSize, metadata.key};
+        if (stoken.stop_requested())
+            return ExitStatus_e::KILLED;
         SerializerManager::loadRaw(input.loadPath, timingData);
+
+        if (stoken.stop_requested())
+            return ExitStatus_e::KILLED;
         std::cout << "Filtering the timing data...\n";
         Filter::filter<double>(timingData.timing(), [this](double data)
                                { return input.lb <= data and data <= input.ub; });
+
+        if (stoken.stop_requested())
+            return ExitStatus_e::KILLED;
         std::cout << "Saving the filtered timing data...\n";
         SerializerManager::saveRaw(input.savePath, timingData);
         std::cout << "Finished Filter job.\n\n";
@@ -33,23 +43,30 @@ void App::JobFilter::operator()()
     else
     {
         TimingData<false> timingData {metadata.dataSize};
+        if (stoken.stop_requested())
+            return ExitStatus_e::KILLED;
         SerializerManager::loadRaw(input.loadPath, timingData);
+
+        if (stoken.stop_requested())
+            return ExitStatus_e::KILLED;
         std::cout << "Filtering the timing data...\n";
         Filter::filter<double>(timingData.timing(), [this](double data)
                                { return input.lb <= data and data <= input.ub; });
+
+        if (stoken.stop_requested())
+            return ExitStatus_e::KILLED;
         std::cout << "Saving the filtered timing data...\n";
         SerializerManager::saveRaw(input.savePath, timingData);
         std::cout << "Finished Filter job.\n\n";
     }
+    return ExitStatus_e::OK;
 }
 
-std::string App::JobFilter::description() const noexcept
+std::string JobFilter::description() const noexcept
 {
     return std::format("Filter - [{}, {}], {} -> {}", input.lb, input.ub, input.loadPath.string(),
                        input.savePath.string());
 }
 
-std::unique_ptr<App::JobI> App::JobFilter::clone() const
-{
-    return std::make_unique<JobFilter>(*this);
-}
+std::unique_ptr<JobI> JobFilter::clone() const { return std::make_unique<JobFilter>(*this); }
+} // namespace App

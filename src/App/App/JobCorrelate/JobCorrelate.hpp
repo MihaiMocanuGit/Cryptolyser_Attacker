@@ -52,9 +52,9 @@ class JobCorrelate : public JobI
         std::string savePath {};
     };
 
-    explicit JobCorrelate(const Buffers &buffers, const std::atomic_bool &continueRunning);
+    explicit JobCorrelate(const Buffers &buffers);
 
-    void operator()() override;
+    [[nodiscard]] ExitStatus_e invoke(std::stop_token stoken) override;
 
     [[nodiscard]] std::string description() const noexcept override;
 

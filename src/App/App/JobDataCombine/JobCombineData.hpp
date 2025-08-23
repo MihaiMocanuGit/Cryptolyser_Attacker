@@ -29,9 +29,9 @@ class JobCombineData : public JobI
         bool onlyMetrics {false};
     };
 
-    explicit JobCombineData(const Buffers &buffers, const std::atomic_bool &continueRunning);
+    explicit JobCombineData(const Buffers &buffers);
 
-    void operator()() override;
+    [[nodiscard]] ExitStatus_e invoke(std::stop_token stoken) override;
 
     [[nodiscard]] std::string description() const noexcept override;
 

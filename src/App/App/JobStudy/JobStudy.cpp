@@ -1,8 +1,8 @@
 #include "JobStudy.hpp"
 
-App::JobStudy::JobStudy(const App::JobStudy::Buffers &buffers,
-                        const std::atomic_bool &continueRunning)
-    : JobI {continueRunning}
+namespace App
+{
+JobStudy::JobStudy(const JobStudy::Buffers &buffers) : JobI {}
 {
     input.calibrate = buffers.calibrate;
     input.lb = buffers.lb;
@@ -20,23 +20,30 @@ App::JobStudy::JobStudy(const App::JobStudy::Buffers &buffers,
     input.savePath = buffers.savePath;
 }
 
-void App::JobStudy::operator()()
+[[nodiscard]] JobStudy::ExitStatus_e JobStudy::invoke(std::stop_token stoken)
 {
+    if (stoken.stop_requested())
+        return ExitStatus_e::KILLED;
     std::cout << "Started Study job.\n";
     if (input.knownKey)
     {
         ServerConnection<true> connection {input.ip, input.port, input.aesType};
         TimingData<true, SampleData<double>> timingData {input.dataSize, input.key};
         Gatherer<true> gatherer {std::move(connection), std::move(timingData), input.aesType};
-
         Study<true> study {std::move(gatherer), m_continueRunning, input.savePath};
+
         DistributionData<double>::Bounds bounds {input.lb, input.ub};
         if (input.calibrate)
         {
+            if (stoken.stop_requested())
+                return ExitStatus_e::KILLED;
             std::cout << "Started calibration...\n";
             bounds = study.calibrateBounds(1'000'000, input.lbConfidence, input.ubConfidence);
             std::cout << "Finished calibration.\n";
         }
+
+        if (stoken.stop_requested())
+            return ExitStatus_e::KILLED;
         study.run(input.packetCount, 1024 * 1024, 16 * 1024 * 1024, bounds.lb, bounds.ub);
     }
     else
@@ -44,21 +51,27 @@ void App::JobStudy::operator()()
         ServerConnection<false> connection {input.ip, input.port, input.aesType};
         TimingData<false, SampleData<double>> timingData {input.dataSize};
         Gatherer<false> gatherer {std::move(connection), std::move(timingData), input.aesType};
-
         Study<false> study {std::move(gatherer), m_continueRunning, input.savePath};
+
         DistributionData<double>::Bounds bounds {input.lb, input.ub};
         if (input.calibrate)
         {
+            if (stoken.stop_requested())
+                return ExitStatus_e::KILLED;
             std::cout << "Started calibration...\n";
             bounds = study.calibrateBounds(1'000'000, input.lbConfidence, input.ubConfidence);
             std::cout << "Finished calibration.\n";
         }
+
+        if (stoken.stop_requested())
+            return ExitStatus_e::KILLED;
         study.run(input.packetCount, 1024 * 1024, 16 * 1024 * 1024, bounds.lb, bounds.ub);
     }
     std::cout << "Finished Study job.\n\n";
+    return ExitStatus_e::OK;
 }
 
-std::string App::JobStudy::description() const noexcept
+std::string JobStudy::description() const noexcept
 {
     std::string hexKeyArray {""};
     if (input.knownKey)
@@ -74,7 +87,6 @@ std::string App::JobStudy::description() const noexcept
                        input.packetCount, hexKeyArray, input.savePath.string());
 }
 
-std::unique_ptr<App::JobI> App::JobStudy::clone() const
-{
-    return std::make_unique<JobStudy>(*this);
-}
+std::unique_ptr<JobI> JobStudy::clone() const { return std::make_unique<JobStudy>(*this); }
+
+} // namespace App
