@@ -12,7 +12,7 @@ class WindowStudy : public WindowI, public WorkableWindow
     App::JobStudy::Buffers m_buffers {};
 
   public:
-    WindowStudy(std::string_view name, App::WorkloadManager &workloadManager);
+    WindowStudy(std::string_view name, App::JobScheduler &jobScheduler);
 
     [[nodiscard]] std::unique_ptr<App::JobI> job() const override;
 

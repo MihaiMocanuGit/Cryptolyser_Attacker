@@ -30,7 +30,7 @@ JobStudy::JobStudy(const JobStudy::Buffers &buffers) : JobI {}
         ServerConnection<true> connection {input.ip, input.port, input.aesType};
         TimingData<true, SampleData<double>> timingData {input.dataSize, input.key};
         Gatherer<true> gatherer {std::move(connection), std::move(timingData), input.aesType};
-        Study<true> study {std::move(gatherer), m_continueRunning, input.savePath};
+        Study<true> study {std::move(gatherer), input.savePath, stoken};
 
         DistributionData<double>::Bounds bounds {input.lb, input.ub};
         if (input.calibrate)
@@ -51,7 +51,7 @@ JobStudy::JobStudy(const JobStudy::Buffers &buffers) : JobI {}
         ServerConnection<false> connection {input.ip, input.port, input.aesType};
         TimingData<false, SampleData<double>> timingData {input.dataSize};
         Gatherer<false> gatherer {std::move(connection), std::move(timingData), input.aesType};
-        Study<false> study {std::move(gatherer), m_continueRunning, input.savePath};
+        Study<false> study {std::move(gatherer), input.savePath, stoken};
 
         DistributionData<double>::Bounds bounds {input.lb, input.ub};
         if (input.calibrate)

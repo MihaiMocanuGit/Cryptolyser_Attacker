@@ -12,7 +12,7 @@ class WindowCorrelate : public WindowI, public WorkableWindow
     App::JobCorrelate::Buffers m_buffers {};
 
   public:
-    WindowCorrelate(std::string_view name, App::WorkloadManager &workloadManager);
+    WindowCorrelate(std::string_view name, App::JobScheduler &jobScheduler);
 
     [[nodiscard]] std::unique_ptr<App::JobI> job() const override;
 

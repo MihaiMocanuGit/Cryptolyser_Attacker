@@ -28,7 +28,8 @@ DistributionData<double>::Bounds Study<KnownKey>::calibrateBounds(size_t transmi
         SampleData<double> sample;
         sample.reserve(transmissionsCount);
         for (size_t currentCount {0};
-             currentCount < transmissionsCount and m_continueRunningFlag.load(); ++currentCount)
+             currentCount < transmissionsCount and not m_continueRunningFlag.stop_requested();
+             ++currentCount)
         {
             std::vector<std::byte> studyPlaintext {
                 constructRandomVector(m_gatherer.timingData().dataSize())};
@@ -65,10 +66,10 @@ DistributionData<double>::Bounds Study<KnownKey>::calibrateBounds(size_t transmi
 }
 
 template <bool KnownKey>
-Study<KnownKey>::Study(Gatherer<KnownKey> &&gatherer, const std::atomic_bool &continueRunningFlag,
-                       const std::filesystem::path &saveDirPath)
-    : m_gatherer {std::move(gatherer)}, m_logger {m_gatherer},
-      m_continueRunningFlag {continueRunningFlag}, m_saveDirPath {saveDirPath}
+Study<KnownKey>::Study(Gatherer<KnownKey> &&gatherer, const std::filesystem::path &saveDirPath,
+                       std::stop_token continueRunningFlag)
+    : m_gatherer {std::move(gatherer)}, m_logger {m_gatherer}, m_saveDirPath {saveDirPath},
+      m_continueRunningFlag {continueRunningFlag}
 {
 }
 
@@ -80,7 +81,8 @@ void Study<KnownKey>::run(size_t desiredCount, size_t logFreq, size_t saveMetric
     m_logger.init(desiredCount);
     std::filesystem::create_directories(m_saveDirPath);
     uint32_t packageId {0};
-    while (m_gatherer.validValuesCount() < desiredCount && m_continueRunningFlag.load())
+    while (m_gatherer.validValuesCount() < desiredCount and
+           not m_continueRunningFlag.stop_requested())
     {
         auto status {m_gatherer.obtain(packageId)};
 
@@ -88,7 +90,7 @@ void Study<KnownKey>::run(size_t desiredCount, size_t logFreq, size_t saveMetric
         {
             size_t packageCount {gatherer.validValuesCount()};
             return (packageCount % freq == 0 and packageCount > 0) or
-                   packageCount + 1 == desiredCount or not m_continueRunningFlag.load();
+                   packageCount + 1 == desiredCount or m_continueRunningFlag.stop_requested();
         };
 
         if (status == Gatherer<KnownKey>::ObtainStatus::success)

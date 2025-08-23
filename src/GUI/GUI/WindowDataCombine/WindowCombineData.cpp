@@ -4,9 +4,8 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
-GUI::WindowCombineData::WindowCombineData(std::string_view name,
-                                          App::WorkloadManager &workloadManager)
-    : WindowI {name}, WorkableWindow {workloadManager}
+GUI::WindowCombineData::WindowCombineData(std::string_view name, App::JobScheduler &jobScheduler)
+    : WindowI {name}, WorkableWindow {jobScheduler}
 {
     std::string currentPath {Widgets::fileExplorerWidget_defaultPath};
     m_buffers.loadPaths.push_back(currentPath);
@@ -17,7 +16,7 @@ GUI::WindowCombineData::WindowCombineData(std::string_view name,
 
 std::unique_ptr<App::JobI> GUI::WindowCombineData::job() const
 {
-    return std::make_unique<App::JobCombineData>(m_buffers, m_workloadManager.continueRunning());
+    return std::make_unique<App::JobCombineData>(m_buffers);
 }
 
 void GUI::WindowCombineData::constructWindow()
@@ -49,7 +48,7 @@ void GUI::WindowCombineData::constructWindow()
     }
     if (ImGui::Button("Queue Combine Data job"))
     {
-        m_workloadManager.addJob(job());
+        m_jobScheduler.addJob(job());
     }
     ImGui::End();
 }

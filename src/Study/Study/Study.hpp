@@ -15,12 +15,12 @@ class Study
   private:
     Gatherer<KnownKey> m_gatherer;
     Logger<KnownKey> m_logger;
-    const std::atomic_bool &m_continueRunningFlag;
     const std::filesystem::path &m_saveDirPath;
+    std::stop_token m_continueRunningFlag;
 
   public:
-    Study(Gatherer<KnownKey> &&gatherer, const std::atomic_bool &continueRunningFlag,
-          const std::filesystem::path &saveDirPath);
+    Study(Gatherer<KnownKey> &&gatherer, const std::filesystem::path &saveDirPath,
+          std::stop_token continueRunningFlag);
 
     void run(size_t desiredCount, size_t logFreq, size_t saveMetricsFreq, double lb = 0,
              double ub = std::numeric_limits<double>::max());

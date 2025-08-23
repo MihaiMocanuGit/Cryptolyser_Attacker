@@ -4,8 +4,10 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
-GUI::WindowCorrelate::WindowCorrelate(std::string_view name, App::WorkloadManager &workloadManager)
-    : WindowI {name}, WorkableWindow {workloadManager}
+#include <format>
+
+GUI::WindowCorrelate::WindowCorrelate(std::string_view name, App::JobScheduler &jobScheduler)
+    : WindowI {name}, WorkableWindow {jobScheduler}
 {
     std::string currentPath {Widgets::fileExplorerWidget_defaultPath};
     m_buffers.groups.emplace_back();
@@ -17,7 +19,7 @@ GUI::WindowCorrelate::WindowCorrelate(std::string_view name, App::WorkloadManage
 
 std::unique_ptr<App::JobI> GUI::WindowCorrelate::job() const
 {
-    return std::make_unique<App::JobCorrelate>(m_buffers, m_workloadManager.continueRunning());
+    return std::make_unique<App::JobCorrelate>(m_buffers);
 }
 
 void GUI::WindowCorrelate::constructWindow()
@@ -101,7 +103,7 @@ void GUI::WindowCorrelate::constructWindow()
 
     if (ImGui::Button("Queue Correlate job"))
     {
-        m_workloadManager.addJob(job());
+        m_jobScheduler.addJob(job());
     }
     ImGui::End();
 }

@@ -4,6 +4,8 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
+#include <format>
+#include <iostream>
 #include <sstream>
 
 namespace GUI
@@ -15,9 +17,8 @@ std::ostringstream WindowWorkloadQueue::m_cerrBuff;
 void WindowWorkloadQueue::coutInit() { std::cout.rdbuf(m_coutBuff.rdbuf()); };
 void WindowWorkloadQueue::cerrInit() { std::cerr.rdbuf(m_cerrBuff.rdbuf()); };
 
-WindowWorkloadQueue::WindowWorkloadQueue(std::string_view name,
-                                         App::WorkloadManager &workloadManager)
-    : WindowI {name}, m_workloadManager {workloadManager}
+WindowWorkloadQueue::WindowWorkloadQueue(std::string_view name, App::JobScheduler &jobScheduler)
+    : WindowI {name}, m_jobScheduler {jobScheduler}
 {
     coutInit();
     cerrInit();
@@ -33,88 +34,50 @@ void WindowWorkloadQueue::constructWindow()
                       {ImGui::GetWindowSize().x / 3.5f, ImGui::GetWindowSize().y * topWidthRatio},
                       ImGuiChildFlags_Borders);
 
-    size_t noJobs {m_workloadManager.size()};
-    size_t currentJob {m_workloadManager.currentJobIndex()};
+    size_t noJobs {m_jobScheduler.jobqueueSize()};
+    size_t currentJob {m_jobScheduler.currentJobIndex()};
 
-    switch (m_workloadManager.state())
+    switch (m_jobScheduler.state())
     {
-        case App::WorkloadManager::States::NOT_STARTED:
+        case App::JobScheduler::States::NOT_STARTED:
         {
-            ImGui::TextWrapped("The Manager is not running.");
+            ImGui::TextWrapped("The Sheduler is not running.");
             ImGui::TextWrapped("Number of jobs: %zu", noJobs);
             if (noJobs > 0)
             {
                 if (ImGui::Button("Run queued jobs"))
-                    m_workloadManager.start();
-                if (ImGui::Button("Remove all possible jobs"))
-                    m_workloadManager.removeAllPossibleJobs();
+                    m_jobScheduler.run();
+                if (ImGui::Button("Remove all jobs"))
+                    m_jobScheduler.removeAllJobs();
             }
             break;
         }
-        case App::WorkloadManager::States::BUSY:
+        case App::JobScheduler::States::RUNNING:
         {
             ImGui::TextWrapped("The Manager is currently running.");
             ImGui::TextWrapped("Number of jobs: %zu", noJobs);
             ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
             if (noJobs > 0)
             {
-                if (ImGui::Button("Remove all possible jobs"))
-                    m_workloadManager.removeAllPossibleJobs();
+                if (ImGui::Button("Remove all jobs"))
+                    m_jobScheduler.removeAllJobs();
                 if (ImGui::Button("Pause after this job."))
-                    m_workloadManager.pauseAfterJob();
+                    m_jobScheduler.pauseAfter();
             }
             break;
         }
-        case App::WorkloadManager::States::PAUSE_AFTER_THIS:
+        case App::JobScheduler::States::PAUSED:
         {
-            ImGui::TextWrapped("The Manager will pause after finishing the current job.");
+            ImGui::TextWrapped("The Manager paused.");
             ImGui::TextWrapped("Number of jobs: %zu", noJobs);
             ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
             if (noJobs > 0)
             {
-                if (ImGui::Button("Remove all possible jobs"))
-                    m_workloadManager.removeAllPossibleJobs();
+                if (ImGui::Button("Remove all jobs"))
+                    m_jobScheduler.removeAllJobs();
+                if (ImGui::Button("Resume"))
+                    m_jobScheduler.resume();
             }
-            break;
-        }
-        case App::WorkloadManager::States::PAUSED:
-        {
-            ImGui::TextWrapped("The Manager has been paused.");
-            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
-            ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
-            if (noJobs > 0)
-            {
-                if (ImGui::Button("Remove all possible jobs"))
-                    m_workloadManager.removeAllPossibleJobs();
-            }
-            if (ImGui::Button("Resume"))
-                m_workloadManager.resume();
-            break;
-        }
-        case App::WorkloadManager::States::FORCEFULLY_STOPPED:
-        {
-            ImGui::TextWrapped(
-                "The Manager has been forcefully paused. The app should close soon.");
-            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
-            ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
-            break;
-        }
-        case App::WorkloadManager::States::FINISHED:
-        {
-            ImGui::TextWrapped(
-                "The Manager has finished. Rearm if you want to modify the queue and run again.");
-            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
-            ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
-            if (ImGui::Button("Rearm"))
-                m_workloadManager.rearmManager();
-            break;
-        }
-        case App::WorkloadManager::States::INVALID:
-        {
-            ImGui::TextWrapped(
-                "The Manager has reached and invalid state. You're on your own, sorry :((");
-            ImGui::TextWrapped("Number of jobs: %zu", noJobs);
-            ImGui::TextWrapped("Processed number of jobs: %zu", currentJob);
             break;
         }
     }
@@ -127,15 +90,14 @@ void WindowWorkloadQueue::constructWindow()
     ImGui::BeginChild("##WorkloadQueueDescription", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders,
                       ImGuiWindowFlags_AlwaysVerticalScrollbar |
                           ImGuiWindowFlags_AlwaysHorizontalScrollbar);
-    const auto &descriptions = m_workloadManager.jobDescriptions();
-    const size_t currentJobIndex {m_workloadManager.currentJobIndex()};
+    const auto &descriptions = m_jobScheduler.allJobDescriptions();
     for (size_t index {0}; index < descriptions.size(); ++index)
     {
         if (ImGui::Button(std::format("-##{}", index).c_str()))
         {
             try
             {
-                m_workloadManager.removeJob(index);
+                m_jobScheduler.removeJob(index);
             }
             catch (...)
             {
@@ -147,7 +109,7 @@ void WindowWorkloadQueue::constructWindow()
         {
             try
             {
-                m_workloadManager.swapJobs(index, index - 1);
+                m_jobScheduler.swapJobs(index, index - 1);
             }
             catch (...)
             {
@@ -159,7 +121,7 @@ void WindowWorkloadQueue::constructWindow()
         {
             try
             {
-                m_workloadManager.swapJobs(index, index + 1);
+                m_jobScheduler.swapJobs(index, index + 1);
             }
             catch (...)
             {
@@ -167,7 +129,7 @@ void WindowWorkloadQueue::constructWindow()
             }
         }
         ImGui::SameLine();
-        if (index != currentJobIndex)
+        if (index != currentJob)
             ImGui::Text("%zu | %s", index, descriptions[index].c_str());
         else
             ImGui::Text("HERE --> %zu | %s", index, descriptions[index].c_str());

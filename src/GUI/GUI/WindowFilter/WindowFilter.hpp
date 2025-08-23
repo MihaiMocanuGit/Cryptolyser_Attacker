@@ -12,7 +12,7 @@ class WindowFilter : public WindowI, public WorkableWindow
     App::JobFilter::Buffers m_buffers {};
 
   public:
-    WindowFilter(std::string_view name, App::WorkloadManager &workloadManager);
+    WindowFilter(std::string_view name, App::JobScheduler &jobScheduler);
 
     [[nodiscard]] std::unique_ptr<App::JobI> job() const override;
 

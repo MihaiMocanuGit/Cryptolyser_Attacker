@@ -4,8 +4,8 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
-GUI::WindowFilter::WindowFilter(std::string_view name, App::WorkloadManager &workloadManager)
-    : WindowI {name}, WorkableWindow {workloadManager}
+GUI::WindowFilter::WindowFilter(std::string_view name, App::JobScheduler &jobScheduler)
+    : WindowI {name}, WorkableWindow {jobScheduler}
 {
     m_buffers.savePath = std::filesystem::current_path().string();
     m_buffers.loadPath = std::filesystem::current_path().string();
@@ -13,7 +13,7 @@ GUI::WindowFilter::WindowFilter(std::string_view name, App::WorkloadManager &wor
 
 std::unique_ptr<App::JobI> GUI::WindowFilter::job() const
 {
-    return std::make_unique<App::JobFilter>(m_buffers, m_workloadManager.continueRunning());
+    return std::make_unique<App::JobFilter>(m_buffers);
 }
 
 void GUI::WindowFilter::constructWindow()
@@ -35,7 +35,7 @@ void GUI::WindowFilter::constructWindow()
     Widgets::fileExplorerWidget(m_buffers.savePath, "Save Path", "Search##2");
     if (ImGui::Button("Queue Filter"))
     {
-        m_workloadManager.addJob(job());
+        m_jobScheduler.addJob(job());
     }
     ImGui::End();
 }

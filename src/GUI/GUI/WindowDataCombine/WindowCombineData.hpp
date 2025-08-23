@@ -12,7 +12,7 @@ class WindowCombineData : public WindowI, public WorkableWindow
     App::JobCombineData::Buffers m_buffers {};
 
   public:
-    WindowCombineData(std::string_view name, App::WorkloadManager &workloadManager);
+    WindowCombineData(std::string_view name, App::JobScheduler &jobScheduler);
 
     [[nodiscard]] std::unique_ptr<App::JobI> job() const override;
 

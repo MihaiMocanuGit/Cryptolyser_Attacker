@@ -4,15 +4,15 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
-GUI::WindowStudy::WindowStudy(std::string_view name, App::WorkloadManager &workloadManager)
-    : WindowI {name}, WorkableWindow {workloadManager}
+GUI::WindowStudy::WindowStudy(std::string_view name, App::JobScheduler &jobScheduler)
+    : WindowI {name}, WorkableWindow {jobScheduler}
 {
     m_buffers.savePath = std::filesystem::current_path().string();
 }
 
 std::unique_ptr<App::JobI> GUI::WindowStudy::job() const
 {
-    return std::make_unique<App::JobStudy>(m_buffers, m_workloadManager.continueRunning());
+    return std::make_unique<App::JobStudy>(m_buffers);
 }
 
 void GUI::WindowStudy::constructWindow()
@@ -123,7 +123,7 @@ void GUI::WindowStudy::constructWindow()
         }
     }
     if (ImGui::Button("Queue Study Run"))
-        m_workloadManager.addJob(job());
+        m_jobScheduler.addJob(job());
 
     ImGui::End();
 }

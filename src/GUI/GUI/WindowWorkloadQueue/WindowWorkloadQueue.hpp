@@ -1,14 +1,14 @@
 #pragma once
 
 #include "../WindowI/WindowI.hpp"
-#include "App/WorkloadManager/WorkloadManager.hpp"
+#include "App/JobScheduler/JobScheduler.hpp"
 
 namespace GUI
 {
 class WindowWorkloadQueue : public WindowI
 {
   private:
-    App::WorkloadManager &m_workloadManager;
+    App::JobScheduler &m_jobScheduler;
 
     static std::ostringstream m_coutBuff;
 
@@ -19,7 +19,7 @@ class WindowWorkloadQueue : public WindowI
     static void cerrInit();
 
   public:
-    WindowWorkloadQueue(std::string_view name, App::WorkloadManager &workloadManager);
+    WindowWorkloadQueue(std::string_view name, App::JobScheduler &jobScheduler);
 
     void constructWindow() override;
 };

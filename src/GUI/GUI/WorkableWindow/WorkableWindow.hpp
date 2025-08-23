@@ -1,6 +1,6 @@
 #pragma once
 #include "App/JobI/JobI.hpp"
-#include "App/WorkloadManager/WorkloadManager.hpp"
+#include "App/JobScheduler/JobScheduler.hpp"
 
 #include <memory>
 
@@ -9,13 +9,10 @@ namespace GUI
 class WorkableWindow
 {
   protected:
-    App::WorkloadManager &m_workloadManager;
+    App::JobScheduler &m_jobScheduler;
 
   public:
-    explicit WorkableWindow(App::WorkloadManager &workloadManager)
-        : m_workloadManager {workloadManager}
-    {
-    }
+    explicit WorkableWindow(App::JobScheduler &jobScheduler) : m_jobScheduler {jobScheduler} {}
 
     [[nodiscard]] virtual std::unique_ptr<App::JobI> job() const = 0;
 

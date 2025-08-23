@@ -68,12 +68,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
     bool show_demo_window = true;
 #endif
 
-    App::WorkloadManager workloadManager {g_continueRunning};
-    GUI::WindowWorkloadQueue workloadQueueWindow {"Workload", workloadManager};
-    GUI::WindowStudy studyWindow {"Study", workloadManager};
-    GUI::WindowFilter filterWindow {"Filter", workloadManager};
-    GUI::WindowCombineData combineDataWindow {"CombineData", workloadManager};
-    GUI::WindowCorrelate correlateWindow {"Correlate", workloadManager};
+    App::JobScheduler jobScheduler {};
+    GUI::WindowWorkloadQueue jobSchedulerWindow {"Scheduler", jobScheduler};
+    GUI::WindowStudy studyWindow {"Study", jobScheduler};
+    GUI::WindowFilter filterWindow {"Filter", jobScheduler};
+    GUI::WindowCombineData combineDataWindow {"CombineData", jobScheduler};
+    GUI::WindowCorrelate correlateWindow {"Correlate", jobScheduler};
 
     gui.runEveryFrame(
         [&]()
@@ -102,14 +102,14 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
                 ImGui::DockBuilderDockWindow(filterWindow.name().data(), dock1);
                 ImGui::DockBuilderDockWindow(combineDataWindow.name().data(), dock1);
                 ImGui::DockBuilderDockWindow(correlateWindow.name().data(), dock1);
-                ImGui::DockBuilderDockWindow(workloadQueueWindow.name().data(), dock2);
+                ImGui::DockBuilderDockWindow(jobSchedulerWindow.name().data(), dock2);
 
                 ImGui::DockBuilderFinish(id);
             }
 
             if (show_demo_window)
                 ImGui::ShowDemoWindow(&show_demo_window);
-            workloadQueueWindow.constructWindow();
+            jobSchedulerWindow.constructWindow();
             studyWindow.constructWindow();
             filterWindow.constructWindow();
             combineDataWindow.constructWindow();
