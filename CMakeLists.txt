@@ -31,11 +31,17 @@ execute_process(
     ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json)
 
 enable_testing()
+add_executable(unit_tests)
 
-add_subdirectory(third-party)
+add_subdirectory(third_party)
 add_subdirectory(Cryptolyser_Common)
 add_subdirectory(src)
 
 add_executable(${PROJECT_NAME} main.cpp)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Cryptolyser_Common src imgui nfd)
+target_link_libraries(${PROJECT_NAME} PRIVATE Cryptolyser_Common src
+                                              third_party)
+
+target_link_options(unit_tests PRIVATE -ltbb)
+target_link_libraries(unit_tests PRIVATE third_party src)
+catch_discover_tests(unit_tests)
