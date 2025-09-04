@@ -19,13 +19,17 @@ namespace App
 
 void JobScheduler::m_startWorker(size_t startAtJob) noexcept
 {
-    const auto logic = [this](std::stop_token stoken, size_t startAtJob)
+    std::atomic_flag threadInvoked {false};
+    const auto logic = [this, &threadInvoked](std::stop_token stoken, size_t startAtJob)
     {
         ASSERT_START
         m_state = States::RUNNING;
-        for (m_currentJobIndex = startAtJob;
+        m_currentJobIndex = startAtJob;
+        threadInvoked.test_and_set();
+        threadInvoked.notify_one();
+        for (;
              // The state can be externally changed (or internally due to an exception inside the
-             // job). Thus it is checked after every iteration.
+             // job). Thus, it is checked after every iteration.
              m_currentJobIndex < m_jobqueueSize and m_state == States::RUNNING and
              not m_pausePending;
              ++m_currentJobIndex)
@@ -45,6 +49,7 @@ void JobScheduler::m_startWorker(size_t startAtJob) noexcept
                 {
                     std::cerr << "Job killed by user: " << m_currentJobIndex << std::endl;
                     m_state = States::PAUSED;
+                    m_stopSource = {};
                     break;
                 }
             }
@@ -60,7 +65,10 @@ void JobScheduler::m_startWorker(size_t startAtJob) noexcept
         if (m_state == States::RUNNING)
         {
             if (m_pausePending)
+            {
                 m_state = States::PAUSED;
+                m_pausePending = false;
+            }
             else // we finished all jobs succesfully
                 m_resetJobqueue();
         }
@@ -71,15 +79,18 @@ void JobScheduler::m_startWorker(size_t startAtJob) noexcept
         ASSERT_END
     };
     m_worker = std::jthread {logic, m_stopSource.get_token(), startAtJob};
+    // Waiting for the thread to start and to change the state to RUNNING. After this function
+    // (m_startWorker), the worker should be already completly started
+    threadInvoked.wait(false);
 }
 
 void JobScheduler::m_resetJobqueue() noexcept
 {
-    ASSERT_START
     m_state = States::NOT_STARTED;
     m_pausePending = false;
     m_currentJobIndex = npos;
-    ASSERT_END
+    m_stopSource = {};
+    ASSERT_SINGLE
 }
 
 void JobScheduler::m_assertGoodBehaviour() const noexcept
