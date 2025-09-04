@@ -19,10 +19,13 @@ namespace App
 
 void JobScheduler::m_startWorker(size_t startAtJob) noexcept
 {
-    const auto logic = [this](std::stop_token stoken, size_t startAtJob)
+    std::atomic_flag threadInvoked {false};
+    const auto logic = [this, &threadInvoked](std::stop_token stoken, size_t startAtJob)
     {
         ASSERT_START
         m_state = States::RUNNING;
+        threadInvoked.test_and_set();
+        threadInvoked.notify_one();
         for (m_currentJobIndex = startAtJob;
              // The state can be externally changed (or internally due to an exception inside the
              // job). Thus it is checked after every iteration.
@@ -71,15 +74,17 @@ void JobScheduler::m_startWorker(size_t startAtJob) noexcept
         ASSERT_END
     };
     m_worker = std::jthread {logic, m_stopSource.get_token(), startAtJob};
+    // Waiting for the thread to start and to change the state to RUNNING. After this function
+    // (m_startWorker), the worker should be already completly started
+    threadInvoked.wait(false);
 }
 
 void JobScheduler::m_resetJobqueue() noexcept
 {
-    ASSERT_START
     m_state = States::NOT_STARTED;
     m_pausePending = false;
     m_currentJobIndex = npos;
-    ASSERT_END
+    ASSERT_SINGLE
 }
 
 void JobScheduler::m_assertGoodBehaviour() const noexcept
