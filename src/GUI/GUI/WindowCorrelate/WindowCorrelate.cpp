@@ -8,8 +8,9 @@ GUI::WindowCorrelate::WindowCorrelate(std::string_view name, App::WorkloadManage
     : WindowI {name}, WorkableWindow {workloadManager}
 {
     std::string currentPath {Widgets::fileExplorerWidget_defaultPath};
-    m_buffers.victimLoadPaths.push_back(currentPath);
-    m_buffers.doppelLoadPaths.push_back(currentPath);
+    m_buffers.groups.emplace_back();
+    m_buffers.groups[0].victimLoadPaths.push_back(currentPath);
+    m_buffers.groups[0].doppelLoadPaths.push_back(currentPath);
     m_buffers.savePath = currentPath;
     m_buffers.victimKeyKnown = true;
 }
@@ -26,62 +27,77 @@ void GUI::WindowCorrelate::constructWindow()
     ImGui::Begin(m_name.c_str());
     ImGui::Text("This is where you can correlate the studied keys.");
     Widgets::fileExplorerWidget(m_buffers.savePath, "Save Path", "Search##SavePath");
+    ImGui::Text("Paths for victim timing data.");
+    if (ImGui::Checkbox("Known Victim Key", &m_buffers.victimKeyKnown))
     {
-        ImGui::Text("Paths for victim timing data.");
-        if (ImGui::Checkbox("Known Victim Key", &m_buffers.victimKeyKnown))
+    }
+    if (m_buffers.victimKeyKnown)
+    {
+        for (unsigned i {0}; i < PACKET_KEY_SIZE; ++i)
         {
-        }
-        if (m_buffers.victimKeyKnown)
-        {
-            for (unsigned i {0}; i < PACKET_KEY_SIZE; ++i)
+            ImGui::SetNextItemWidth(30.0f);
+            std::string id {(i != PACKET_KEY_SIZE - 1) ? "##key" + std::to_string(i) : "Key"};
+            if (ImGui::InputScalar(id.c_str(), ImGuiDataType_U8, &m_buffers.victimKey[i], NULL,
+                                   NULL, "%02x"))
             {
-                ImGui::SetNextItemWidth(30.0f);
-                std::string id {(i != PACKET_KEY_SIZE - 1) ? "##key" + std::to_string(i)
-                                                                : "Key"};
-                if (ImGui::InputScalar(id.c_str(), ImGuiDataType_U8, &m_buffers.victimKey[i], NULL,
-                                       NULL, "%02x"))
-                {
-                }
-                if (i != PACKET_KEY_SIZE - 1)
-                    ImGui::SameLine();
+            }
+            if (i != PACKET_KEY_SIZE - 1)
+                ImGui::SameLine();
+        }
+    }
+
+    auto processGroup = [&](auto &group, unsigned groupId)
+    {
+        ImGui::BeginChild(std::format("Group{}", groupId).c_str(), ImVec2(0, 0),
+                          ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY);
+        ImGui::Text("Group %d:", groupId);
+        { // VICTIM PATHS
+            if (ImGui::Button("+##Victim"))
+            {
+                group.victimLoadPaths.push_back(currentPath);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("-##Victim") and group.victimLoadPaths.size() > 1)
+            {
+                group.victimLoadPaths.pop_back();
+            }
+            unsigned index {0};
+            for (std::string &inputLine : group.victimLoadPaths)
+            {
+                Widgets::fileExplorerWidget(inputLine, std::format("Victim Load Path {}", index),
+                                            std::format("Search##VictimLoadPath{}", index));
+                ++index;
             }
         }
-        if (ImGui::Button("+##Victim"))
-        {
-            m_buffers.victimLoadPaths.push_back(currentPath);
+        { // DOPPELGANGER PATHS
+            ImGui::Text("Paths for doppel timing data.");
+            if (ImGui::Button("+##Doppel"))
+            {
+                group.doppelLoadPaths.push_back(currentPath);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("-##Doppel") and group.doppelLoadPaths.size() > 1)
+            {
+                group.doppelLoadPaths.pop_back();
+            }
+            unsigned index {0};
+            for (std::string &inputLine : group.doppelLoadPaths)
+            {
+                Widgets::fileExplorerWidget(inputLine, std::format("Doppel Load Path {}", index),
+                                            std::format("Search##DoppelLoadPath{}", index));
+                ++index;
+            }
         }
-        ImGui::SameLine();
-        if (ImGui::Button("-##Victim") and m_buffers.victimLoadPaths.size() > 1)
-        {
-            m_buffers.victimLoadPaths.pop_back();
-        }
-        unsigned index {0};
-        for (std::string &inputLine : m_buffers.victimLoadPaths)
-        {
-            Widgets::fileExplorerWidget(inputLine, std::format("Victim Load Path {}", index),
-                                        std::format("Search##VictimLoadPath{}", index));
-            ++index;
-        }
-    }
-    {
-        ImGui::Text("Paths for doppel timing data.");
-        if (ImGui::Button("+##Doppel"))
-        {
-            m_buffers.doppelLoadPaths.push_back(currentPath);
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("-##Doppel") and m_buffers.doppelLoadPaths.size() > 1)
-        {
-            m_buffers.doppelLoadPaths.pop_back();
-        }
-        unsigned index {0};
-        for (std::string &inputLine : m_buffers.doppelLoadPaths)
-        {
-            Widgets::fileExplorerWidget(inputLine, std::format("Doppel Load Path {}", index),
-                                        std::format("Search##DoppelLoadPath{}", index));
-            ++index;
-        }
-    }
+        ImGui::EndChild();
+    };
+    ImGui::Text("Correlate groups.");
+    if (ImGui::Button("+##Group"))
+        m_buffers.groups.push_back(m_buffers.groups.back());
+    ImGui::SameLine();
+    if (ImGui::Button("-##Group") and m_buffers.groups.size() > 1)
+        m_buffers.groups.pop_back();
+    for (unsigned groupId {0}; groupId < m_buffers.groups.size(); ++groupId)
+        processGroup(m_buffers.groups[groupId], groupId);
 
     if (ImGui::Button("Queue Correlate job"))
     {

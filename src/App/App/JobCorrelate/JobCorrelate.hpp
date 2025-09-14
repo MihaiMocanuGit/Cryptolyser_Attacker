@@ -17,8 +17,12 @@ class JobCorrelate : public JobI
   private:
     struct Input
     {
-        std::vector<std::filesystem::path> doppelLoadPaths {};
-        std::vector<std::filesystem::path> victimLoadPaths {};
+        struct Group
+        {
+            std::vector<std::filesystem::path> doppelLoadPaths {};
+            std::vector<std::filesystem::path> victimLoadPaths {};
+        };
+        std::vector<Group> groups;
         bool victimKeyKnown {true};
         std::filesystem::path savePath {};
         std::array<std::byte, PACKET_KEY_SIZE> victimKey {std::byte(0)};
@@ -37,8 +41,12 @@ class JobCorrelate : public JobI
   public:
     struct Buffers
     {
-        std::vector<std::string> doppelLoadPaths {};
-        std::vector<std::string> victimLoadPaths {};
+        struct Group
+        {
+            std::vector<std::string> doppelLoadPaths {};
+            std::vector<std::string> victimLoadPaths {};
+        };
+        std::vector<Group> groups;
         bool victimKeyKnown {true};
         std::array<std::byte, PACKET_KEY_SIZE> victimKey {std::byte(0)};
         std::string savePath {};

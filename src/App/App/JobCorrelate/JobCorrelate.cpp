@@ -52,41 +52,55 @@ std::string App::JobCorrelate::m_createCorrelationDataString(
 
 Correlate<MetricsData<double>, MetricsData<double>> App::JobCorrelate::m_computeCorrelation() const
 {
-    // Load all the known victim timing data
-    std::vector<TimingData<false, MetricsData<double>>> victimData;
-    victimData.reserve(this->input.victimLoadPaths.size());
-    std::cout << "Loading the victim timing data...\n";
-    for (const auto &loadPath : this->input.victimLoadPaths)
+    auto processGroup = [&](const Input::Group &group, unsigned groupId)
     {
-        const auto metadata {SerializerManager::loadTimingMetadata(loadPath)};
-        TimingData<false, MetricsData<double>> timingData {metadata.dataSize};
-        SerializerManager::loadRaw(loadPath, timingData);
-
-        victimData.emplace_back(std::move(timingData));
-    }
-
-    // Prepare an empty correlation
-    Correlate<MetricsData<double>, MetricsData<double>> correlate {};
-
-    // Load one by one the doppel timing data
-    std::cout << "Loading the doppel timing data...\n";
-    for (const auto &loadPath : this->input.doppelLoadPaths)
-    {
-        const auto metadata {SerializerManager::loadTimingMetadata(loadPath)};
-        assert(metadata.knownKey);
-        TimingData<true, MetricsData<double>> doppel {metadata.dataSize, metadata.key};
-        SerializerManager::loadRaw(loadPath, doppel);
-
-        // Compute the correlations between all the loaded victim timing data and the new doppel
-        // timing data.
-        for (const auto &victim : victimData)
+        std::cout << "Group " << groupId << "\n";
+        // Load all the known victim timing data
+        std::vector<TimingData<false, MetricsData<double>>> victimData;
+        victimData.reserve(group.victimLoadPaths.size());
+        std::cout << "Loading the victim timing data...\n";
+        for (const auto &loadPath : group.victimLoadPaths)
         {
-            Correlate<MetricsData<double>, MetricsData<double>> tmpCorrelate {victim, doppel};
+            const auto metadata {SerializerManager::loadTimingMetadata(loadPath)};
+            TimingData<false, MetricsData<double>> timingData {metadata.dataSize};
+            SerializerManager::loadRaw(loadPath, timingData);
 
-            // Update the main correlation with the new one.
-            correlate += tmpCorrelate;
+            victimData.emplace_back(std::move(timingData));
         }
+
+        // Prepare an empty correlation
+        Correlate<MetricsData<double>, MetricsData<double>> correlate {};
+
+        // Load one by one the doppel timing data
+        std::cout << "Loading the doppel timing data...\n";
+        for (const auto &loadPath : group.doppelLoadPaths)
+        {
+            const auto metadata {SerializerManager::loadTimingMetadata(loadPath)};
+            assert(metadata.knownKey);
+            TimingData<true, MetricsData<double>> doppel {metadata.dataSize, metadata.key};
+            SerializerManager::loadRaw(loadPath, doppel);
+
+            // Compute the correlations between all the loaded victim timing data and the new doppel
+            // timing data.
+            for (const auto &victim : victimData)
+            {
+                Correlate<MetricsData<double>, MetricsData<double>> tmpCorrelate {victim, doppel};
+
+                // Update the main correlation with the new one.
+                correlate += tmpCorrelate;
+            }
+        }
+        return correlate;
+    };
+
+    Correlate<MetricsData<double>, MetricsData<double>> correlate {};
+    unsigned groupId {0};
+    for (const auto &group : input.groups)
+    {
+        correlate += processGroup(group, groupId);
+        groupId++;
     }
+
     return correlate;
 }
 
@@ -139,10 +153,15 @@ App::JobCorrelate::JobCorrelate(const App::JobCorrelate::Buffers &buffers,
     input.victimKeyKnown = buffers.victimKeyKnown;
     input.victimKey = buffers.victimKey;
 
-    for (const auto &path : buffers.victimLoadPaths)
-        input.victimLoadPaths.emplace_back(path);
-    for (const auto &path : buffers.doppelLoadPaths)
-        input.doppelLoadPaths.emplace_back(path);
+    for (const auto &bufferGroup : buffers.groups)
+    {
+        input.groups.emplace_back();
+        auto &inputGroup = input.groups.back();
+        for (const auto &path : bufferGroup.victimLoadPaths)
+            inputGroup.victimLoadPaths.emplace_back(path);
+        for (const auto &path : bufferGroup.doppelLoadPaths)
+            inputGroup.doppelLoadPaths.emplace_back(path);
+    }
 }
 
 void App::JobCorrelate::operator()()
@@ -179,19 +198,27 @@ std::string App::JobCorrelate::description() const noexcept
     else
         description += "Unknown ";
 
-    description += "Victim Paths: {";
-    for (const std::filesystem::path &path : input.victimLoadPaths)
-        description += path.string() + ", ";
-    description.pop_back(); // remove ' '
-    description.pop_back(); // remove ','
-    description += "} ";
+    unsigned groupId {0};
+    for (const auto &group : input.groups)
+    {
+        description += "Group " + std::to_string(groupId) + ": {";
+        description += "Victim Paths: {";
+        for (const std::filesystem::path &path : group.victimLoadPaths)
+            description += path.string() + ", ";
+        description.pop_back(); // remove ' '
+        description.pop_back(); // remove ','
+        description += "} ";
 
-    description += "Doppel Paths: {";
-    for (const std::filesystem::path &path : input.doppelLoadPaths)
-        description += path.string() + ", ";
-    description.pop_back(); // remove ' '
-    description.pop_back(); // remove ','
-    description += '}';
+        description += "Doppel Paths: {";
+        for (const std::filesystem::path &path : group.doppelLoadPaths)
+            description += path.string() + ", ";
+        description.pop_back(); // remove ' '
+        description.pop_back(); // remove ','
+        description += '}';
+        description += "} ";
+
+        groupId++;
+    }
 
     return description;
 }
